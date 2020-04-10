@@ -22,8 +22,9 @@
 #include "mngfile.h"
 #include "mmapifstream.h"
 
+#include "music/mngparser.h"
+
 MNGFile *g_mngfile = NULL;
-extern int mngparse(); // parser
 
 void decryptbuf(char * buf, int len) {
 	int i;
@@ -69,16 +70,20 @@ MNGFile::MNGFile(std::string n) {
 	memcpy(script, stream->map + scriptoffset, scriptlength);
 	decryptbuf(script, scriptlength);
 
-	yyinit(script);
-	g_mngfile = this;
-	try {
-		mngparse();
-	} catch (...) {
-		delete stream;
-		g_mngfile = 0;
-		throw;
-	}
-	g_mngfile = 0;
+	mngparse(script);
+
+
+	// 
+	// yyinit(script);
+	// g_mngfile = this;
+	// try {
+	// 	mngparse();
+	// } catch (...) {
+	// 	delete stream;
+	// 	g_mngfile = 0;
+	// 	throw;
+	// }
+	// g_mngfile = 0;
 
 	processState *p = new processState(this);
 	for (std::map<std::string, MNGEffectDecNode *>::iterator i = effects.begin(); i != effects.end(); i++)
@@ -154,7 +159,7 @@ std::string MNGFile::dump() {
 }
 
 void mngerror(char const *s) {
-	throw MNGFileException(s, g_mngfile->yylineno);
+	// throw MNGFileException(s, g_mngfile->yylineno); // TODO
 }
 
 /* vim: set noet: */

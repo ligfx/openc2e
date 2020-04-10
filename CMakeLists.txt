@@ -95,7 +95,7 @@ set(OPENC2E_CORE
 	src/MetaRoom.cpp
 	src/mmapifstream.cpp
 	src/music/mngfile.cpp
-	${GEN}/mngparser.tab.cpp
+	src/music/mngparser.tab.cpp
 	src/MusicManager.cpp
 	src/creatures/oldBrain.cpp
 	src/PathResolver.cpp
@@ -300,19 +300,11 @@ add_custom_command(
 	DEPENDS ${SRC}/src/prayfile/PraySourceParser.re2c
 	WORKING_DIRECTORY ${SRC})
 
-add_custom_command(
-	OUTPUT ${GEN}/mngparser.tab.cpp ${GEN}/mngparser.tab.hpp
-	COMMAND ${CMAKE_COMMAND} -E make_directory "${GEN}"
-	COMMAND bison -d --name-prefix=mng --file-prefix="${GEN}/mngparser" src/music/mngparser.ypp
-	DEPENDS src/music/mngparser.ypp
-	WORKING_DIRECTORY ${SRC})
-
 add_custom_target(test DEPENDS openc2e
 	COMMAND perl ${SRC}/runtests.pl ${SRC}/tests)
 add_custom_target(docs ALL DEPENDS ${BIN}/caosdocs.html ${BIN}/docs.css ${BIN}/openc2e.6)
 add_custom_target(generated DEPENDS
 	${GEN}/caoslexer.cpp
-	${GEN}/mngparser.tab.cpp ${GEN}/mngparser.tab.hpp
 	${GEN}/mnglexer.cpp
 	${GEN}/cataloglexer.cpp
 	${GEN}/cmddata.cpp

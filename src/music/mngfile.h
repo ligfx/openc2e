@@ -308,7 +308,19 @@ protected:
 
 public:
 	// TODO: i'm assuming layer clears them all, ie, it really is a union. is that right? - fuzzie
-	MNGVariableNode(std::string n) { layer = 0; variabletype = NAMED; name = n; }
+	MNGVariableNode(std::string n) {
+		layer = 0;
+		if (n == "Interval") {
+			variabletype = INTERVAL;
+		} else if (n == "Pan") {
+			variabletype = PAN;
+		} else if (n == "Volume") {
+			variabletype = VOLUME;
+		} else {
+			variabletype = NAMED;
+			name = n;
+		}
+	}
 	MNGVariableNode(variabletypes t) { layer = 0; variabletype = t; }
 	virtual void postProcess(processState *s) {
 		switch (variabletype) {
