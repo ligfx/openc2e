@@ -20,13 +20,12 @@
 #include "openc2e.h"
 #include "caosVM.h"
 #include "Agent.h"
-#include "World.h"
-#include "Engine.h"
 #include "AudioBackend.h"
 #include "MusicManager.h"
 #include "Camera.h"
 #include "MetaRoom.h"
 #include "Room.h"
+#include "ServiceLocator.h"
 #include "Map.h"
 #include <iostream>
 #include <memory>
@@ -46,7 +45,7 @@ void caosVM::c_SNDE() {
 	VM_PARAM_STRING(filename)
 
 	valid_agent(targ);
-	if (engine.camera->getMetaRoom() != world.map->metaRoomAt(targ->x, targ->y) || !agentOnCamera(targ)) return; // TODO: is it correct behaviour for only onscreen agents to play?
+	if (getService<MainCamera>()->getMetaRoom() != getService<Map>()->metaRoomAt(targ->x, targ->y) || !agentOnCamera(targ)) return; // TODO: is it correct behaviour for only onscreen agents to play?
 	targ->playAudio(filename, false, false);
 }
 
@@ -80,7 +79,7 @@ void caosVM::c_SNDC() {
 	VM_PARAM_STRING(filename)
 
 	valid_agent(targ);
-	if (engine.camera->getMetaRoom() != world.map->metaRoomAt(targ->x, targ->y) || !agentOnCamera(targ)) return; // TODO: is it correct behaviour for only onscreen agents to play?
+	if (getService<MainCamera>()->getMetaRoom() != getService<Map>()->metaRoomAt(targ->x, targ->y) || !agentOnCamera(targ)) return; // TODO: is it correct behaviour for only onscreen agents to play?
 	targ->playAudio(filename, true, false);
 }
 
@@ -128,7 +127,7 @@ void caosVM::c_MMSC() {
 	VM_PARAM_INTEGER(y)
 	VM_PARAM_INTEGER(x)
 
-	MetaRoom *r = world.map->metaRoomAt(x, y);
+	MetaRoom *r = getService<Map>()->metaRoomAt(x, y);
 	caos_assert(r); // note that real c2e doesn't check
 
 	r->music = track_name;
@@ -145,7 +144,7 @@ void caosVM::v_MMSC() {
 	VM_PARAM_INTEGER(y)
 	VM_PARAM_INTEGER(x)
 
-	MetaRoom *r = world.map->metaRoomAt(x, y);
+	MetaRoom *r = getService<Map>()->metaRoomAt(x, y);
 	caos_assert(r); // note that real c2e doesn't check
 
 	result.setString(r->music);
@@ -163,7 +162,7 @@ void caosVM::c_RMSC() {
 	VM_PARAM_INTEGER(y)
 	VM_PARAM_INTEGER(x)
 
-	shared_ptr<Room> r = world.map->roomAt(x, y);
+	shared_ptr<Room> r = getService<Map>()->roomAt(x, y);
 	caos_assert(r);
 
 	r->music = track_name;
@@ -180,7 +179,7 @@ void caosVM::v_RMSC() {
 	VM_PARAM_INTEGER(y)
 	VM_PARAM_INTEGER(x)
 
-	shared_ptr<Room> r = world.map->roomAt(x, y);
+	shared_ptr<Room> r = getService<Map>()->roomAt(x, y);
 	caos_assert(r);
 
 	result.setString(r->music);
@@ -265,17 +264,17 @@ void caosVM::v_MUTE() {
 
 	// TODO: we should maintain state despite having no audio engine, probably
 	// (UI scripting assumes changes were successful)
-	if (!engine.audio) {
+	if (!getService<AudioBackend>()) {
 		result.setInt(0);
 		return;
 	}
 
 	// TODO: music
 
-	if (eormask & 1) engine.audio->setMute(!engine.audio->isMuted());
+	if (eormask & 1) getService<AudioBackend>()->setMute(!getService<AudioBackend>()->isMuted());
 
 	int r = 0;
-	if (andmask & 1 && engine.audio->isMuted()) r += 1;
+	if (andmask & 1 && getService<AudioBackend>()->isMuted()) r += 1;
 	result.setInt(r);
 }
 
@@ -331,7 +330,7 @@ void caosVM::c_PLDS() {
 	VM_PARAM_STRING(filename)
 
 	valid_agent(targ);
-	if (engine.camera->getMetaRoom() != world.map->metaRoomAt(targ->x, targ->y)) return; // TODO: needs better check ;)
+	if (getService<MainCamera>()->getMetaRoom() != getService<Map>()->metaRoomAt(targ->x, targ->y)) return; // TODO: needs better check ;)
 
 	// TODO
 }
@@ -390,9 +389,9 @@ void caosVM::c_DBG_SINE() {
 	}
 	std::shared_ptr<AudioSource> src;
 	if (track == 2)
-		src = engine.audio->getBGMSource();
+		src = getService<AudioBackend>()->getBGMSource();
 	else
-		src = targ->sound = engine.audio->newSource();
+		src = targ->sound = getService<AudioBackend>()->newSource();
 	if (!src)
 		throw creaturesException("Audio is unavailable");
 	src->setStream(AudioStream(new SineStream(rate, stereo, ampl)));
@@ -410,7 +409,7 @@ void caosVM::c_DBG_SINE() {
  Don't touch.
  */
 void caosVM::c_DBG_SBGM() {
-	std::shared_ptr<AudioSource> src = engine.audio->getBGMSource();
+	std::shared_ptr<AudioSource> src = getService<AudioBackend>()->getBGMSource();
 	if (src)
 		src->stop();
 }

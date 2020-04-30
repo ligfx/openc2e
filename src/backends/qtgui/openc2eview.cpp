@@ -17,7 +17,7 @@
 #include "World.h"
 #include "MetaRoom.h"
 #include "Camera.h"
-#include "Engine.h"
+#include "ServiceLocator.h"
 
 #include "openc2eview.h"
 #include "QtBackend.h"
@@ -41,7 +41,7 @@
  *
  */
 
-openc2eView::openc2eView(QWidget *parent, std::shared_ptr<QtBackend> b) : QAbstractScrollArea(parent) {
+openc2eView::openc2eView(QWidget *parent, QtBackend* b) : QAbstractScrollArea(parent) {
 	backend = b;
 
 	viewport()->setAttribute(Qt::WA_OpaquePaintEvent); // no need for Qt to draw a background
@@ -62,18 +62,14 @@ openc2eView::openc2eView(QWidget *parent, std::shared_ptr<QtBackend> b) : QAbstr
 openc2eView::~openc2eView() {
 }
 
-std::shared_ptr<class Backend> openc2eView::getBackend() {
-	return std::dynamic_pointer_cast<class Backend, class QtBackend>(backend);
-}
-
 void openc2eView::resizescrollbars() {
-	if (engine.camera->getMetaRoom()) {
-		if (engine.camera->getMetaRoom()->wraparound()) {
-			horizontalScrollBar()->setRange(0,engine.camera->getMetaRoom()->width());
+	if (getService<MainCamera>()->getMetaRoom()) {
+		if (getService<MainCamera>()->getMetaRoom()->wraparound()) {
+			horizontalScrollBar()->setRange(0,getService<MainCamera>()->getMetaRoom()->width());
 		} else {
-			horizontalScrollBar()->setRange(0,engine.camera->getMetaRoom()->width() - viewport()->width());
+			horizontalScrollBar()->setRange(0,getService<MainCamera>()->getMetaRoom()->width() - viewport()->width());
 		}
-		verticalScrollBar()->setRange(0,engine.camera->getMetaRoom()->height() - viewport()->height());
+		verticalScrollBar()->setRange(0,getService<MainCamera>()->getMetaRoom()->height() - viewport()->height());
 	}
 }
 
@@ -169,12 +165,12 @@ void openc2eView::scrollContentsBy(int dx, int dy) {
 	(void)dx;
 	(void)dy;
 	if (lastMetaroom)
-		engine.camera->moveTo(horizontalScrollBar()->value() + lastMetaroom->x(), verticalScrollBar()->value() + lastMetaroom->y());
+		getService<MainCamera>()->moveTo(horizontalScrollBar()->value() + lastMetaroom->x(), verticalScrollBar()->value() + lastMetaroom->y());
 }
 
 void openc2eView::tick() {
-	if (lastMetaroom != engine.camera->getMetaRoom()) {
-		lastMetaroom = engine.camera->getMetaRoom();
+	if (lastMetaroom != getService<MainCamera>()->getMetaRoom()) {
+		lastMetaroom = getService<MainCamera>()->getMetaRoom();
 		resizescrollbars();
 	}
 }

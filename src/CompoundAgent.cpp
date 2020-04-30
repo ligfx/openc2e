@@ -19,7 +19,6 @@
 
 #include "CompoundAgent.h"
 #include "openc2e.h"
-#include "World.h"
 #include "Engine.h" // version
 #include <algorithm> // sort
 #include <cassert>

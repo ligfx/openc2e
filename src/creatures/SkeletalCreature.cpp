@@ -34,6 +34,7 @@
 #include "Backend.h"
 #include "MetaRoom.h"
 #include "Room.h"
+#include "ServiceLocator.h"
 #include "creaturesImage.h"
 #include "imageManager.h"
 #include "Map.h"
@@ -393,7 +394,7 @@ void SkeletalCreature::snapDownFoot() {
 	float footx = x + attachmentX(orig_footpart, 1);
 	float footy = y + attachmentY(orig_footpart, 1);
 
-	MetaRoom *m = world.map->metaRoomAt(x, y);
+	MetaRoom *m = getService<Map>()->metaRoomAt(x, y);
 	if (!m) return; // TODO: exceptiony death
 
 	shared_ptr<Room> newroom;
@@ -499,7 +500,7 @@ void SkeletalCreature::snapDownFoot() {
 			}
 		} else {
 			// TODO: hilar hack: same as above for perm
-			shared_ptr<Room> downroom = world.map->roomAt(footx, downfootroom->y_left_floor + 1);
+			shared_ptr<Room> downroom = getService<Map>()->roomAt(footx, downfootroom->y_left_floor + 1);
 			if (downfootroom->doors.find(downroom) != downfootroom->doors.end()) {
 				int permsize = (engine.version == 2 ? size.getInt() : perm);
 				if (permsize <= downfootroom->doors[downroom]->perm) {

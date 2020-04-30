@@ -20,6 +20,7 @@
 #include "Room.h"
 #include "Engine.h"
 #include "World.h"
+#include "ServiceLocator.h"
 #include "Map.h"
 #include "MetaRoom.h"
 #include "caosVM.h" // for setupCommandPointers()
@@ -366,10 +367,10 @@ void Engine::handleKeyboardScrolling() {
 
 	// do the actual movement
 	if (velx || vely) {
-		int adjustx = engine.camera->getX(), adjusty = engine.camera->getY();
+		int adjustx = getService<MainCamera>()->getX(), adjusty = getService<MainCamera>()->getY();
 		int adjustbyx = (int)velx, adjustbyy = (int) vely;
 			
-		engine.camera->moveTo(adjustx + adjustbyx, adjusty + adjustbyy, jump);
+		getService<MainCamera>()->moveTo(adjustx + adjustbyx, adjusty + adjustbyy, jump);
 	}
 }
 
@@ -561,20 +562,20 @@ void Engine::handleSpecialKeyDown(SomeEvent &event) {
 
 				case 33: // pageup
 					// TODO: previous metaroom
-					if ((world.map->getMetaRoomCount() - 1) == engine.camera->getMetaRoom()->id)
+					if ((getService<Map>()->getMetaRoomCount() - 1) == getService<MainCamera>()->getMetaRoom()->id)
 						break;
-					n = world.map->getMetaRoom(engine.camera->getMetaRoom()->id + 1);
+					n = getService<Map>()->getMetaRoom(getService<MainCamera>()->getMetaRoom()->id + 1);
 					if (n)
-						engine.camera->goToMetaRoom(n->id);
+						getService<MainCamera>()->goToMetaRoom(n->id);
 					break;
 
 				case 34: // pagedown
 					// TODO: next metaroom
-					if (engine.camera->getMetaRoom()->id == 0)
+					if (getService<MainCamera>()->getMetaRoom()->id == 0)
 						break;
-					n = world.map->getMetaRoom(engine.camera->getMetaRoom()->id - 1);
+					n = getService<Map>()->getMetaRoom(getService<MainCamera>()->getMetaRoom()->id - 1);
 					if (n)
-						engine.camera->goToMetaRoom(n->id);
+						getService<MainCamera>()->goToMetaRoom(n->id);
 					break;
 
 				default: break; // to shut up warnings
@@ -753,7 +754,7 @@ bool Engine::initialSetup() {
 	world.init(); // just reads mouse cursor (we want this after the catalogue reading so we don't play "guess the filename")
 	if (engine.version > 2) {
 		std::cout << "* Reading PRAY files..." << std::endl;
-		world.praymanager->update();
+		getService<prayManager>()->update();
 	}
 
 #ifdef _WIN32
@@ -852,7 +853,7 @@ bool Engine::initialSetup() {
 
 	// if there aren't any metarooms, we can't run a useful game, the user probably
 	// wanted to execute a CAOS script or something went badly wrong.
-	if (!cmdline_norun && world.map->getMetaRoomCount() == 0) {
+	if (!cmdline_norun && getService<Map>()->getMetaRoomCount() == 0) {
 		shutdown();
 		throw creaturesException("No metarooms found in given bootstrap directories or files");
 	}

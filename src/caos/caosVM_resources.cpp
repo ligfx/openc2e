@@ -21,6 +21,7 @@
 #include "caosScript.h" // PRAY INJT
 #include "Engine.h"
 #include "World.h"
+#include "ServiceLocator.h"
 #include "Catalogue.h"
 
 #include "prayManager.h"
@@ -30,7 +31,7 @@
 namespace fs = ghc::filesystem;
 
 bool prayInstall(std::string name, unsigned int type, bool actually_install) {
-	std::string directory = world.praymanager->getResourceDir(type);
+	std::string directory = getService<prayManager>()->getResourceDir(type);
 	caos_assert(!directory.empty());
 
 	fs::path dir = fs::path(world.getUserDataDir()) / fs::path(directory);
@@ -50,8 +51,8 @@ bool prayInstall(std::string name, unsigned int type, bool actually_install) {
 		return true;
 	}
 
-	std::map<std::string, std::unique_ptr<PrayBlock> >::iterator i = world.praymanager->blocks.find(name);
-	if (i == world.praymanager->blocks.end()) {
+	std::map<std::string, std::unique_ptr<PrayBlock> >::iterator i = getService<prayManager>()->blocks.find(name);
+	if (i == getService<prayManager>()->blocks.end()) {
 		std::cout << "PRAY FILE: couldn't find block " << name << std::endl;
 		return false;
 	}
@@ -83,8 +84,8 @@ bool prayInstall(std::string name, unsigned int type, bool actually_install) {
 }
 
 int prayInstallDeps(std::string name, bool actually_install) {
-	std::map<std::string, std::unique_ptr<PrayBlock> >::iterator i = world.praymanager->blocks.find(name);
-	caos_assert(i != world.praymanager->blocks.end());
+	std::map<std::string, std::unique_ptr<PrayBlock> >::iterator i = getService<prayManager>()->blocks.find(name);
+	caos_assert(i != getService<prayManager>()->blocks.end());
 
 	PrayBlock *p = i->second.get();
 	p->parseTags();
@@ -130,14 +131,14 @@ std::string findBlock(std::string type, std::string last, bool forward, bool loo
 	PrayBlock *firstblock = 0, *currblock = 0;
 	bool foundblock = false;
 
-	if (world.praymanager->blocks.size() == 0) return ""; // We definitely can't find anything in that case!
+	if (getService<prayManager>()->blocks.size() == 0) return ""; // We definitely can't find anything in that case!
 
 	// Where do we start?
 	std::map<std::string, std::unique_ptr<PrayBlock> >::iterator i;
 	if (forward)
-		i = world.praymanager->blocks.begin();
+		i = getService<prayManager>()->blocks.begin();
 	else {
-		i = world.praymanager->blocks.end();
+		i = getService<prayManager>()->blocks.end();
 		i--;
 	}
 	
@@ -160,9 +161,9 @@ std::string findBlock(std::string type, std::string last, bool forward, bool loo
 		}
 		
 		// Step through the list. Break if we need to.
-		if (!forward && i == world.praymanager->blocks.begin()) break;
+		if (!forward && i == getService<prayManager>()->blocks.begin()) break;
 		if (forward) i++; else i--;
-		if (forward && i == world.praymanager->blocks.end()) break;
+		if (forward && i == getService<prayManager>()->blocks.end()) break;
 	}
 
 	if (foundblock && loop) return firstblock->name; // loop around to first-found block
@@ -183,8 +184,8 @@ void caosVM::v_PRAY_AGTI() {
 	VM_PARAM_STRING(tag)
 	VM_PARAM_STRING(resource)
 
-	std::map<std::string, std::unique_ptr<PrayBlock> >::iterator i = world.praymanager->blocks.find(resource);
-	caos_assert(i != world.praymanager->blocks.end());
+	std::map<std::string, std::unique_ptr<PrayBlock> >::iterator i = getService<prayManager>()->blocks.find(resource);
+	caos_assert(i != getService<prayManager>()->blocks.end());
 
 	PrayBlock *p = i->second.get();
 	p->parseTags();
@@ -206,8 +207,8 @@ void caosVM::v_PRAY_AGTS() {
 	VM_PARAM_STRING(tag)
 	VM_PARAM_STRING(resource)
 
-	std::map<std::string, std::unique_ptr<PrayBlock> >::iterator i = world.praymanager->blocks.find(resource);
-	caos_assert(i != world.praymanager->blocks.end());
+	std::map<std::string, std::unique_ptr<PrayBlock> >::iterator i = getService<prayManager>()->blocks.find(resource);
+	caos_assert(i != getService<prayManager>()->blocks.end());
 
 	PrayBlock *p = i->second.get();
 	p->parseTags();
@@ -241,7 +242,7 @@ void caosVM::v_PRAY_COUN() {
 	VM_PARAM_STRING(type)
 
 	unsigned int count = 0;
-	for (std::map<std::string, std::unique_ptr<PrayBlock> >::iterator i = world.praymanager->blocks.begin(); i != world.praymanager->blocks.end(); i++)
+	for (std::map<std::string, std::unique_ptr<PrayBlock> >::iterator i = getService<prayManager>()->blocks.begin(); i != getService<prayManager>()->blocks.end(); i++)
 		if (i->second->type == type)
 			count++;
 	
@@ -347,8 +348,8 @@ void caosVM::v_PRAY_INJT() {
 	}
 	
 	// Now grab the relevant block..
-	std::map<std::string, std::unique_ptr<PrayBlock> >::iterator i = world.praymanager->blocks.find(name);
-	caos_assert(i != world.praymanager->blocks.end());
+	std::map<std::string, std::unique_ptr<PrayBlock> >::iterator i = getService<prayManager>()->blocks.find(name);
+	caos_assert(i != getService<prayManager>()->blocks.end());
 	PrayBlock *p = i->second.get();
 	p->parseTags();
 	
@@ -476,7 +477,7 @@ void caosVM::v_PRAY_PREV() {
  make the pray manager check for deleted/new files in the resource directory
 */
 void caosVM::c_PRAY_REFR() {
-	world.praymanager->update();
+	getService<prayManager>()->update();
 }
 
 /**
@@ -486,8 +487,8 @@ void caosVM::c_PRAY_REFR() {
 void caosVM::v_PRAY_TEST() {
 	VM_PARAM_STRING(name)
 
-	std::map<std::string, std::unique_ptr<PrayBlock> >::iterator i = world.praymanager->blocks.find(name);
-	if (i == world.praymanager->blocks.end())
+	std::map<std::string, std::unique_ptr<PrayBlock> >::iterator i = getService<prayManager>()->blocks.find(name);
+	if (i == getService<prayManager>()->blocks.end())
 		result.setInt(0);
 	else {
 		PrayBlock *p = i->second.get();

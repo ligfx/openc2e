@@ -37,7 +37,7 @@ void caosVM::c_SERS_MAPP() {
 	std::ofstream outf(filename.c_str(), std::ios::binary);
 	{
 		boost::archive::text_oarchive oa(outf);
-		oa << (const Map &)world.map;
+		oa << (const Map &)getService<Map>();
 		std::string test("TEST MARKER ETC");
 		oa << (const std::string &) test;
 	}
@@ -52,8 +52,8 @@ void caosVM::c_SERL_MAPP() {
 	{
 		boost::archive::text_iarchive ia(inf);
 		try {
-			world.map->Reset();
-			ia >> world.map; // if this fails the game will explode
+			getService<Map>()->Reset();
+			ia >> getService<Map>(); // if this fails the game will explode
 		} catch (std::exception &e) {
 			std::cerr << "Deserialization failed; game is in an unknown state!" << std::endl;
 			std::cerr << "Exception was: " << e.what() << std::endl;

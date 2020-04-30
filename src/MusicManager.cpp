@@ -21,7 +21,7 @@
 #include "World.h"
 #include "AudioBackend.h"
 #include "endianlove.h"
-#include "Engine.h"
+#include "ServiceLocator.h"
 #include <iostream> // for debug messages
 #include <cmath> // for cos/sin
 #include <memory>
@@ -63,9 +63,9 @@ void MusicManager::tick() {
 	}
 	if (!current_latency) {
 		// TODO: this behaviour is different in C2, and should probably be cleverer
-		MetaRoom *m = engine.camera->getMetaRoom();
+		MetaRoom *m = getService<MainCamera>()->getMetaRoom();
 		if (m) {
-			shared_ptr<Room> r = m->roomAt(engine.camera->getXCentre(), engine.camera->getYCentre());
+			shared_ptr<Room> r = m->roomAt(getService<MainCamera>()->getXCentre(), getService<MainCamera>()->getYCentre());
 			if (r && r->music.size()) {
 				playTrack(r->music, 0);
 			} else if (m->music.size()) {
@@ -166,7 +166,7 @@ void MusicManager::playTrack(shared_ptr<MusicTrack> track) {
 }
 
 void MusicManager::startPlayback() {
-	shared_ptr<AudioSource> src = engine.audio->getBGMSource();
+	shared_ptr<AudioSource> src = getService<AudioBackend>()->getBGMSource();
 	if (!src) return;
 
 	if (!stream) {

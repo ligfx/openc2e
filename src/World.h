@@ -56,6 +56,9 @@ struct scriptevent {
 
 class World {
 protected:
+	template <typename T>
+	friend T* getService();
+
 	class PointerAgent *theHand;
 	std::list<scriptevent> scriptqueue;
 
@@ -63,12 +66,12 @@ protected:
 
 	std::map<int, std::weak_ptr<Agent> > unidmap;
 	std::vector<caosVM *> vmpool;
+	std::unique_ptr<prayManager> praymanager;
+	std::unique_ptr<Map> map;
 
 public:
 	int vmpool_size() const { return vmpool.size(); }
 	bool quitting, saving, paused;
-
-	std::unique_ptr<Map> map;
 
 	std::multiset<CompoundPart *, partzorder> zorder; // sorted from top to bottom
 	std::multiset<renderable *, renderablezorder> renders; // sorted from bottom to top
@@ -79,7 +82,6 @@ public:
 
 	std::vector<ghc::filesystem::path> data_directories;
 	std::unique_ptr<Scriptorium> scriptorium;
-	std::unique_ptr<prayManager> praymanager;
 	std::unique_ptr<imageManager> gallery;
 	std::unique_ptr<historyManager> history;
 

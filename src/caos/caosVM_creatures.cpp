@@ -29,6 +29,7 @@
 #include "creatures/oldCreature.h"
 #include "creatures/c2eCreature.h"
 #include "historyManager.h"
+#include "ServiceLocator.h"
 using std::cerr;
 
 CreatureAgent *caosVM::getTargCreatureAgent() {
@@ -1118,7 +1119,7 @@ void caosVM::c_NEWC() {
 	
 	a->finishInit();
 
-	world.history->getMoniker(world.history->findMoniker(i->second)).moveToCreature(a);
+	getService<historyManager>()->getMoniker(getService<historyManager>()->findMoniker(i->second)).moveToCreature(a);
 	i->second.reset(); // TODO: remove the slot from the gene_agent entirely
 
 	setTarg(a);
@@ -1184,7 +1185,7 @@ void caosVM::c_NEW_CREA_c1() {
 
 	a->genome_slots[0] = genome;
 	world.newMoniker(genome, realmoniker, a);
-	world.history->getMoniker(world.history->findMoniker(genome)).moveToCreature(a);
+	getService<historyManager>()->getMoniker(getService<historyManager>()->findMoniker(genome)).moveToCreature(a);
 
 	setTarg(a);
 }
@@ -1224,7 +1225,7 @@ void caosVM::c_NEW_CRAG() {
 	
 	a->finishInit();
 
-	world.history->getMoniker(world.history->findMoniker(i->second)).moveToCreature(a);
+	getService<historyManager>()->getMoniker(getService<historyManager>()->findMoniker(i->second)).moveToCreature(a);
 	i->second.reset(); // TODO: remove the slot from the gene_agent entirely
 
 	setTarg(a);

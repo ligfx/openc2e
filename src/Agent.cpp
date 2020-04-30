@@ -34,6 +34,7 @@
 #include "Camera.h"
 #include "Map.h"
 #include "Scriptorium.h"
+#include "ServiceLocator.h"
 #include "VoiceData.h"
 
 void Agent::core_init() {
@@ -155,7 +156,7 @@ void Agent::moveTo(float _x, float _y, bool force) {
 	// TODO: this is perhaps non-ideal
 	if (engine.version < 3 && xoffset != 0.0f) {
 		// TODO: it'd be nice to handle multiple metarooms
-		MetaRoom *m = world.map->getFallbackMetaroom();
+		MetaRoom *m = getService<Map>()->getFallbackMetaroom();
 		assert(m);
 
 		if (x < m->x()) {
@@ -186,7 +187,7 @@ void Agent::floatTo(float x, float y) {
 	if (floatingagent) {
 		moveTo(floatingagent->x + x, floatingagent->y + y);
 	} else {
-		moveTo(engine.camera->getX() + x, engine.camera->getY() + y);
+		moveTo(getService<MainCamera>()->getX() + x, getService<MainCamera>()->getY() + y);
 	}
 }
 
@@ -194,14 +195,14 @@ void Agent::floatSetup() {
 	if (floatingagent)
 		floatingagent->addFloated(this);
 	else
-		engine.camera->addFloated(this);
+		getService<MainCamera>()->addFloated(this);
 }
 
 void Agent::floatRelease() {
 	if (floatingagent) {
 		floatingagent->delFloated(this);
 	} else
-		engine.camera->delFloated(this);
+		getService<MainCamera>()->delFloated(this);
 }
 
 void Agent::addFloated(AgentRef a) {
@@ -329,7 +330,7 @@ bool Agent::fireScript(unsigned short event, Agent *from, caosVar one, caosVar t
 			// Creatures 1 drop snapping
 			// TODO: this probably doesn't belong here, but it has to be run after the
 			// drop script starts (see for instance C1 carrots, which change pose)
-			MetaRoom* m = world.map->metaRoomAt(x, y);
+			MetaRoom* m = getService<Map>()->metaRoomAt(x, y);
 			if (!m) break;
 			shared_ptr<Room> r = m->nextFloorFromPoint(x, y);
 			if (!r) break;
@@ -409,18 +410,18 @@ bool agentOnCamera(Agent *targ, bool checkall = false); // caosVM_camera.cpp
 static bool inrange_at(const MetaRoom *room, float x, float y, unsigned int width, unsigned int height) {
 	const static unsigned int buffer = 500;
 
-	if (engine.camera->getMetaRoom() != room)
+	if (getService<MainCamera>()->getMetaRoom() != room)
 		return false;
-	if (x + buffer < engine.camera->getX() || x + width - buffer > engine.camera->getX() + engine.camera->getWidth())
+	if (x + buffer < getService<MainCamera>()->getX() || x + width - buffer > getService<MainCamera>()->getX() + getService<MainCamera>()->getWidth())
 		return false;
-	if (y + buffer < engine.camera->getY() || y + height - buffer > engine.camera->getY() + engine.camera->getHeight())
+	if (y + buffer < getService<MainCamera>()->getY() || y + height - buffer > getService<MainCamera>()->getY() + getService<MainCamera>()->getHeight())
 		return false;
 	return true;
 }
 
 void Agent::updateAudio(std::shared_ptr<AudioSource> s) {
 	assert(s);
-	MetaRoom *room = world.map->metaRoomAt(x, y);
+	MetaRoom *room = getService<Map>()->metaRoomAt(x, y);
 	if (!room) {
 		// TODO: think about inrange when positioning outside-metaroom agents
 		s->setPos(x + getWidth() / 2, y + getHeight() / 2, zorder);
@@ -500,7 +501,7 @@ bool Agent::validInRoomSystem() {
 
 bool Agent::validInRoomSystem(Point p, float w, float h, int testperm) {
 	// Return true if this agent is inside the world room system at the specified point, or false if it isn't.
-	MetaRoom *m = world.map->metaRoomAt(p.x, p.y);
+	MetaRoom *m = getService<Map>()->metaRoomAt(p.x, p.y);
 	if (!m) return false;
 
 	for (unsigned int i = 0; i < 4; i++) {
@@ -536,7 +537,7 @@ bool Agent::validInRoomSystem(Point p, float w, float h, int testperm) {
 			if (!ourRoom) return false;
 
 			unsigned int dir; Line wall;
-			world.map->collideLineWithRoomSystem(src, dest, ourRoom, src, wall, dir, testperm);
+			getService<Map>()->collideLineWithRoomSystem(src, dest, ourRoom, src, wall, dir, testperm);
 
 			if (src != dest) return false;
 		}
@@ -614,9 +615,9 @@ void Agent::physicsTick() {
 			// store values
 			float srcx = src.x, srcy = src.y;
 
-			shared_ptr<Room> ourRoom = world.map->roomAt(srcx, srcy);
+			shared_ptr<Room> ourRoom = getService<Map>()->roomAt(srcx, srcy);
 			if (!ourRoom) {
-				ourRoom = world.map->roomAt(srcx, srcy);
+				ourRoom = getService<Map>()->roomAt(srcx, srcy);
 			}
 			if (!ourRoom) {
 				if (!displaycore) { // TODO: ugh, displaycore is a horrible thing to use for this
@@ -642,7 +643,7 @@ void Agent::physicsTick() {
 			Line local_wall;
 		
 			// this changes src to the point at which we end up
-			bool local_collided = world.map->collideLineWithRoomSystem(src, dest, ourRoom, src, local_wall, local_collidedirection, perm);
+			bool local_collided = getService<Map>()->collideLineWithRoomSystem(src, dest, ourRoom, src, local_wall, local_collidedirection, perm);
 
 			float dist;
 			if (src.x == srcx && src.y == srcy)
@@ -958,7 +959,7 @@ void Agent::physicsTickC2() {
 	bool collided = false;
 
 	if (suffercollisions()) {
-		MetaRoom *m = world.map->metaRoomAt(x, y);
+		MetaRoom *m = getService<Map>()->metaRoomAt(x, y);
 		if (!m) {
 			if (!displaycore)
 				unhandledException(fmt::sprintf("out of room system at (%f, %f)", x, y), false);
@@ -1026,7 +1027,7 @@ void Agent::tick() {
 	// CA updates
 	if (emitca_index != -1 && emitca_amount != 0.0f) {
 		assert(0 <= emitca_index && emitca_index <= 19);
-		shared_ptr<Room> r = world.map->roomAt(x, y);
+		shared_ptr<Room> r = getService<Map>()->roomAt(x, y);
 		if (r) {
 			r->catemp[emitca_index] += emitca_amount;
 			/*if (r->catemp[emitca_index] <= 0.0f) r->catemp[emitca_index] = 0.0f;

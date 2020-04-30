@@ -49,6 +49,7 @@
 #include "creatures/oldCreature.h"
 #include "creatures/SkeletalCreature.h"
 #include "PointerAgent.h"
+#include "ServiceLocator.h"
 
 #include "version.h"
 
@@ -87,7 +88,7 @@ QIcon iconFromImageList(QPixmap l, unsigned int n) {
 }
 
 // Constructor which creates the main window.
-QtOpenc2e::QtOpenc2e(std::shared_ptr<QtBackend> backend) {
+QtOpenc2e::QtOpenc2e(QtBackend* backend) {
 	viewport = new openc2eView(this, backend);
 	setCentralWidget(viewport);
 
@@ -453,8 +454,8 @@ QtOpenc2e::~QtOpenc2e() {
 monikerData &monikerDataFor(AgentRef a) {
 	shared_ptr<class genomeFile> g = a->getSlot(0);
 	assert(g);
-	std::string moniker = world.history->findMoniker(g);
-	return world.history->getMoniker(moniker);
+	std::string moniker = getService<historyManager>()->findMoniker(g);
+	return getService<historyManager>()->getMoniker(moniker);
 }
 
 std::string creatureNameFor(AgentRef a) {
@@ -553,11 +554,11 @@ void QtOpenc2e::tick() {
 
 	bool didtick = engine.tick();
 
-	int y = engine.camera->getY();
-	int x = engine.camera->getX();
+	int y = getService<MainCamera>()->getY();
+	int x = getService<MainCamera>()->getX();
 	viewport->tick();
-	viewport->horizontalScrollBar()->setValue(x - engine.camera->getMetaRoom()->x());
-	viewport->verticalScrollBar()->setValue(y - engine.camera->getMetaRoom()->y());
+	viewport->horizontalScrollBar()->setValue(x - getService<MainCamera>()->getMetaRoom()->x());
+	viewport->verticalScrollBar()->setValue(y - getService<MainCamera>()->getMetaRoom()->y());
 	
 	if (engine.done) close();
 
@@ -583,7 +584,7 @@ void QtOpenc2e::tick() {
 				room_for_tempcheck = roomContainingAgent(world.selectedcreature);
 			}
 			if (!room_for_tempcheck) // then try the room at the centre of the camera
-				room_for_tempcheck = engine.camera->getMetaRoom()->roomAt(engine.camera->getXCentre(), engine.camera->getYCentre());
+				room_for_tempcheck = getService<MainCamera>()->getMetaRoom()->roomAt(getService<MainCamera>()->getXCentre(), getService<MainCamera>()->getYCentre());
 			// TODO: c2 seems to try closest room as a last resort?
 			if (room_for_tempcheck) {
 				unsigned char temp = room_for_tempcheck->temp.getInt();
@@ -658,7 +659,7 @@ void QtOpenc2e::updateMenus() {
 	fastSpeedAct->setChecked(engine.fastticks);
 	displayUpdatesAct->setChecked(!engine.dorendering);
 	autokillAct->setChecked(world.autokill);
-	muteAct->setChecked(engine.audio->isMuted());
+	muteAct->setChecked(getService<AudioBackend>()->isMuted());
 	if (world.paused) pauseAct->setText("&Play");
 	else pauseAct->setText("&Pause");
 }
@@ -787,7 +788,7 @@ void QtOpenc2e::togglePause() {
 }
 
 void QtOpenc2e::toggleMute() {
-	engine.audio->setMute(!engine.audio->isMuted());
+	getService<AudioBackend>()->setMute(!getService<AudioBackend>()->isMuted());
 }
 
 #undef slots
@@ -828,7 +829,7 @@ void QtOpenc2e::newNorn() {
 
 	a->genome_slots[0] = genome;
 	world.newMoniker(genome, genomefile, a);
-	world.history->getMoniker(world.history->findMoniker(genome)).moveToCreature(a);
+	getService<historyManager>()->getMoniker(getService<historyManager>()->findMoniker(genome)).moveToCreature(a);
 
 	// TODO: set it dreaming
 	

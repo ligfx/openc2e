@@ -187,6 +187,7 @@ add_library(openc2e-core STATIC
 	src/renderablezorder.cpp
 	src/Room.cpp
 	src/Scriptorium.cpp
+	src/ServiceLocator.cpp
 	src/SFCFile.cpp
 	src/SimpleAgent.cpp
 	src/creatures/SkeletalCreature.cpp

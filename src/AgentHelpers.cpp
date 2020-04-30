@@ -22,6 +22,7 @@
 #include "Map.h"
 #include "MetaRoom.h"
 #include "Room.h"
+#include "ServiceLocator.h"
 #include <cassert>
 #include <memory>
 
@@ -33,9 +34,9 @@ bool agentIsVisible(Agent *seeing, Agent *a, float ownerx, float ownery, MetaRoo
 	// verify we're in the same metaroom as owner, and in a room
 	float thisx = a->x + (a->getWidth() / 2.0f);
 	float thisy = a->y + (a->getHeight() / 2.0f);
-	MetaRoom *m = world.map->metaRoomAt(thisx, thisy);
+	MetaRoom *m = getService<Map>()->metaRoomAt(thisx, thisy);
 	if (m != ownermeta) return false;
-	shared_ptr<Room> r = world.map->roomAt(thisx, thisy);
+	shared_ptr<Room> r = getService<Map>()->roomAt(thisx, thisy);
 	if (!r) return false;
 		
 	// compare squared distance with range
@@ -47,7 +48,7 @@ bool agentIsVisible(Agent *seeing, Agent *a, float ownerx, float ownery, MetaRoo
 	Point src(ownerx, ownery), dest(thisx, thisy);
 	Line dummywall; unsigned int dummydir;
 	shared_ptr<Room> newroom = ownerroom;
-	world.map->collideLineWithRoomSystem(src, dest, newroom, src, dummywall, dummydir, seeing->perm);
+	getService<Map>()->collideLineWithRoomSystem(src, dest, newroom, src, dummywall, dummydir, seeing->perm);
 	if (src != dest) return false;
 
 	return true;
@@ -56,8 +57,8 @@ bool agentIsVisible(Agent *seeing, Agent *a, float ownerx, float ownery, MetaRoo
 bool agentIsVisible(Agent *seeing, Agent *dest) {
 	float ownerx = (seeing->x + (seeing->getWidth() / 2.0f));
 	float ownery = (seeing->y + (seeing->getHeight() / 2.0f));
-	MetaRoom *ownermeta = world.map->metaRoomAt(ownerx, ownery);
-	shared_ptr<Room> ownerroom = world.map->roomAt(ownerx, ownery);
+	MetaRoom *ownermeta = getService<Map>()->metaRoomAt(ownerx, ownery);
+	shared_ptr<Room> ownerroom = getService<Map>()->roomAt(ownerx, ownery);
 	if (!ownermeta) return false; if (!ownerroom) return false;
 
 	return agentIsVisible(seeing, dest, ownerx, ownery, ownermeta, ownerroom);
@@ -68,8 +69,8 @@ std::vector<std::shared_ptr<Agent> > getVisibleList(Agent *seeing, unsigned char
 
 	float ownerx = (seeing->x + (seeing->getWidth() / 2.0f));
 	float ownery = (seeing->y + (seeing->getHeight() / 2.0f));
-	MetaRoom *ownermeta = world.map->metaRoomAt(ownerx, ownery);
-	shared_ptr<Room> ownerroom = world.map->roomAt(ownerx, ownery);
+	MetaRoom *ownermeta = getService<Map>()->metaRoomAt(ownerx, ownery);
+	shared_ptr<Room> ownerroom = getService<Map>()->roomAt(ownerx, ownery);
 	if (!ownermeta) return agents; if (!ownerroom) return agents;
 
 	for (std::list<std::shared_ptr<Agent> >::iterator i
@@ -119,7 +120,7 @@ bool agentsTouching(Agent *first, Agent *second) {
 }
 
 shared_ptr<Room> roomContainingAgent(AgentRef agent) {
-	MetaRoom *m = world.map->metaRoomAt(agent->x, agent->y);
+	MetaRoom *m = getService<Map>()->metaRoomAt(agent->x, agent->y);
 	if (!m) return shared_ptr<Room>();
 	return m->roomAt(agent->x + (agent->getWidth() / 2.0f), agent->y + (agent->getHeight() / 2.0f));
 }

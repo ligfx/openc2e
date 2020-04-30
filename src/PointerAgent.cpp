@@ -25,6 +25,7 @@
 #include "Room.h"
 #include "Map.h"
 #include "MetaRoom.h"
+#include "ServiceLocator.h"
 #include "Camera.h"
 #include "creatures/SkeletalCreature.h"
 #include <cassert>
@@ -191,7 +192,7 @@ void PointerAgent::handleEvent(SomeEvent &event) {
 	int x = pointerX(), y = pointerY();
 		
 	if (event.type == eventmousemove) {
-		moveTo(event.x + engine.camera->getX() - hotspotx, event.y + engine.camera->getY() - hotspoty);
+		moveTo(event.x + getService<MainCamera>()->getX() - hotspotx, event.y + getService<MainCamera>()->getY() - hotspoty);
 		velx.setInt(event.xrel * 4);
 		vely.setInt(event.yrel * 4);
 
@@ -200,7 +201,7 @@ void PointerAgent::handleEvent(SomeEvent &event) {
 
 		// middle mouse button scrolling
 		if (event.button & buttonmiddle)
-			engine.camera->moveTo(engine.camera->getX() - event.xrel, engine.camera->getY() - event.yrel, jump);
+			getService<MainCamera>()->moveTo(getService<MainCamera>()->getX() - event.xrel, getService<MainCamera>()->getY() - event.yrel, jump);
 	} else if (!handle_events) {
 		/* mouse move events are (apparently - see eg C3 agent help) still handled with handle_events disabled, but nothing else */
 		return;
@@ -327,7 +328,7 @@ void PointerAgent::handleEvent(SomeEvent &event) {
 			if (carrying) {
 				if (engine.version == 1) {
 					// ensure there's a room to drop into, in C1
-					MetaRoom* m = world.map->metaRoomAt(x, y);
+					MetaRoom* m = getService<Map>()->metaRoomAt(x, y);
 					if (!m) return;
 					shared_ptr<Room> r = m->nextFloorFromPoint(x, y);
 					if (!r) return;
@@ -341,7 +342,7 @@ void PointerAgent::handleEvent(SomeEvent &event) {
 
 				if (engine.version == 2) {
 					/* check dropstatus for the room we're dropping into */
-					MetaRoom* m = world.map->metaRoomAt(carrying->x, carrying->y);
+					MetaRoom* m = getService<Map>()->metaRoomAt(carrying->x, carrying->y);
 					if (m) {
 						shared_ptr<Room> r = m->roomAt(carrying->x, carrying->y);
 						if (r) {
@@ -395,7 +396,7 @@ void PointerAgent::handleEvent(SomeEvent &event) {
 				}
 			}
 		} else if (event.button == buttonmiddle) {
-			std::vector<shared_ptr<Room> > rooms = world.map->roomsAt(x, y);
+			std::vector<shared_ptr<Room> > rooms = getService<Map>()->roomsAt(x, y);
 			if (rooms.size() > 0) std::cout << "Room at cursor is " << rooms[0]->id << std::endl;
 			Agent *a = world.agentAt(x, y, true);
 			if (a)

@@ -21,11 +21,11 @@
 #include "oldCreature.h"
 #include "c2eCreature.h"
 #include "CreatureAgent.h"
-#include "World.h"
 #include "Catalogue.h"
 #include "c2eBrain.h"
 #include "historyManager.h"
 #include "oldBrain.h"
+#include "ServiceLocator.h"
 #include <cassert>
 #include <memory>
 
@@ -142,7 +142,7 @@ void Creature::ageCreature() {
 	assert(parent);
 	parent->creatureAged();
 #ifndef _CREATURE_STANDALONE
-	world.history->getMoniker(world.history->findMoniker(genome)).addEvent(4, "", ""); // aged event
+	getService<historyManager>()->getMoniker(getService<historyManager>()->findMoniker(genome)).addEvent(4, "", ""); // aged event
 #endif
 }
 
@@ -164,8 +164,8 @@ void Creature::born() {
 
 	// TODO: life event?
 #ifndef _CREATURE_STANDALONE
-	world.history->getMoniker(world.history->findMoniker(genome)).wasBorn();
-	world.history->getMoniker(world.history->findMoniker(genome)).addEvent(3, "", ""); // born event, parents..
+	getService<historyManager>()->getMoniker(getService<historyManager>()->findMoniker(genome)).wasBorn();
+	getService<historyManager>()->getMoniker(getService<historyManager>()->findMoniker(genome)).addEvent(3, "", ""); // born event, parents..
 #endif
 
 	tickage = true;
@@ -176,8 +176,8 @@ void Creature::die() {
 
 	// TODO: life event?
 #ifndef _CREATURE_STANDALONE
-	world.history->getMoniker(world.history->findMoniker(genome)).hasDied();
-	world.history->getMoniker(world.history->findMoniker(genome)).addEvent(7, "", ""); // died event
+	getService<historyManager>()->getMoniker(getService<historyManager>()->findMoniker(genome)).hasDied();
+	getService<historyManager>()->getMoniker(getService<historyManager>()->findMoniker(genome)).addEvent(7, "", ""); // died event
 #endif
 	// TODO: disable brain/biochemistry updates
 	

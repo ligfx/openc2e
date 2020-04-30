@@ -19,9 +19,9 @@
 
 #include "caosVM.h"
 #include "World.h"
-#include "Engine.h"
 #include "Backend.h"
 #include "Agent.h"
+#include "ServiceLocator.h"
 #include <time.h> // gmtime and strftime
 
 /**
@@ -151,7 +151,7 @@ void caosVM::v_HIST_YEAR() {
  %status maybe
 */
 void caosVM::v_MSEC() {
-	result.setInt(engine.backend->ticks());
+	result.setInt(getService<Backend>()->ticks());
 }
 
 /**

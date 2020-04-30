@@ -24,6 +24,7 @@
 #include "imageManager.h"
 #include "images/blkImage.h"
 #include "Map.h"
+#include "ServiceLocator.h"
 #include <assert.h>
 #include <memory>
 #include "Backend.h"
@@ -135,10 +136,10 @@ shared_ptr<Room> MetaRoom::nextFloorFromPoint(float x, float y) {
 unsigned int MetaRoom::addRoom(shared_ptr<Room> r) {
 	// add to both our local list and the global list
 	rooms.push_back(r);
-	world.map->rooms.push_back(r);
+	getService<Map>()->rooms.push_back(r);
 
 	// set the id and return
-	r->id = world.map->room_base++;
+	r->id = getService<Map>()->room_base++;
 	return r->id;
 }
 

@@ -18,37 +18,37 @@
  */
 
 #include "caosVM.h"
-#include "Engine.h"
 #include "World.h"
 #include "CompoundAgent.h"
 #include "CameraPart.h"
 #include "Map.h"
 #include "MetaRoom.h"
+#include "ServiceLocator.h"
 #include "Camera.h"
 
 Camera *caosVM::getCamera() {
 	Camera *c = camera.lock().get();
-	if (!c) c = engine.camera.get();
+	if (!c) c = getService<MainCamera>();
 	return c;
 }
 
 bool agentOnCamera(Agent *targ, bool checkall) {
-	MetaRoom *m = world.map->metaRoomAt(targ->x, targ->y);
-	if (!m || m != engine.camera->getMetaRoom()) return false;
+	MetaRoom *m = getService<Map>()->metaRoomAt(targ->x, targ->y);
+	if (!m || m != getService<MainCamera>()->getMetaRoom()) return false;
 
 	// TODO: check non-main cameras?
 	// TODO: do compound parts stick out of the agent?
 
 	// y coordinates don't wrap
-	if (targ->y + targ->getHeight() < engine.camera->getY()) return false;
-	if (targ->y > engine.camera->getY() + engine.camera->getHeight()) return false;
+	if (targ->y + targ->getHeight() < getService<MainCamera>()->getY()) return false;
+	if (targ->y > getService<MainCamera>()->getY() + getService<MainCamera>()->getHeight()) return false;
 	
 	// if an agent is off-camera to the right, it's not visible
-	if (targ->x > engine.camera->getX() + engine.camera->getWidth()) return false;
+	if (targ->x > getService<MainCamera>()->getX() + getService<MainCamera>()->getWidth()) return false;
 
-	if (targ->x + targ->getWidth() < engine.camera->getX()) {
+	if (targ->x + targ->getWidth() < getService<MainCamera>()->getX()) {
 		// if an agent is off-camera to the left, it might be wrapping
-		if (!m->wraparound() || (targ->x + targ->getWidth() + m->width() < engine.camera->getX()))
+		if (!m->wraparound() || (targ->x + targ->getWidth() + m->width() < getService<MainCamera>()->getX()))
 			return false;
 	}
 
@@ -107,7 +107,7 @@ void caosVM::c_META() {
 	VM_PARAM_INTEGER(metaroom_id)
 
 	caos_assert(metaroom_id >= 0);
-	MetaRoom *m = world.map->getMetaRoom(metaroom_id);
+	MetaRoom *m = getService<Map>()->getMetaRoom(metaroom_id);
 	if (!m) return; // DS does 'meta 0 -1 -1 0' in !map.cos for some stupid reason
 	
 	int camerax = camera_x; if (camerax == -1) camerax = m->x();
@@ -145,7 +145,7 @@ void caosVM::c_CMRT() {
 
 	valid_agent(targ);
 
-	MetaRoom *r = world.map->metaRoomAt(targ->x, targ->y);
+	MetaRoom *r = getService<Map>()->metaRoomAt(targ->x, targ->y);
 	int xpos = (int)(targ->x - (getCamera()->getWidth() / 2.0f) + (targ->getWidth() / 2.0f));
 	int ypos = (int)(targ->y - (getCamera()->getHeight() / 2.0f) + (targ->getHeight() / 2.0f));
 	if (r)
@@ -459,7 +459,7 @@ void caosVM::c_BKGD() {
 	VM_PARAM_STRING(background)
 	VM_PARAM_INTEGER(metaroomid)
 
-	MetaRoom *metaroom = world.map->getMetaRoom(metaroomid);
+	MetaRoom *metaroom = getService<Map>()->getMetaRoom(metaroomid);
 	caos_assert(metaroom);
 
 	// TODO
@@ -472,7 +472,7 @@ void caosVM::c_BKGD() {
 void caosVM::v_BKGD() {
 	VM_PARAM_INTEGER(metaroomid)
 
-	MetaRoom *metaroom = world.map->getMetaRoom(metaroomid);
+	MetaRoom *metaroom = getService<Map>()->getMetaRoom(metaroomid);
 	caos_assert(metaroom);
 
 	result.setString(""); // TODO

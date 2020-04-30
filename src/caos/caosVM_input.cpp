@@ -18,10 +18,10 @@
  */
 
 #include "World.h"
-#include "Engine.h"
 #include "PointerAgent.h"
 #include "Backend.h"
 #include "caosVM.h"
+#include "ServiceLocator.h"
 #include <iostream>
 using std::cerr;
 
@@ -142,7 +142,7 @@ void caosVM::v_IMSK() {
 void caosVM::v_KEYD() {
 	VM_PARAM_INTEGER(keycode) // keycodes are crazy broken windows things
 
-	if (engine.backend->keyDown(keycode))
+	if (getService<Backend>()->keyDown(keycode))
 		result.setInt(1);
 	else
 		result.setInt(0);

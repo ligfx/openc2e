@@ -28,6 +28,7 @@
 #include "Backend.h"
 #include "Agent.h"
 #include "imageManager.h"
+#include "ServiceLocator.h"
 #include <cassert>
 #include <memory>
 
@@ -651,15 +652,15 @@ CameraPart::CameraPart(Agent *p, unsigned int _id, std::string spritefile, unsig
 
 void CameraPart::partRender(RenderTarget *renderer, int xoffset, int yoffset) {
 	// TODO: hack to stop us rendering cameras inside cameras. better way?
-	if (renderer == engine.backend->getMainRenderTarget()) {
+	if (renderer == getService<Backend>()->getMainRenderTarget()) {
 		// make sure we're onscreen before bothering to do any work..
 		if (xoffset + x + (int)camerawidth >= 0 && yoffset + y + (int)cameraheight >= 0 &&
 			xoffset + x < (int)renderer->getWidth() && yoffset + y < (int)renderer->getHeight()) {
-			RenderTarget *surface = engine.backend->newRenderTarget(viewwidth, viewheight);
+			RenderTarget *surface = getService<Backend>()->newRenderTarget(viewwidth, viewheight);
 			assert(surface); // TODO: good behaviour?
 			world.drawWorld(camera.get(), surface);
 			renderer->blitRenderTarget(surface, xoffset + x, yoffset + y, camerawidth, cameraheight);
-			engine.backend->freeRenderTarget(surface);
+			getService<Backend>()->freeRenderTarget(surface);
 		}
 	}
 	

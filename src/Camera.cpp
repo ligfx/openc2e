@@ -19,11 +19,10 @@
 
 #include "Camera.h"
 #include "CameraPart.h"
-#include "Engine.h"
-#include "World.h"
 #include "Backend.h"
 #include "Map.h"
 #include "MetaRoom.h"
+#include "ServiceLocator.h"
 #include "Agent.h"
 #include <cassert>
 
@@ -35,7 +34,7 @@ Camera::Camera() {
 }
 
 MetaRoom * Camera::getMetaRoom() const {
-	return world.map->getMetaRoom(metaroom);
+	return getService<Map>()->getMetaRoom(metaroom);
 }
 
 void Camera::goToMetaRoom(unsigned int m) {
@@ -62,7 +61,7 @@ void Camera::moveTo(int _x, int _y, panstyle pan) {
 }
 
 void Camera::moveToGlobal(int _x, int _y, panstyle pan) {
-	MetaRoom *m = world.map->metaRoomAt(_x, _y);
+	MetaRoom *m = getService<Map>()->metaRoomAt(_x, _y);
 	if (m) {
 		if (m->id != metaroom) pan = jump; // inter-metaroom panning is always jump
 		metaroom = m->id;
@@ -142,15 +141,15 @@ void Camera::updateTracking() {
 }
 
 unsigned int MainCamera::getWidth() const {
-	if ((!getMetaRoom()) || (engine.backend->getMainRenderTarget()->getWidth() < getMetaRoom()->width()))
-		return engine.backend->getMainRenderTarget()->getWidth();
+	if ((!getMetaRoom()) || (getService<Backend>()->getMainRenderTarget()->getWidth() < getMetaRoom()->width()))
+		return getService<Backend>()->getMainRenderTarget()->getWidth();
 	else
 		return getMetaRoom()->width();
 }
 
 unsigned int MainCamera::getHeight() const {
-	if ((!getMetaRoom()) || (engine.backend->getMainRenderTarget()->getHeight() < getMetaRoom()->height()))
-		return engine.backend->getMainRenderTarget()->getHeight();
+	if ((!getMetaRoom()) || (getService<Backend>()->getMainRenderTarget()->getHeight() < getMetaRoom()->height()))
+		return getService<Backend>()->getMainRenderTarget()->getHeight();
 	else
 		return getMetaRoom()->height();
 }

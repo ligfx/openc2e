@@ -27,6 +27,7 @@
 #include "exceptions.h"
 #include "imageManager.h"
 #include "Map.h"
+#include "ServiceLocator.h"
 #include "Agent.h"
 
 /*
@@ -798,7 +799,7 @@ void SFCFile::copyToWorld() {
 	}
 
 	// move the camera to the correct position
-	engine.camera->moveTo(scrollx, scrolly, jump);
+	getService<MainCamera>()->moveTo(scrollx, scrolly, jump);
 
 	// patch agents
 	// TODO: do we really need to do this, and if so, should it be done here?
@@ -850,7 +851,7 @@ void MapData::copyToWorld() {
 	// TODO: hardcoded size bad?
 	unsigned int w = parent->version() == 0 ? 1200 : 2400;
 	MetaRoom *m = new MetaRoom(0, 0, 8352, w, background->filename, spr, true);
-	world.map->addMetaRoom(m);
+	getService<Map>()->addMetaRoom(m);
 
 	for (std::vector<CRoom *>::iterator i = rooms.begin(); i != rooms.end(); i++) {
 		// retrieve our room data
@@ -861,7 +862,7 @@ void MapData::copyToWorld() {
 		r->type.setInt(src->roomtype);
 
 		// add the room to the world, ensure it matches the id we retrieved
-		while (src->id > world.map->room_base) world.map->room_base++; // skip any gaps (deleted rooms)
+		while (src->id > getService<Map>()->room_base) getService<Map>()->room_base++; // skip any gaps (deleted rooms)
 		unsigned int roomid = m->addRoom(r);
 		sfccheck(roomid == src->id);
 
@@ -906,8 +907,8 @@ void MapData::copyToWorld() {
 		for (unsigned int j = 0; j < 4; j++) {
 			for (std::vector<CDoor *>::iterator k = src->doors[j].begin(); k < src->doors[j].end(); k++) {
 				CDoor *door = *k;
-				shared_ptr<Room> r1 = world.map->getRoom(src->id);
-				shared_ptr<Room> r2 = world.map->getRoom(door->otherroom);
+				shared_ptr<Room> r1 = getService<Map>()->getRoom(src->id);
+				shared_ptr<Room> r2 = getService<Map>()->getRoom(door->otherroom);
 
 				if (r1->doors.find(r2) == r1->doors.end()) {
 					// create a new door between rooms!

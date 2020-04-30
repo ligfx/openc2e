@@ -19,7 +19,7 @@
 
 #include "caosVM.h"
 #include "historyManager.h"
-#include "World.h"
+#include "ServiceLocator.h"
 
 /*
  * TODO:
@@ -35,8 +35,8 @@ void caosVM::v_HIST_CAGE() {
 	VM_PARAM_INTEGER(event)
 	VM_PARAM_STRING(moniker)
 
-	caos_assert(world.history->hasMoniker(moniker));
-	monikerData &m = world.history->getMoniker(moniker);
+	caos_assert(getService<historyManager>()->hasMoniker(moniker));
+	monikerData &m = getService<historyManager>()->getMoniker(moniker);
 	caos_assert(event >= 0 && (unsigned int)event < m.events.size());
 	result.setInt(m.events[event].stage);
 }
@@ -48,8 +48,8 @@ void caosVM::v_HIST_CAGE() {
 void caosVM::v_HIST_COUN() {
 	VM_PARAM_STRING(moniker)
 
-	if (world.history->hasMoniker(moniker)) {
-		monikerData &m = world.history->getMoniker(moniker);
+	if (getService<historyManager>()->hasMoniker(moniker)) {
+		monikerData &m = getService<historyManager>()->getMoniker(moniker);
 		result.setInt(m.events.size());
 	} else {
 		result.setInt(0);
@@ -63,8 +63,8 @@ void caosVM::v_HIST_COUN() {
 void caosVM::v_HIST_CROS() {
 	VM_PARAM_STRING(moniker)
 
-	caos_assert(world.history->hasMoniker(moniker));
-	result.setInt(world.history->getMoniker(moniker).no_crossover_points);
+	caos_assert(getService<historyManager>()->hasMoniker(moniker));
+	result.setInt(getService<historyManager>()->getMoniker(moniker).no_crossover_points);
 }
 
 /**
@@ -79,8 +79,8 @@ void caosVM::c_HIST_EVNT() {
 	VM_PARAM_INTEGER(type)
 	VM_PARAM_STRING(moniker)
 
-	caos_assert(world.history->hasMoniker(moniker));
-	monikerData &m = world.history->getMoniker(moniker);
+	caos_assert(getService<historyManager>()->hasMoniker(moniker));
+	monikerData &m = getService<historyManager>()->getMoniker(moniker);
 	m.addEvent(type, relatedmoniker1, relatedmoniker2);
 }
 
@@ -93,8 +93,8 @@ void caosVM::v_HIST_FIND() {
 	VM_PARAM_INTEGER(event)
 	VM_PARAM_STRING(moniker)
 
-	caos_assert(world.history->hasMoniker(moniker));
-	monikerData &m = world.history->getMoniker(moniker);
+	caos_assert(getService<historyManager>()->hasMoniker(moniker));
+	monikerData &m = getService<historyManager>()->getMoniker(moniker);
 
 	for (int i = from + 1; i >= 0 && (unsigned int)i < m.events.size(); i++) {
 		if (m.events[i].eventno == (unsigned int)event) {
@@ -115,8 +115,8 @@ void caosVM::v_HIST_FINR() {
 	VM_PARAM_INTEGER(event)
 	VM_PARAM_STRING(moniker)
 
-	caos_assert(world.history->hasMoniker(moniker));
-	monikerData &m = world.history->getMoniker(moniker);
+	caos_assert(getService<historyManager>()->hasMoniker(moniker));
+	monikerData &m = getService<historyManager>()->getMoniker(moniker);
 
 	if (from == -1) from = m.events.size();
 
@@ -138,8 +138,8 @@ void caosVM::v_HIST_FOTO() {
 	VM_PARAM_INTEGER(event)
 	VM_PARAM_STRING(moniker)
 
-	caos_assert(world.history->hasMoniker(moniker));
-	monikerData &m = world.history->getMoniker(moniker);
+	caos_assert(getService<historyManager>()->hasMoniker(moniker));
+	monikerData &m = getService<historyManager>()->getMoniker(moniker);
 	caos_assert(event >= 0 && (unsigned int)event < m.events.size());
 	
 	result.setString(m.events[event].photo);
@@ -154,8 +154,8 @@ void caosVM::c_HIST_FOTO() {
 	VM_PARAM_INTEGER(event)
 	VM_PARAM_STRING(moniker)
 
-	caos_assert(world.history->hasMoniker(moniker));
-	monikerData &m = world.history->getMoniker(moniker);
+	caos_assert(getService<historyManager>()->hasMoniker(moniker));
+	monikerData &m = getService<historyManager>()->getMoniker(moniker);
 	caos_assert(event >= 0 && (unsigned int)event < m.events.size());
 	
 	// TODO: handle magic (ie, atticing old photo)
@@ -169,8 +169,8 @@ void caosVM::c_HIST_FOTO() {
 void caosVM::v_HIST_GEND() {
 	VM_PARAM_STRING(moniker)
 
-	caos_assert(world.history->hasMoniker(moniker));
-	monikerData &m = world.history->getMoniker(moniker);
+	caos_assert(getService<historyManager>()->hasMoniker(moniker));
+	monikerData &m = getService<historyManager>()->getMoniker(moniker);
 
 	result.setInt(m.gender);
 }
@@ -182,8 +182,8 @@ void caosVM::v_HIST_GEND() {
 void caosVM::v_HIST_GNUS() {
 	VM_PARAM_STRING(moniker)
 
-	caos_assert(world.history->hasMoniker(moniker));
-	monikerData &m = world.history->getMoniker(moniker);
+	caos_assert(getService<historyManager>()->hasMoniker(moniker));
+	monikerData &m = getService<historyManager>()->getMoniker(moniker);
 
 	result.setInt(m.genus);
 }
@@ -196,8 +196,8 @@ void caosVM::v_HIST_MON1() {
 	VM_PARAM_INTEGER(event)
 	VM_PARAM_STRING(moniker)
 
-	caos_assert(world.history->hasMoniker(moniker));
-	monikerData &m = world.history->getMoniker(moniker);
+	caos_assert(getService<historyManager>()->hasMoniker(moniker));
+	monikerData &m = getService<historyManager>()->getMoniker(moniker);
 	caos_assert(event >= 0 && (unsigned int)event < m.events.size());
 	
 	result.setString(m.events[event].monikers[0]);
@@ -211,8 +211,8 @@ void caosVM::v_HIST_MON2() {
 	VM_PARAM_INTEGER(event)
 	VM_PARAM_STRING(moniker)
 
-	caos_assert(world.history->hasMoniker(moniker));
-	monikerData &m = world.history->getMoniker(moniker);
+	caos_assert(getService<historyManager>()->hasMoniker(moniker));
+	monikerData &m = getService<historyManager>()->getMoniker(moniker);
 	caos_assert(event >= 0 && (unsigned int)event < m.events.size());
 	
 	result.setString(m.events[event].monikers[1]);
@@ -225,8 +225,8 @@ void caosVM::v_HIST_MON2() {
 void caosVM::v_HIST_MUTE() {
 	VM_PARAM_STRING(moniker)
 
-	caos_assert(world.history->hasMoniker(moniker));
-	monikerData &m = world.history->getMoniker(moniker);
+	caos_assert(getService<historyManager>()->hasMoniker(moniker));
+	monikerData &m = getService<historyManager>()->getMoniker(moniker);
 
 	result.setInt(m.no_point_mutations);
 }
@@ -240,8 +240,8 @@ void caosVM::v_HIST_MUTE() {
 void caosVM::v_HIST_NAME() {
 	VM_PARAM_STRING(moniker)
 
-	caos_assert(world.history->hasMoniker(moniker));
-	monikerData &m = world.history->getMoniker(moniker);
+	caos_assert(getService<historyManager>()->hasMoniker(moniker));
+	monikerData &m = getService<historyManager>()->getMoniker(moniker);
 
 	result.setString(m.name);
 }
@@ -254,8 +254,8 @@ void caosVM::c_HIST_NAME() {
 	VM_PARAM_STRING(name)
 	VM_PARAM_STRING(moniker)
 
-	caos_assert(world.history->hasMoniker(moniker));
-	monikerData &m = world.history->getMoniker(moniker);
+	caos_assert(getService<historyManager>()->hasMoniker(moniker));
+	monikerData &m = getService<historyManager>()->getMoniker(moniker);
 
 	m.name = name;
 }
@@ -268,8 +268,8 @@ void caosVM::v_HIST_NETU() {
 	VM_PARAM_INTEGER(event)
 	VM_PARAM_STRING(moniker)
 
-	caos_assert(world.history->hasMoniker(moniker));
-	monikerData &m = world.history->getMoniker(moniker);
+	caos_assert(getService<historyManager>()->hasMoniker(moniker));
+	monikerData &m = getService<historyManager>()->getMoniker(moniker);
 	caos_assert(event >= 0 && (unsigned int)event < m.events.size());
 	
 	result.setString(m.events[event].networkid);
@@ -303,8 +303,8 @@ void caosVM::v_HIST_RTIM() {
 	VM_PARAM_INTEGER(event)
 	VM_PARAM_STRING(moniker)
 
-	caos_assert(world.history->hasMoniker(moniker));
-	monikerData &m = world.history->getMoniker(moniker);
+	caos_assert(getService<historyManager>()->hasMoniker(moniker));
+	monikerData &m = getService<historyManager>()->getMoniker(moniker);
 	caos_assert(event >= 0 && (unsigned int)event < m.events.size());
 	
 	result.setInt(m.events[event].timestamp);
@@ -318,8 +318,8 @@ void caosVM::v_HIST_TAGE() {
 	VM_PARAM_INTEGER(event)
 	VM_PARAM_STRING(moniker)
 
-	caos_assert(world.history->hasMoniker(moniker));
-	monikerData &m = world.history->getMoniker(moniker);
+	caos_assert(getService<historyManager>()->hasMoniker(moniker));
+	monikerData &m = getService<historyManager>()->getMoniker(moniker);
 	caos_assert(event >= 0 && (unsigned int)event < m.events.size());
 	
 	result.setInt(m.events[event].tage);
@@ -333,8 +333,8 @@ void caosVM::v_HIST_TYPE() {
 	VM_PARAM_INTEGER(event)
 	VM_PARAM_STRING(moniker)
 
-	caos_assert(world.history->hasMoniker(moniker));
-	monikerData &m = world.history->getMoniker(moniker);
+	caos_assert(getService<historyManager>()->hasMoniker(moniker));
+	monikerData &m = getService<historyManager>()->getMoniker(moniker);
 	caos_assert(event >= 0 && (unsigned int)event < m.events.size());
 	
 	result.setInt(m.events[event].eventno);
@@ -349,8 +349,8 @@ void caosVM::c_HIST_UTXT() {
 	VM_PARAM_INTEGER(event)
 	VM_PARAM_STRING(moniker)
 
-	caos_assert(world.history->hasMoniker(moniker));
-	monikerData &m = world.history->getMoniker(moniker);
+	caos_assert(getService<historyManager>()->hasMoniker(moniker));
+	monikerData &m = getService<historyManager>()->getMoniker(moniker);
 	caos_assert(event >= 0 && (unsigned int)event < m.events.size());
 	
 	m.events[event].usertext = value;
@@ -364,8 +364,8 @@ void caosVM::v_HIST_UTXT() {
 	VM_PARAM_INTEGER(event)
 	VM_PARAM_STRING(moniker)
 
-	caos_assert(world.history->hasMoniker(moniker));
-	monikerData &m = world.history->getMoniker(moniker);
+	caos_assert(getService<historyManager>()->hasMoniker(moniker));
+	monikerData &m = getService<historyManager>()->getMoniker(moniker);
 	caos_assert(event >= 0 && (unsigned int)event < m.events.size());
 	
 	result.setString(m.events[event].usertext);
@@ -378,8 +378,8 @@ void caosVM::v_HIST_UTXT() {
 void caosVM::v_HIST_VARI() {
 	VM_PARAM_STRING(moniker)
 
-	caos_assert(world.history->hasMoniker(moniker));
-	monikerData &m = world.history->getMoniker(moniker);
+	caos_assert(getService<historyManager>()->hasMoniker(moniker));
+	monikerData &m = getService<historyManager>()->getMoniker(moniker);
 
 	result.setInt(m.variant);
 }
@@ -391,8 +391,8 @@ void caosVM::v_HIST_VARI() {
 void caosVM::c_HIST_WIPE() {
 	VM_PARAM_STRING(moniker)
 
-	caos_assert(world.history->hasMoniker(moniker));
-	monikerData &m = world.history->getMoniker(moniker);
+	caos_assert(getService<historyManager>()->hasMoniker(moniker));
+	monikerData &m = getService<historyManager>()->getMoniker(moniker);
 
 	// TODO
 }
@@ -405,8 +405,8 @@ void caosVM::v_HIST_WNAM() {
 	VM_PARAM_INTEGER(event)
 	VM_PARAM_STRING(moniker)
 
-	caos_assert(world.history->hasMoniker(moniker));
-	monikerData &m = world.history->getMoniker(moniker);
+	caos_assert(getService<historyManager>()->hasMoniker(moniker));
+	monikerData &m = getService<historyManager>()->getMoniker(moniker);
 	caos_assert(event >= 0 && (unsigned int)event < m.events.size());
 	
 	result.setString(m.events[event].worldname); // TODO
@@ -420,8 +420,8 @@ void caosVM::v_HIST_WTIK() {
 	VM_PARAM_INTEGER(event)
 	VM_PARAM_STRING(moniker)
 
-	caos_assert(world.history->hasMoniker(moniker));
-	monikerData &m = world.history->getMoniker(moniker);
+	caos_assert(getService<historyManager>()->hasMoniker(moniker));
+	monikerData &m = getService<historyManager>()->getMoniker(moniker);
 	caos_assert(event >= 0 && (unsigned int)event < m.events.size());
 	
 	result.setInt(m.events[event].worldtick);
@@ -435,8 +435,8 @@ void caosVM::v_HIST_WUID() {
 	VM_PARAM_INTEGER(event)
 	VM_PARAM_STRING(moniker)
 
-	caos_assert(world.history->hasMoniker(moniker));
-	monikerData &m = world.history->getMoniker(moniker);
+	caos_assert(getService<historyManager>()->hasMoniker(moniker));
+	monikerData &m = getService<historyManager>()->getMoniker(moniker);
 	caos_assert(event >= 0 && (unsigned int)event < m.events.size());
 	
 	result.setString(m.events[event].worldmoniker);
@@ -449,8 +449,8 @@ void caosVM::v_HIST_WUID() {
 void caosVM::v_HIST_WVET() {
 	VM_PARAM_STRING(moniker)
 
-	caos_assert(world.history->hasMoniker(moniker));
-	monikerData &m = world.history->getMoniker(moniker);
+	caos_assert(getService<historyManager>()->hasMoniker(moniker));
+	monikerData &m = getService<historyManager>()->getMoniker(moniker);
 
 	if (m.warpveteran)
 		result.setInt(1);
@@ -470,8 +470,8 @@ void caosVM::v_OOWW() {
 
 	result.setInt(0);
 
-	if (world.history->hasMoniker(moniker)) {
-		monikerData &m = world.history->getMoniker(moniker);
+	if (getService<historyManager>()->hasMoniker(moniker)) {
+		monikerData &m = getService<historyManager>()->getMoniker(moniker);
 
 		result.setInt((int)m.getStatus());
 	}

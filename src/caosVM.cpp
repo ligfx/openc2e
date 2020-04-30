@@ -19,7 +19,6 @@
 
 #include "caosVM.h"
 #include "openc2e.h"
-#include "World.h"
 #include "bytecode.h"
 #include "caosScript.h"
 #include <cassert>

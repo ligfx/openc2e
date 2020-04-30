@@ -23,6 +23,7 @@
 #include "Backend.h"
 #include "Camera.h"
 #include "creaturesImage.h"
+#include "ServiceLocator.h"
 #include <cassert>
 
 // class BubblePart *ourPart;
@@ -87,7 +88,7 @@ Bubble *Bubble::newBubble(Agent *parent, bool speech, std::string text) {
 
 	bool leftside = false;
 	// TODO: cope with wrap
-	if (parent->x - engine.camera->getX() < engine.camera->getWidth() / 2) leftside = true;
+	if (parent->x - getService<MainCamera>()->getX() < getService<MainCamera>()->getWidth() / 2) leftside = true;
 
 	int pose;
 	if (engine.version == 1) {
@@ -206,7 +207,7 @@ unsigned int BubblePart::poseForWidth(unsigned int width) {
 }
 
 void BubblePart::setText(std::string str) {
-	unsigned int twidth = engine.backend->textWidth(str);
+	unsigned int twidth = getService<Backend>()->textWidth(str);
 
 	if (engine.version == 2) {
 		unsigned int pose = poseForWidth(twidth);

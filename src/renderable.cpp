@@ -19,7 +19,6 @@
 
 #include "renderable.h"
 #include "World.h"
-#include "Engine.h"
 #include <cassert>
 
 void renderable::zapZOrder() {

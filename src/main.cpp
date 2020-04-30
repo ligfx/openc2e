@@ -23,6 +23,7 @@
 #include <iostream>
 #include <memory>
 #include "Engine.h"
+#include "ServiceLocator.h"
 #include "backends/SDLBackend.h"
 #ifdef SDLMIXER_SUPPORT
 #include "backends/SDLMixerBackend.h"
@@ -65,7 +66,7 @@ extern "C" int main(int argc, char *argv[]) {
 		// get the engine to do all the startup (read catalogue, loading world, etc)
 		if (!engine.initialSetup()) return 0;
 	
-		int ret = engine.backend->run(argc, argv);
+		int ret = getService<Backend>()->run(argc, argv);
 		
 		// we're done, be sure to shut stuff down
 		engine.shutdown();

@@ -41,6 +41,7 @@
 #include "MusicManager.h"
 #include "prayManager.h"
 #include "Scriptorium.h"
+#include "ServiceLocator.h"
 
 #include <fmt/printf.h>
 #include <ghc/filesystem.hpp>
@@ -223,7 +224,7 @@ void World::tick() {
 	}
 
 	// Notify the audio backend about our current viewpoint center.
-	engine.audio->setViewpointCenter(engine.camera->getXCentre(), engine.camera->getYCentre());
+	getService<AudioBackend>()->setViewpointCenter(getService<MainCamera>()->getXCentre(), getService<MainCamera>()->getYCentre());
 
 	std::list<std::pair<std::shared_ptr<AudioSource>, bool> >::iterator si = uncontrolled_sounds.begin();
 	while (si != uncontrolled_sounds.end()) {
@@ -234,13 +235,13 @@ void World::tick() {
 		} else {
 			if (si->second) {
 				// follow viewport
-				si->first->setPos(engine.camera->getXCentre(), engine.camera->getYCentre(), 0);
+				si->first->setPos(getService<MainCamera>()->getXCentre(), getService<MainCamera>()->getYCentre(), 0);
 			} else {
 				// mute/unmute off-screen uncontrolled audio if necessary
 				float x, y, z;
 				si->first->getPos(x, y, z);
 				if (engine.version > 2) // TODO: this is because of wrap issues, but we need a better fix
-					si->first->setMute(engine.camera->getMetaRoom() != world.map->metaRoomAt(x, y));
+					si->first->setMute(getService<MainCamera>()->getMetaRoom() != map->metaRoomAt(x, y));
 			}
 		}
 
@@ -303,7 +304,7 @@ void World::tick() {
 		}
 	}
 
-	world.map->tick();
+	map->tick();
 
 	// TODO: correct behaviour? hrm :/
 	world.hand()->velx.setFloat(world.hand()->velx.getFloat() / 2.0f);
@@ -323,7 +324,7 @@ CompoundPart *World::partAt(unsigned int x, unsigned int y, bool obey_all_transp
 	if (!obey_all_transparency)
 		transagent = agentAt(x, y, true, needs_mouseable);
 
-	MetaRoom *m = world.map->metaRoomAt(x, y); // for wraparound checking
+	MetaRoom *m = map->metaRoomAt(x, y); // for wraparound checking
 
 	for (std::multiset<CompoundPart *, partzorder>::iterator i = zorder.begin(); i != zorder.end(); i++) {
 		CompoundPart *p = *i;
@@ -394,7 +395,7 @@ shared_ptr<Agent> World::lookupUNID(int unid) {
 }
 
 void World::drawWorld() {
-	drawWorld(engine.camera.get(), engine.backend->getMainRenderTarget());
+	drawWorld(getService<MainCamera>(), getService<Backend>()->getMainRenderTarget());
 }
 
 void World::drawWorld(Camera *cam, RenderTarget *surface) {
@@ -449,7 +450,7 @@ void World::drawWorld(Camera *cam, RenderTarget *surface) {
 
 	// render all the agents
 	for (std::multiset<renderable *, renderablezorder>::iterator i = renders.begin(); i != renders.end(); i++) {
-		if ((*i)->showOnRemoteCameras() || cam == engine.camera.get()) {
+		if ((*i)->showOnRemoteCameras() || cam == getService<MainCamera>()) {
 			// three-pass for wraparound rooms, the third since agents often straddle the boundary
 			// TODO: same as above with background rendering
 			for (unsigned int z = 0; z < (m->wraparound() ? 3 : 1); z++) {
@@ -704,8 +705,8 @@ shared_ptr<genomeFile> World::loadGenome(std::string &genefile) {
 
 void World::newMoniker(shared_ptr<genomeFile> g, std::string genefile, AgentRef agent) {
 	std::string d = history->newMoniker(g);
-	world.history->getMoniker(d).addEvent(2, "", genefile);
-	world.history->getMoniker(d).moveToAgent(agent);
+	history->getMoniker(d).addEvent(2, "", genefile);
+	history->getMoniker(d).moveToAgent(agent);
 }
 
 std::string World::generateMoniker(std::string basename) {
@@ -738,7 +739,7 @@ std::string World::generateMoniker(std::string basename) {
 std::shared_ptr<AudioSource> World::playAudio(std::string filename, AgentRef agent, bool controlled, bool loop, bool followviewport) {
 	if (filename.size() == 0) return std::shared_ptr<AudioSource>();
 
-	std::shared_ptr<AudioSource> sound = engine.audio->loadClip(filename);
+	std::shared_ptr<AudioSource> sound = getService<AudioBackend>()->loadClip(filename);
 	if (!sound) {
 		// note that more specific error messages can be thrown by implementations of loadClip
 		if (engine.version < 3) return std::shared_ptr<AudioSource>(); // creatures 1 and 2 ignore non-existent audio clips
@@ -762,7 +763,7 @@ std::shared_ptr<AudioSource> World::playAudio(std::string filename, AgentRef age
 		assert(!controlled);
 
 		// TODO: handle non-agent sounds
-		sound->setPos(engine.camera->getXCentre(), engine.camera->getYCentre(), 0);
+		sound->setPos(getService<MainCamera>()->getXCentre(), getService<MainCamera>()->getYCentre(), 0);
 		uncontrolled_sounds.push_back(std::pair<std::shared_ptr<class AudioSource>, bool>(sound, followviewport));
 	}
 	

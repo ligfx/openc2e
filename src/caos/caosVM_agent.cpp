@@ -33,6 +33,7 @@
 #include "Room.h" // LIML/LIMT etc
 #include "Engine.h" // C2 hack in POSE
 #include "Map.h"
+#include "ServiceLocator.h"
 #include <climits>
 
 using std::cerr;
@@ -1833,7 +1834,7 @@ void caosVM::v_LIML() {
 		Vehicle *v = dynamic_cast<Vehicle *>(targ->invehicle.get()); assert(v);
 		result.setInt((int)v->x + v->cabinleft);
 	} else {
-		shared_ptr<Room> r = world.map->roomAt(targ->x + (targ->getWidth() / 2.0f), targ->y + (targ->getHeight() / 2.0f));
+		shared_ptr<Room> r = getService<Map>()->roomAt(targ->x + (targ->getWidth() / 2.0f), targ->y + (targ->getHeight() / 2.0f));
 
 		if (r) result.setInt(r->x_left);
 		else result.setInt(0);
@@ -1853,7 +1854,7 @@ void caosVM::v_LIMT() {
 		Vehicle *v = dynamic_cast<Vehicle *>(targ->invehicle.get()); assert(v);
 		result.setInt((int)v->y + v->cabintop);
 	} else {
-		shared_ptr<Room> r = world.map->roomAt(targ->x + (targ->getWidth() / 2.0f), targ->y + (targ->getHeight() / 2.0f));
+		shared_ptr<Room> r = getService<Map>()->roomAt(targ->x + (targ->getWidth() / 2.0f), targ->y + (targ->getHeight() / 2.0f));
 
 		if (r) result.setInt(r->y_left_ceiling);
 		else result.setInt(0);
@@ -1873,7 +1874,7 @@ void caosVM::v_LIMR() {
 		Vehicle *v = dynamic_cast<Vehicle *>(targ->invehicle.get()); assert(v);
 		result.setInt((int)v->x + v->cabinright);
 	} else {
-		shared_ptr<Room> r = world.map->roomAt(targ->x + (targ->getWidth() / 2.0f), targ->y + (targ->getHeight() / 2.0f));
+		shared_ptr<Room> r = getService<Map>()->roomAt(targ->x + (targ->getWidth() / 2.0f), targ->y + (targ->getHeight() / 2.0f));
 
 		if (r) result.setInt(r->x_right);
 		else result.setInt(8352); // TODO
@@ -1894,7 +1895,7 @@ void caosVM::v_LIMB_c1() {
 		Vehicle *v = dynamic_cast<Vehicle *>(targ->invehicle.get()); assert(v);
 		result.setInt((int)v->y + v->cabinbottom);
 	} else {
-		shared_ptr<Room> r = world.map->roomAt(targ->x + (targ->getWidth() / 2.0f), targ->y + (targ->getHeight() / 2.0f));
+		shared_ptr<Room> r = getService<Map>()->roomAt(targ->x + (targ->getWidth() / 2.0f), targ->y + (targ->getHeight() / 2.0f));
 
 		if (r) result.setInt(r->y_left_floor);
 		else result.setInt(1200); // TODO

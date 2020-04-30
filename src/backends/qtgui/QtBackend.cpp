@@ -16,7 +16,6 @@
 
 #include "QtBackend.h"
 #include "qtopenc2e.h"
-#include "Engine.h"
 #include <QKeyEvent>
 #include <QApplication>
 #include <QWidget>
@@ -26,6 +25,7 @@
 #include <iostream>
 #include <memory>
 #include "exceptions.h"
+#include "ServiceLocator.h"
 
 #ifdef _WIN32
 #include <windows.h>
@@ -199,10 +199,8 @@ bool QtBackend::keyDown(int key) {
 
 int QtBackend::run(int argc, char **argv) {
 	QApplication app(argc, argv);
-	std::shared_ptr<QtBackend> qtbackend = std::dynamic_pointer_cast<class QtBackend, class Backend>(engine.backend);
-	assert(qtbackend.get() == this);
 
-	QtOpenc2e myvat(qtbackend);
+	QtOpenc2e myvat(this);
 	myvat.show();
 
 	return app.exec();
