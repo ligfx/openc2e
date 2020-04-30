@@ -12,6 +12,27 @@
 
 namespace fs = ghc::filesystem;
 
+static bool is_filename_okay(const std::string& filename) {
+    auto p = fs::path(filename).lexically_normal();
+    if (p.has_root_path() || p.has_root_name() || p.has_root_directory() || p.is_absolute()) {
+        std::cerr << "Error: " << p << " absolute paths not allowed\n";
+        return false;
+    }
+    if (*p.begin() == "..") {
+        std::cerr << "Error: " << p << " only files in the same directory or subdirectories are allowed\n";
+        return false;
+    }
+    if (!fs::exists(p)) {
+        std::cerr << "Error: " << p << " doesn't exist\n";
+        return false;
+    }
+    if (!(fs::is_regular_file(p) || fs::is_symlink(p))) {
+        std::cerr << "Error: " << p << " is not a file\n";
+        return false;
+    }
+    return true;
+}
+
 int main(int argc, char**argv) {
   {
       if (!(argc == 2 || argc == 3)) {
@@ -42,10 +63,31 @@ int main(int argc, char**argv) {
         output_filename = fs::path(argv[1]).stem().string() + ".agents";
     }
 
-    if (mpark::holds_alternative<PraySourceParser::Error>(events[0])) {
-        std::cout << "Error: "
-                  << mpark::get<PraySourceParser::Error>(events[0]).message << "\n";
-        return 1;
+    bool seen_error = false;
+    for (auto res : events) {
+      visit_overloads(
+          res,
+          [&](PraySourceParser::Error event) {
+            std::cout << "Error: " << event.message << "\n";
+            seen_error = true;
+          },
+          [](PraySourceParser::Warning event) {
+            std::cerr << "Warning: " << event.message << std::endl;
+          },
+          [](PraySourceParser::GroupBlockStart) {},
+          [](PraySourceParser::GroupBlockEnd) {},
+          [](PraySourceParser::StringTag) {},
+          [](PraySourceParser::IntegerTag) {},
+          [&](PraySourceParser::InlineBlock event) {
+              seen_error = !is_filename_okay(event.filename);
+          },
+          [&](PraySourceParser::StringTagFromFile event) {
+              seen_error = !is_filename_okay(event.filename);
+          }
+      );
+    }
+    if (seen_error) {
+        exit(1);
     }
 
     std::cout << "Writing output to \"" << output_filename << "\"" << std::endl;
