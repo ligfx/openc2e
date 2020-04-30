@@ -190,7 +190,7 @@ class Caos2PrayParserImpl {
         } else if (imatch(a, "\\.(catalogue)$")) {
             events->push_back(IntegerTag{categorykey, 7});
         } else {
-            *events = {Error{"Unknown dependency category for '" + a}};
+            *events = {Error{"Unknown dependency category for \"" + a + "\""}};
         }
     }
 
