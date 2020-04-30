@@ -25,23 +25,23 @@ int main(int argc, char**argv) {
 
     fs::path parent_path = fs::path(argv[1]).parent_path();
 
-    std::string output_filename;
-    if (argc == 3) {
-        output_filename = argv[2];
-    }
     std::vector<PraySourceParser::Event> events;
     if (fs::path(argv[1]).extension() == ".txt") {
         events = PraySourceParser::parse(str);
     } else if (fs::path(argv[1]).extension() == ".cos") {
-        events = Caos2PrayParser::parse(str, output_filename.size() ? nullptr : &output_filename);
+        events = Caos2PrayParser::parse(str);
     } else {
         std::cout << "Don't know how to handle input file \"" << argv[1] << "\"" << std::endl;
         exit(1);
     }
-    if (!output_filename.size()) {
+
+    std::string output_filename;
+    if (argc == 3) {
+        output_filename = argv[2];
+    } else {
         output_filename = fs::path(argv[1]).stem().string() + ".agents";
     }
-    
+
     if (mpark::holds_alternative<PraySourceParser::Error>(events[0])) {
         std::cout << "Error: "
                   << mpark::get<PraySourceParser::Error>(events[0]).message << "\n";
@@ -63,6 +63,9 @@ int main(int argc, char**argv) {
       visit_overloads(
           res, [](PraySourceParser::Error) {
               /* handled already */
+          },
+          [](PraySourceParser::Warning event) {
+            std::cerr << "Warning: " << event.message << std::endl;
           },
           [&](PraySourceParser::GroupBlockStart) {
             string_tags = {};

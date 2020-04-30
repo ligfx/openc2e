@@ -349,6 +349,7 @@ std::vector<PraySourceParser::Event> PraySourceParser::parse(const std::string& 
 std::string PraySourceParser::eventToString(const Event& event) {
     return visit(make_overloaded_function(
         [](Error e) { return fmt::format("Error({})", e.message); },
+		[](Warning e) { return fmt::format("Warning({})", e.message); },
         [&](GroupBlockStart e) { return fmt::format("GroupBlockStart({}, {})", e.type, e.name); },
         [&](GroupBlockEnd e) { return fmt::format("GroupBlockEnd({}, {})", e.type, e.name); },
         [&](InlineBlock e) { return fmt::format("InlineBlock({}, {}, {})", e.type, e.name, e.filename); },

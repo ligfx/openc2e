@@ -8,6 +8,9 @@ namespace PraySourceParser {
     struct Error {
       std::string message;
     };
+    struct Warning {
+      std::string message;
+    };
     struct GroupBlockStart {
         std::string type;
         std::string name;
@@ -34,7 +37,7 @@ namespace PraySourceParser {
       int value;
     };
     using Event =
-        mpark::variant<Error, GroupBlockStart, GroupBlockEnd,
+        mpark::variant<Error, Warning, GroupBlockStart, GroupBlockEnd,
                         InlineBlock, StringTag, StringTagFromFile, IntegerTag>;
 
     std::vector<Event> parse(const std::string&);

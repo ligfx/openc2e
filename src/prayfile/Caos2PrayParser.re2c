@@ -170,7 +170,7 @@ class Caos2PrayParserImpl {
     int dependency_count = 0;
     int script_count = 1;
     bool in_rscr = false;
-    std::string output_filename;
+    bool seen_output_filename = false;
     std::string remove_script;
 
     void add_dependency_tags(std::vector<Event>* events,
@@ -200,16 +200,20 @@ class Caos2PrayParserImpl {
                              const std::vector<std::string> &args) {
 
         switch (type) {
-        case c2ptoken::CMD_PRAY_FILE:
+        case c2ptoken::CMD_PRAY_FILE: {
+            std::vector<Event> events{
+				Warning{"Command 'Pray-File' is ignored by this implementation"}
+			};
             if (args.size() != 1) {
-                return {Error{"Command 'Pray-File' takes 1 argument, got " +
-                              std::to_string(args.size())}};
+                events.push_back(Warning{"Command 'Pray-File' takes 1 argument, got " +
+                                         std::to_string(args.size())});
             }
-            if (output_filename.size() > 0) {
-                return {Error{"Command 'Pray-File' used more than once"}};
+            if (seen_output_filename) {
+                events.push_back(Warning{"Command 'Pray-File' used more than once"});
             }
-            output_filename = args[0];
-            return {};
+			seen_output_filename = true;
+			return events;
+        }
         case c2ptoken::CMD_DS_NAME:
             if (args.size() != 1) {
                 return {Error{"Command 'DS-Name' takes 1 argument, got " +
@@ -351,7 +355,7 @@ class Caos2PrayParserImpl {
         }
     }
 
-    std::vector<Event> run(std::string script, std::string *output_filename_) {
+    std::vector<Event> run(std::string script) {
         std::vector<token> tokens;
         size_t p = 0;
         lexcaos(tokens, script.c_str(), false);
@@ -396,6 +400,7 @@ class Caos2PrayParserImpl {
             p++;
         }
 
+		std::vector<Event> other;
         std::vector<GroupBlockStart> group_blocks;
         std::vector<Event> inline_blocks;
         std::vector<Event> tags;
@@ -410,6 +415,7 @@ class Caos2PrayParserImpl {
                 [&](const StringTag &) { tags.push_back(e); },
                 [&](const StringTagFromFile &) { tags.push_back(e); },
                 [&](const IntegerTag &) { tags.push_back(e); },
+				[&](const Warning &) { other.push_back(e); },
                 [](const GroupBlockEnd &) { abort(); }, // not created yet
                 [](const Error &) { abort(); }          // handled already
             );
@@ -420,22 +426,18 @@ class Caos2PrayParserImpl {
         }
 
         events = {};
+		events.insert(events.end(), other.begin(), other.end());
         for (auto &g : group_blocks) {
             events.push_back(g);
-            for (auto &t : tags) {
-                events.push_back(t);
-            }
+			events.insert(events.end(), tags.begin(), tags.end());
             events.push_back(GroupBlockEnd{g.type, g.name});
         }
         events.insert(events.end(), inline_blocks.begin(), inline_blocks.end());
-
-        if (output_filename.size() > 0 && output_filename_)
-            *output_filename_ = output_filename;
 
         return events;
     }
 };
 
-std::vector<Event> Caos2PrayParser::parse(const std::string& script, std::string *output_filename) {
-	return Caos2PrayParserImpl().run(ensure_utf8(script).c_str(), output_filename);
+std::vector<Event> Caos2PrayParser::parse(const std::string& script) {
+	return Caos2PrayParserImpl().run(ensure_utf8(script).c_str());
 }

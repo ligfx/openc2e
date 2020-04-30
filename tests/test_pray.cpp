@@ -47,12 +47,30 @@ TEST(caos2prayparser, character_escapes) {
     auto events = Caos2PrayParser::parse(R"(
         *# DS-Name "My Agent"
         *# Agent Description = "A \"really cool\" agent\nThis is a backslash\\"
-    )", nullptr);
+    )");
     auto string_tag = matchEvent<PraySourceParser::StringTag>(events, [](const PraySourceParser::StringTag &e) {
         return e.key == "Agent Description";
     });
     if (!string_tag) FAIL() << "No such event in:\n" + eventsToString(events);
     ASSERT_EQ(string_tag->value, "A \"really cool\" agent\nThis is a backslash\\");
+}
+
+TEST(caos2prayparser, warns_on_output_filename) {
+    std::string good = R"(
+        *# DS-Name "My Agent"
+        *# Agent Description = "A \"really cool\" agent\nThis is a backslash\\"
+    )";
+    {
+        auto events = Caos2PrayParser::parse(good);
+        auto warning = matchEvent<PraySourceParser::Warning>(events);
+        printf("warning %p\n", warning);
+        if (warning) FAIL() << "Didn't expect warning event in:\n" + eventsToString(events);
+    }
+    {
+        auto events = Caos2PrayParser::parse(good + "\n*# Pray-File \"myagent.agents\"");
+        auto warning = matchEvent<PraySourceParser::Warning>(events);
+        if (!warning) FAIL() << "No such event in:\n" + eventsToString(events);
+    }
 }
 
 TEST(praywriter, doesnt_compress_if_would_be_bigger) {
@@ -110,8 +128,8 @@ TEST(praysourceparser, utf8_to_utf8) {
 TEST(caos2prayparser, cp1252_to_utf8) {
     auto events = Caos2PrayParser::parse(std::string(R"(
         *# DS-Name "My Agent"
-        *# Agent Description-fr = )") + "\"Un tr\xe8s cool agent\"",
-    nullptr);
+        *# Agent Description-fr = )") + "\"Un tr\xe8s cool agent\""
+    );
     auto string_tag = matchEvent<PraySourceParser::StringTag>(events, [](const PraySourceParser::StringTag &e) {
         return e.key == "Agent Description-fr";
     });
@@ -122,8 +140,8 @@ TEST(caos2prayparser, cp1252_to_utf8) {
 TEST(caos2prayparser, utf8_to_utf8) {
     auto events = Caos2PrayParser::parse(std::string(R"(
         *# DS-Name "My Agent"
-        *# Agent Description-fr = )") + "\"Un tr\xc3\xa8s cool agent\"",
-    nullptr);
+        *# Agent Description-fr = )") + "\"Un tr\xc3\xa8s cool agent\""
+    );
     auto string_tag = matchEvent<PraySourceParser::StringTag>(events, [](const PraySourceParser::StringTag &e) {
         return e.key == "Agent Description-fr";
     });
