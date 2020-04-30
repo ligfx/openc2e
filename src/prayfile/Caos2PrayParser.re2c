@@ -382,11 +382,6 @@ class Caos2PrayParserImpl {
                     // parse caos2pray comment
                     std::vector<Event> newevents =
                         parse_caos2pray(tokens[p].strval.c_str() + 2);
-                    for (auto e : newevents) {
-                        if (mpark::holds_alternative<Error>(e)) {
-                            return {e};
-                        }
-                    }
                     events.insert(events.end(), newevents.begin(),
                                   newevents.end());
                 }
@@ -415,9 +410,9 @@ class Caos2PrayParserImpl {
                 [&](const StringTag &) { tags.push_back(e); },
                 [&](const StringTagFromFile &) { tags.push_back(e); },
                 [&](const IntegerTag &) { tags.push_back(e); },
-				[&](const Warning &) { other.push_back(e); },
-                [](const GroupBlockEnd &) { abort(); }, // not created yet
-                [](const Error &) { abort(); }          // handled already
+                [&](const Warning &) { other.push_back(e); },
+                [&](const Error &) { other.push_back(e); },
+                [](const GroupBlockEnd &) { abort(); }
             );
         }
 
