@@ -99,6 +99,7 @@ add_library(prayfile
 	src/prayfile/PrayFileReader.cpp
 	src/prayfile/PrayFileWriter.cpp
 	${GEN}/prayfile/Caos2PrayParser.cpp
+	src/prayfile/PraySourceAnalysis.cpp
 	${GEN}/prayfile/PraySourceParser.cpp
 )
 target_link_libraries(prayfile
@@ -280,7 +281,7 @@ add_executable(praydumper src/tools/praydumper.cpp)
 target_link_libraries(praydumper prayfile)
 
 add_executable(praybuilder src/tools/praybuilder.cpp ${GEN}/caoslexer.cpp)
-target_link_libraries(praybuilder prayfile)
+target_link_libraries(praybuilder cxxopts prayfile)
 
 # tests
 enable_testing()

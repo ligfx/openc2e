@@ -1,6 +1,7 @@
 #include "prayfile/PrayFileWriter.h"
 #include "endianlove.h"
 #include "encoding.h"
+#include "vectorstream.h"
 
 #include <cassert>
 #include <sstream>
@@ -13,7 +14,7 @@ PrayFileWriter::PrayFileWriter(std::ostream &stream_) : stream(stream_) {
 
 void PrayFileWriter::writeBlockRawData(const std::string &type,
                                        const std::string &name,
-                                       const char *data, size_t data_size,
+                                       const unsigned char *data, size_t data_size,
                                        PrayFileWriter::Compression compression) {
   assert(type.size() == 4);
   stream.write(type.c_str(), 4);
@@ -49,7 +50,7 @@ void PrayFileWriter::writeBlockRawData(const std::string &type,
   write32le(stream, data_size);
   write32le(stream, 0);
 
-  stream.write(data, data_size);
+  stream.write(reinterpret_cast<const char*>(data), data_size);
 }
 
 void PrayFileWriter::writeBlockTags(
@@ -57,7 +58,8 @@ void PrayFileWriter::writeBlockTags(
     const std::map<std::string, int> &integer_tags,
     const std::map<std::string, std::string> &string_tags,
     PrayFileWriter::Compression compression) {
-  std::ostringstream os;
+
+  vectorstream os;
 
   write32le(os, integer_tags.size());
   for (auto kv : integer_tags) {
@@ -77,5 +79,5 @@ void PrayFileWriter::writeBlockTags(
     os.write(cp1252_value.c_str(), cp1252_value.size());
   }
 
-  writeBlockRawData(type, name, os.str().c_str(), os.str().size(), compression);
+  writeBlockRawData(type, name, os.vector().data(), os.vector().size(), compression);
 }

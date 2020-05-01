@@ -43,6 +43,7 @@ private:
     TokenType type;
     std::string stringval;
     int intval;
+	int lineno;
   };
 
   static std::string TokenToString(Token &token);
@@ -65,6 +66,7 @@ void PraySourceParserImpl::next_token() {
   assert(p);
   basep = p;
   token.stringval = "";
+  token.lineno = yylineno;
 
   /*!re2c
   re2c:define:YYCTYPE = "unsigned char";
@@ -201,23 +203,31 @@ std::vector<PraySourceParser::Event> PraySourceParserImpl::next() {
     }
   }
   if (!seen_en_gb) {
-    return {Error{"Expected \"en-GB\", got " + TokenToString(token)}};
+    Event result = Error{"Expected \"en-GB\", got " + TokenToString(token)};
+	result.lineno = token.lineno;
+	return {result};
   }
 
   // generate synthetic "GroupBlock" lines
   if (in_group_block && (token.type == PS_BAREWORD || token.type == PS_EOI)) {
     in_group_block = false;
-    return {GroupBlockEnd{last_group_type, last_group_name}};
+	Event result = GroupBlockEnd{last_group_type, last_group_name};
+	result.lineno = token.lineno;
+	return {result};
   }
 
   // parse the actual line
   if (token.type == PS_EOI) {
     return {};
   }
+  int start_of_line = token.lineno;
   PraySourceParser::Event result = parse_line();
   if (mpark::holds_alternative<Error>(result)) {
+    result.lineno = token.lineno;
     return {result};
   }
+  result.lineno = start_of_line;
+  next_token();
 
   // parse ending whitespace/newline
   parse_some_ws();
@@ -225,7 +235,9 @@ std::vector<PraySourceParser::Event> PraySourceParserImpl::next() {
     return {result};
   }
   if (token.type != PS_NEWLINE) {
-    return {Error{"Expected newline, got " + TokenToString(token)}};
+    Event result = Error{"Expected newline, got " + TokenToString(token)};
+	result.lineno = token.lineno;
+	return {result};
   }
   next_token();
 
@@ -247,25 +259,18 @@ PraySourceParser::Event PraySourceParserImpl::parse_line() {
     }
 
     if (token.type == PS_STRING) {
-      std::string value = token.stringval;
-      next_token();
-      return StringTag{key, value};
+      return StringTag{key, token.stringval};
     } else if (token.type == PS_AT) {
       next_token();
       if (!parse_some_ws()) {
-        return Error{"Expected whitespace after '@', got " +
-                     TokenToString(token)};
+        return Error{"Expected whitespace after '@', got " + TokenToString(token)};
       }
       if (token.type != PS_STRING) {
         return Error{"Expected string after '@', got " + TokenToString(token)};
       }
-      std::string value = token.stringval;
-      next_token();
-      return StringTagFromFile{key, value};
+      return StringTagFromFile{key, token.stringval};
     } else if (token.type == PS_INTEGER) {
-      int value = token.intval;
-      next_token();
-      return IntegerTag{key, value};
+      return IntegerTag{key, token.intval};
     } else {
       return Error{"Expected string, integer, or '@', got " +
                    TokenToString(token)};
@@ -274,11 +279,10 @@ PraySourceParser::Event PraySourceParserImpl::parse_line() {
 
   if (token.type == PS_BAREWORD) {
     std::string directive = token.stringval;
-    next_token();
-
     if (directive != "group" && directive != "inline") {
       return Error{"Expected 'group' or 'inline', got " + TokenToString(token)};
     }
+    next_token();
 
     if (!parse_some_ws()) {
       return Error{"Expected whitespace after '" + directive + "', got " +
@@ -300,7 +304,6 @@ PraySourceParser::Event PraySourceParserImpl::parse_line() {
         return Error{"Expected block name, got " + TokenToString(token)};
       }
       std::string name = token.stringval;
-      next_token();
       // bookkeeping for generating "GroupBlockEnd"
       in_group_block = true;
       last_group_type = type;
@@ -315,13 +318,12 @@ PraySourceParser::Event PraySourceParserImpl::parse_line() {
       next_token();
 
       if (!parse_some_ws())
-        return Error{""};
+        return Error{"Expected whitespace after block label"};
 
       if (token.type != PS_STRING) {
         return Error{"Expected quoted filename, got " + TokenToString(token)};
       }
       std::string filename = token.stringval;
-      next_token();
 
       return InlineBlock{type, label, filename};
     }

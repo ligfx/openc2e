@@ -1,92 +1,103 @@
 #include "prayfile/Caos2PrayParser.h"
+#include "prayfile/PraySourceAnalysis.h"
 #include "prayfile/PraySourceParser.h"
 #include "prayfile/PrayFileWriter.h"
+#include "util.h"
 #include "visit_overloads.h"
 
-#include <iostream>
-#include <map>
-#include <string>
-
+#define CXXOPTS_VECTOR_DELIMITER '\0'
+#include <cxxopts.hpp>
 #include <fstream>
 #include <ghc/filesystem.hpp>
+#include <iostream>
+#include <string>
 
 namespace fs = ghc::filesystem;
 
-static bool is_filename_okay(const std::string& filename) {
-    auto p = fs::path(filename).lexically_normal();
-    if (p.has_root_path() || p.has_root_name() || p.has_root_directory() || p.is_absolute()) {
-        std::cerr << "Error: " << p << " absolute paths not allowed\n";
-        return false;
-    }
-    if (*p.begin() == "..") {
-        std::cerr << "Error: " << p << " only files in the same directory or subdirectories are allowed\n";
-        return false;
-    }
-    if (!fs::exists(p)) {
-        std::cerr << "Error: " << p << " doesn't exist\n";
-        return false;
-    }
-    if (!(fs::is_regular_file(p) || fs::is_symlink(p))) {
-        std::cerr << "Error: " << p << " is not a file\n";
-        return false;
-    }
-    return true;
-}
-
 int main(int argc, char**argv) {
-  {
-      if (!(argc == 2 || argc == 3)) {
-          printf("USAGE: %s INPUT [OUTPUT]\n", argv[0]);
-          return 1;
-      }
-      
-    std::ifstream f(argv[1]);
-    std::string str((std::istreambuf_iterator<char>(f)),
-                    std::istreambuf_iterator<char>());
-
-    fs::path parent_path = fs::path(argv[1]).parent_path();
-
-    std::vector<PraySourceParser::Event> events;
-    if (fs::path(argv[1]).extension() == ".txt") {
-        events = PraySourceParser::parse(str);
-    } else if (fs::path(argv[1]).extension() == ".cos") {
-        events = Caos2PrayParser::parse(str);
-    } else {
-        std::cout << "Don't know how to handle input file \"" << argv[1] << "\"" << std::endl;
+    std::string output_filename;
+    std::vector<std::string> input_filenames;
+    
+    cxxopts::Options options(argv[0], "");
+    options.add_options()
+        ("h,help", "Display help on command-line options")
+        ("o,output-filename", "Write output to <arg>", cxxopts::value<std::string>(output_filename))
+        ("input_filenames", "FILE...", cxxopts::value<std::vector<std::string>>(input_filenames))
+    ;
+    options.parse_positional({"input_filenames"});
+    options.positional_help("FILE...");
+    auto args = options.parse(argc, argv);
+    
+    if (args.count("help")) {
+        std::cerr << options.help() << std::endl;
+        exit(0);
+    }
+    if (input_filenames.empty()) {
+        std::cerr << "Error: no input filenames" << std::endl;
         exit(1);
     }
-
-    std::string output_filename;
-    if (argc == 3) {
-        output_filename = argv[2];
-    } else {
-        output_filename = fs::path(argv[1]).stem().string() + ".agents";
+    
+    if (output_filename.empty()) {
+        if (input_filenames.size() == 1) {
+            // TODO: read CAOS2PRAY
+            output_filename = fs::path(input_filenames[0]).stem().string() + ".agents";
+        } else {
+            std::cout << "Error: must specify output filename with multiple input files" << std::endl;
+            exit(1);
+        }
     }
-
+    
+    std::vector<PraySourceParser::Event> all_events;
+    
+    for (auto input_filename : input_filenames) {
+        std::string str = readfile(input_filename);
+        fs::path parent_path = fs::path(input_filename).parent_path();
+        
+        std::vector<PraySourceParser::Event> events;
+        if (fs::path(input_filename).extension() == ".txt") {
+            events = PraySourceParser::parse(str);
+        } else if (fs::path(input_filename).extension() == ".cos") {
+            events = Caos2PrayParser::parse(str);
+        } else {
+            std::cout << "Don't know how to handle input file \"" << input_filename << "\"" << std::endl;
+            exit(1);
+        }
+        
+        PraySourceAnalysis::check_duplicates(events, PraySourceAnalysis::WARN_ON_IDENTICAL_BLOCKS);
+        
+        for (auto &e : events) {
+            e.source_filename = input_filename;
+        }
+        all_events.insert(all_events.end(), events.begin(), events.end());
+    }
+    
+    PraySourceAnalysis::check_filenames(all_events);
+    PraySourceAnalysis::check_files_exist(all_events);
+    PraySourceAnalysis::check_duplicates(all_events, PraySourceAnalysis::IGNORE_IDENTICAL_BLOCKS);
+    
     bool seen_error = false;
-    for (auto res : events) {
-      visit_overloads(
-          res,
-          [&](PraySourceParser::Error event) {
-            std::cout << "Error: " << event.message << "\n";
-            seen_error = true;
-          },
-          [](PraySourceParser::Warning event) {
-            std::cerr << "Warning: " << event.message << std::endl;
-          },
-          [](PraySourceParser::GroupBlockStart) {},
-          [](PraySourceParser::GroupBlockEnd) {},
-          [](PraySourceParser::StringTag) {},
-          [](PraySourceParser::IntegerTag) {},
-          [&](PraySourceParser::InlineBlock event) {
-              seen_error = !is_filename_okay(event.filename);
-          },
-          [&](PraySourceParser::StringTagFromFile event) {
-              seen_error = !is_filename_okay(event.filename);
-          }
-      );
+    for (auto e : all_events) {
+        seen_error |= mpark::holds_alternative<PraySourceParser::Error>(e);
     }
     if (seen_error) {
+        // since caos2pray isn't linear, our errors might not be in the right place
+        std::stable_sort(all_events.begin(), all_events.end(), [](PraySourceParser::Event l, PraySourceParser::Event r) {
+            return l.lineno < r.lineno;
+        });
+        
+        for (auto event : all_events) {
+            visit_overloads(
+                event,
+                [&](PraySourceParser::Error e) { std::cerr << event.source_filename << ":" << event.lineno << ": error: " << e.message << std::endl; },
+                [&](PraySourceParser::Warning e) { std::cerr << event.source_filename << ":" << event.lineno << ": warning: " << e.message << std::endl; },
+                [](PraySourceParser::GroupBlockStart) {},
+                [](PraySourceParser::GroupBlockEnd) {},
+                [](PraySourceParser::StringTag) {},
+                [](PraySourceParser::IntegerTag) {},
+                [](PraySourceParser::InlineBlock) {},
+                [](PraySourceParser::StringTagFromFile) {}
+            );
+        }
         exit(1);
     }
 
@@ -101,64 +112,46 @@ int main(int argc, char**argv) {
     std::map<std::string, std::string> string_tags;
     std::map<std::string, int> int_tags;
     
-    for (auto res : events) {
-      visit_overloads(
-          res, [](PraySourceParser::Error) {
-              /* handled already */
-          },
-          [](PraySourceParser::Warning event) {
-            std::cerr << "Warning: " << event.message << std::endl;
-          },
-          [&](PraySourceParser::GroupBlockStart) {
-            string_tags = {};
-            int_tags = {};
-          },
-          [&](PraySourceParser::GroupBlockEnd event) {
-            writer.writeBlockTags(event.type, event.name, int_tags, string_tags);
-            std::cout << "Tag block " << event.type << " \""
-                      << event.name << "\"\n";
-          },
-          [&](PraySourceParser::InlineBlock event) {
-              std::cout << "Inline block " << event.type << " \""
-                      << event.name << "\" from file \"" << event.filename
-                      << "\"\n";
-            
-            // TODO: check in same directory
-          std::ifstream in((parent_path / event.filename).string());
-          if (!in) {
-              std::cout << "Couldn't open file \""
-                        << (parent_path / event.filename).string() << "\""
-                        << std::endl;
-              exit(1);
-          }
-          std::vector<char> data((std::istreambuf_iterator<char>(in)),
-                          std::istreambuf_iterator<char>());
-                          
-            writer.writeBlockRawData(event.type, event.name, data.data(), data.size());
-            
-          },
-          [&](PraySourceParser::StringTag event) {
-            string_tags[event.key] = event.value;
-          },
-          [&](PraySourceParser::StringTagFromFile event) {
-            // TODO: check in same directory
-            std::ifstream in((parent_path / event.filename).string());
-            if (!in) {
-                std::cout << "Couldn't open file \""
-                          << (parent_path / event.filename).string() << "\""
-                          << std::endl;
-                exit(1);
-            }
-            std::string val((std::istreambuf_iterator<char>(in)),
-                            std::istreambuf_iterator<char>());
-                            
-            string_tags[event.key] = val;
-          },
-          [&](PraySourceParser::IntegerTag event) {
-            int_tags[event.key] = event.value;
-          });
+    try {
+        for (auto event : all_events) {
+          visit_overloads(
+              event, [](PraySourceParser::Error) {
+                  /* handled already */
+              },
+              [&](PraySourceParser::Warning e) {
+                std::cerr << event.source_filename << ":" << event.lineno << ": warning: " << e.message << std::endl;
+              },
+              [&](PraySourceParser::GroupBlockStart) {
+                string_tags = {};
+                int_tags = {};
+              },
+              [&](PraySourceParser::GroupBlockEnd e) {
+                writer.writeBlockTags(e.type, e.name, int_tags, string_tags);
+                std::cout << "Tag block " << e.type << " \""
+                          << e.name << "\"\n";
+              },
+              [&](PraySourceParser::InlineBlock e) {
+                std::cout << "Inline block " << e.type << " \""
+                          << e.name << "\" from file \"" << e.filename
+                          << "\"\n";
+
+                auto data = readfile_binary(fs::path(event.source_filename).parent_path() / e.filename);
+                writer.writeBlockRawData(e.type, e.name, data.data(), data.size());
+              },
+              [&](PraySourceParser::StringTag e) {
+                string_tags[e.key] = e.value;
+              },
+              [&](PraySourceParser::StringTagFromFile e) {
+                string_tags[e.key] = readfile(fs::path(event.source_filename).parent_path() / e.filename);
+              },
+              [&](PraySourceParser::IntegerTag e) {
+                int_tags[e.key] = e.value;
+              });
+        }
+    } catch (const std::exception &e) {
+        std::cerr << "Error: " << e.what() << std::endl;
+        exit(1);
     }
 
     std::cout << "Done!" << std::endl;
-  }
 }

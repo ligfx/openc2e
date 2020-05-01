@@ -8,12 +8,12 @@
 #include <regex>
 
 static char unescape(char c) {
-	switch (c) {
-	case 'n': return '\n';
-	case 'r': return '\r';
-	case 't': return '\t';
-	default : return c;
-	}
+    switch (c) {
+    case 'n': return '\n';
+    case 'r': return '\r';
+    case 't': return '\t';
+    default : return c;
+    }
 }
 
 static bool imatch(const std::string &s, std::string regex) {
@@ -202,8 +202,8 @@ class Caos2PrayParserImpl {
         switch (type) {
         case c2ptoken::CMD_PRAY_FILE: {
             std::vector<Event> events{
-				Warning{"Command 'Pray-File' is ignored by this implementation"}
-			};
+            Warning{"Command 'Pray-File' is ignored by this implementation"}
+            };
             if (args.size() != 1) {
                 events.push_back(Warning{"Command 'Pray-File' takes 1 argument, got " +
                                          std::to_string(args.size())});
@@ -211,8 +211,8 @@ class Caos2PrayParserImpl {
             if (seen_output_filename) {
                 events.push_back(Warning{"Command 'Pray-File' used more than once"});
             }
-			seen_output_filename = true;
-			return events;
+            seen_output_filename = true;
+            return events;
         }
         case c2ptoken::CMD_DS_NAME:
             if (args.size() != 1) {
@@ -251,7 +251,9 @@ class Caos2PrayParserImpl {
             std::vector<Event> events;
             for (auto a : args) {
                 add_dependency_tags(&events, a);
-                events.push_back(InlineBlock{"FILE", a, a});
+                if (!mpark::holds_alternative<Error>(events[0])) {
+                            	events.push_back(InlineBlock{"FILE", a, a});
+                }
             }
             return events;
         }
@@ -382,6 +384,9 @@ class Caos2PrayParserImpl {
                     // parse caos2pray comment
                     std::vector<Event> newevents =
                         parse_caos2pray(tokens[p].strval.c_str() + 2);
+                    for (auto &e : newevents) {
+                        e.lineno = tokens[p].lineno;
+                    }
                     events.insert(events.end(), newevents.begin(),
                                   newevents.end());
                 }
@@ -395,7 +400,7 @@ class Caos2PrayParserImpl {
             p++;
         }
 
-		std::vector<Event> other;
+        std::vector<Event> other;
         std::vector<GroupBlockStart> group_blocks;
         std::vector<Event> inline_blocks;
         std::vector<Event> tags;
@@ -421,10 +426,10 @@ class Caos2PrayParserImpl {
         }
 
         events = {};
-		events.insert(events.end(), other.begin(), other.end());
+        events.insert(events.end(), other.begin(), other.end());
         for (auto &g : group_blocks) {
             events.push_back(g);
-			events.insert(events.end(), tags.begin(), tags.end());
+            events.insert(events.end(), tags.begin(), tags.end());
             events.push_back(GroupBlockEnd{g.type, g.name});
         }
         events.insert(events.end(), inline_blocks.begin(), inline_blocks.end());
@@ -434,5 +439,5 @@ class Caos2PrayParserImpl {
 };
 
 std::vector<Event> Caos2PrayParser::parse(const std::string& script) {
-	return Caos2PrayParserImpl().run(ensure_utf8(script).c_str());
+    return Caos2PrayParserImpl().run(ensure_utf8(script).c_str());
 }

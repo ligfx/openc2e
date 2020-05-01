@@ -36,9 +36,19 @@ namespace PraySourceParser {
       std::string key;
       int value;
     };
-    using Event =
-        mpark::variant<Error, Warning, GroupBlockStart, GroupBlockEnd,
-                        InlineBlock, StringTag, StringTagFromFile, IntegerTag>;
+    struct Event : mpark::variant<Error, Warning, GroupBlockStart, GroupBlockEnd,
+                        InlineBlock, StringTag, StringTagFromFile, IntegerTag>
+    {
+        using mpark::variant<Error, Warning, GroupBlockStart, GroupBlockEnd,
+                            InlineBlock, StringTag, StringTagFromFile, IntegerTag>::variant;
+        // lineno is set by the parser
+        int lineno = 0;
+        // source_filename is not set by the parser, but is needed by praybuilder
+        // and by some of the analysis checks
+        std::string source_filename;
+    };
+
+    int lineno(const Event&);
 
     std::vector<Event> parse(const std::string&);
     std::string eventToString(const Event&);

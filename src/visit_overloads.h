@@ -19,6 +19,6 @@ overloaded<Fs...> make_overloaded_function(Fs... args) {
   return overloaded<Fs...>(args...);
 };
 
-template <typename V, typename... Fs> void visit_overloads(V v, Fs... fs) {
+template <typename V, typename... Fs> void visit_overloads(V&& v, Fs... fs) {
   return visit(make_overloaded_function(fs...), v);
 }
