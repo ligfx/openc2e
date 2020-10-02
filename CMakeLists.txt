@@ -187,6 +187,7 @@ add_library(openc2e-core STATIC
 	src/AnimatablePart.cpp
 	src/ButtonPart.cpp
 	src/CameraPart.cpp
+	src/CobManager.cpp
 	src/CompoundPart.cpp
 	src/DullPart.cpp
 	src/FixedTextPart.cpp

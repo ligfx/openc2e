@@ -1,0 +1,148 @@
+#include "CobManager.h"
+#include "creaturesException.h"
+#include "Engine.h"
+#include "fileformats/c1cobfile.h"
+#include "fileformats/c2cobfile.h"
+#include "utils/ascii_tolower.h"
+#include "utils/find_if.h"
+#include "World.h"
+
+#include <algorithm>
+#include <fstream>
+#include <ghc/filesystem.hpp>
+
+namespace fs = ghc::filesystem;
+
+void CobManager::update() {
+	objects.clear();
+
+	for (unsigned int i = 0; i < world.data_directories.size(); i++) {
+		fs::path p = world.data_directories[i];
+		if (engine.version == 2) p = p / "Objects/";
+		if (!fs::exists(p) || !fs::is_directory(p)) {
+			continue;
+		}
+
+		fs::directory_iterator end_itr; // default constructor is the end
+		for (fs::directory_iterator itr(p); itr != end_itr; itr++) {
+			std::string cobext = itr->path().extension().string();
+			cobext = utils::ascii_tolower(cobext);
+			if (cobext != ".cob") continue;
+
+			std::string cob = itr->path().string();
+
+			if (engine.version == 1) {
+				std::ifstream cobstream(cob.c_str(), std::ios::binary);
+				if (!cobstream.fail()) {
+					c1cobfile cobfile = read_c1cobfile(cobstream);
+					objects.emplace_back(cobfile.name, cob);
+				}
+			} else if (engine.version == 2) {
+				c2cobfile cobfile(itr->path());
+
+				for (auto b : cobfile.blocks) {
+					if (b->type != "agnt") continue;
+					cobAgentBlock a(b);
+					objects.emplace_back(a.name, cob);
+				}
+			}
+		}
+
+	}
+
+	std::sort(objects.begin(), objects.end(), [](auto &a, auto &b) { return a.name < b.name; });
+}
+
+Image CobManager::getPicture(const CobFileInfo& info) {
+	if (engine.version == 1) {
+		std::ifstream cobstream(info.filename, std::ios::binary);
+		c1cobfile cobfile = read_c1cobfile(cobstream);
+
+		if (cobfile.picture.width > 0 && cobfile.picture.height > 0) {
+			// TODO: don't require casting
+			return cobfile.picture;
+		}
+	}
+	else if (engine.version == 2) {
+		c2cobfile cobfile(info.filename);
+		
+		for (auto b : cobfile.blocks) {
+			if (b->type != "agnt") continue;
+			cobAgentBlock a(b);
+			if (a.name != info.name) continue;
+			return a.thumbnail;
+		}
+	}
+	return {};
+}
+
+void CobManager::inject(const CobFileInfo& info) {
+	std::string idata;
+	if (engine.version == 1) {
+		std::ifstream cobstream(info.filename, std::ios::binary);
+		c1cobfile cobfile = read_c1cobfile(cobstream);
+		for (auto s : cobfile.object_scripts) {
+			idata += s + "\n";
+		}
+		for (auto s : cobfile.install_scripts) {
+			idata += "iscr," + s + "\n";
+		}
+	} else if (engine.version == 2) {
+		c2cobfile cobfile(info.filename);
+		auto block = utils::find_if(cobfile.blocks, [&](auto &b) {
+			return b->type == "agnt" && cobAgentBlock(b).name == info.name;
+		});
+		if (!block) {
+			throw creaturesException(fmt::format("Couldn't find agent {}", info.name));
+		}
+		cobAgentBlock a(*block);
+		
+		// dependencies
+		assert(a.deptypes.size() == a.depnames.size());
+		for (size_t i = 0; i < a.deptypes.size(); i++) {
+			int deptype = a.deptypes[i];
+			std::string depname = a.depnames[i];
+			
+			fs::path resourcedir;
+			switch (deptype) {
+				case 0: resourcedir = "Images/"; break;
+				case 1: resourcedir = "Sounds/"; break;
+				default:
+					throw creaturesException("Unknown dependency type " + std::to_string(deptype));
+			}
+							
+			if (world.findFile(resourcedir / depname).size()) continue; // TODO: update file if necessary?
+			
+			auto depBlock = utils::find_if(cobfile.blocks, [&](auto &b) {
+				return b->type == "file" && cobFileBlock(b).filetype == deptype && cobFileBlock(b).filename == depname;
+			});
+			if (!depBlock) {
+				throw creaturesException(fmt::format("Couldn't find dependency {} (type {})", depname, deptype));
+			}
+			cobFileBlock f(*depBlock);
+			
+			fs::path dir = fs::path(world.getUserDataDir()) / resourcedir;
+			if (!fs::exists(dir)) {
+				fs::create_directory(dir);
+			}
+			assert(fs::exists(dir) && fs::is_directory(dir)); // TODO: error handling
+			
+			std::string outputfile = dir / depname;
+			assert(!fs::exists(outputfile));
+			
+			std::ofstream output(outputfile, std::ios::binary);
+			output.write((char*)f.getFileContents(), f.filesize);
+		}
+		
+		for (auto s : a.scripts) {
+			idata += s + "\n";
+		}
+		idata += "iscr," + a.installscript + "\n";
+	}
+	
+	// idata += "rscr\n";
+	std::string result = engine.executeNetwork(idata);
+	if (result.size()) {
+		fmt::print("warning: injection returned data (error?): {}\n", result);
+	}
+}
