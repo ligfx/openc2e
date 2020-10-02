@@ -15,10 +15,21 @@
 */
 
 #include "braininavat.h"
-#include <QtGui>
+#include <QAction>
+#include <QApplication>
+#include <QFileDialog>
+#include <QFileInfo>
+#include <QMenuBar>
+#include <QMessageBox>
+#include <QScrollArea>
+#include <QSettings>
+#include <QStatusBar>
+#include <QToolBar>
 #include <memory>
 #include "brainview.h"
-#include "c2eBrain.h"
+#include "creatures/c2eBrain.h"
+#include "creatures/CreatureAgent.h"
+#include "creatures/SkeletalCreature.h"
 
 #include <fstream>
 using namespace std;
@@ -249,7 +260,7 @@ void BrainInAVat::loadFile(const QString &fileName) {
 	// create creature
 	if (gfile->getVersion() == 3) {
 		try {
-			ourCreature = new c2eCreature(gfile, true, 0);
+			ourCreature = new c2eCreature(gfile, true, 0, new SkeletalCreature(4));
 		} catch (std::exception &e) {
 			QApplication::restoreOverrideCursor();
 			QMessageBox::warning(this, tr("openc2e's Brain in a Vat"), e.what());

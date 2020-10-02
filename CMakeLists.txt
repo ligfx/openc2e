@@ -290,6 +290,18 @@ if (OPENC2E_USE_QT)
 		AUTORCC ON
 		AUTOUIC ON
 	)
+	
+	add_executable(braininavat
+		src/tools/braininavat/main.cpp
+		src/tools/braininavat/braininavat.cpp
+		src/tools/braininavat/brainview.cpp
+	)
+	target_link_libraries(braininavat Qt5::Widgets openc2e-core)
+	set_target_properties(braininavat PROPERTIES
+		AUTOMOC ON
+		AUTORCC ON
+		AUTOUIC ON
+	)
 
 	if (WIN32)
 		find_program(WINDEPLOYQT_EXECUTABLE windeployqt)

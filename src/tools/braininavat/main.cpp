@@ -13,7 +13,7 @@ int main(int argc, char *argv[]) {
 	srand(time(NULL));
 
 	ghc::filesystem::path p(".");
-	catalogue.initFrom(p);
+	catalogue.initFrom(p, "en");
 
 	BrainInAVat myvat;
 	myvat.show();

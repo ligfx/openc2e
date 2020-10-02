@@ -3,6 +3,7 @@
 #include "../../creatures/c2eBrain.h"
 #include "../../creatures/oldBrain.h"
 
+#include <QScrollArea>
 #include <QHBoxLayout>
 #include <QPainter>
 #include <QPalette>
