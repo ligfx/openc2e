@@ -158,6 +158,7 @@ void AgentInjector::onInject() {
 			unsigned short type = b->deptypes[i];
 			std::string name = b->depnames[i];
 
+
 			unsigned int praytype;
 			switch (type) {
 				case 0: praytype = 2; break;
