@@ -279,4 +279,13 @@ Image Tint(const Image& oldimage, unsigned char r, unsigned char g, unsigned cha
 
 }
 
+Color GetPixelColor(const Image& image, unsigned int x, unsigned int y) {
+  if (image.format != if_index8) {
+    throw creaturesException("GetPixelColor unimplemented for formats other than index8");
+  }
+  
+  uint8_t palette_index = image.data[y * image.width + x];
+  return image.palette[palette_index];
+}
+
 } // namespace ImageUtils
