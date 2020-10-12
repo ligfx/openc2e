@@ -26,7 +26,9 @@
 #include "Engine.h"
 #include "openc2eimgui/AgentInjector.h"
 #include "openc2eimgui/BrainViewer.h"
-#include "openc2eimgui/MainMenuBar.h"
+#include "openc2eimgui/C1ToolBar.h"
+#include "openc2eimgui/C2StatusBar.h"
+#include "openc2eimgui/C2ToolBar.h"
 #include "SDLBackend.h"
 #include "World.h"
 
@@ -132,6 +134,9 @@ void SDLBackend::init() {
 		ImGuiStyle& style = ImGui::GetStyle();
 		style.FrameRounding = 0;
 		style.WindowRounding = 0;
+		// style.Colors[ImGuiCol_Text] = ImVec4(0, 0, 0, 1.0);
+		// style.Colors[ImGuiCol_WindowBg] = ImVec4(198 / 255.0, 198 / 255.0, 198 / 255.0, 1.0);
+		// style.Colors[ImGuiCol_PopupBg] = ImVec4(224 / 255.0, 224 / 255.0, 224 / 255.0, 1.0);
 
 		// ImGui::GetStyle().ScaleAllSizes(2);
 		
@@ -408,7 +413,7 @@ unsigned int SDLRenderTarget::getWidth() const {
 	return drawablewidth / scale;
 }
 unsigned int SDLRenderTarget::getHeight() const {
-	return drawableheight / scale - viewport_offset_top;
+	return drawableheight / scale - viewport_offset_top - viewport_offset_bottom;
 }
 
 void SDLRenderTarget::renderCreaturesImage(const creaturesImage& img, unsigned int frame, int x, int y, uint8_t transparency, bool mirror) {
@@ -597,9 +602,6 @@ void SDLBackend::delay(int msec) {
 int SDLBackend::run() {
 	resize(800, 600);
 
-	// do a first-pass draw of the world. TODO: correct?
-	world.drawWorld();
-
 	const int OPENC2E_MAX_FPS = 60;
 
 	while (!engine.done) {
@@ -616,9 +618,23 @@ int SDLBackend::run() {
 		ImGui_ImplSDL2_NewFrame(window);
 		ImGui::NewFrame();
 
-		mainrendertarget.viewport_offset_top = GetMainMenuBarHeightThisFrame();
-
-		DrawMainMenuBar();
+		if (engine.version == 1) {
+			DrawC1ToolBar();
+			mainrendertarget.viewport_offset_top = GetC1ToolBarHeight();
+		} else if (engine.version == 2) {
+			DrawC2Toolbar();
+			mainrendertarget.viewport_offset_top = GetC2ToolBarHeight();
+			DrawC2StatusBar();
+			mainrendertarget.viewport_offset_bottom = GetC2StatusBarHeight();
+		} else {
+			if (ImGui::GetIO().MouseClicked[0] && ImGui::GetIO().KeyMods & ImGuiKeyModFlags_Super) {
+				ImGui::OpenPopup("Menu");
+			}
+			if (ImGui::BeginPopup("Menu")) {
+				DrawMainMenu();
+				ImGui::EndPopup();
+			}
+		}
 		DrawAgentInjector();
 		DrawBrainViewer();
 		DrawCreatureGrapher();

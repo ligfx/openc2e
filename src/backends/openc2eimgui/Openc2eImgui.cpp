@@ -7,12 +7,20 @@
 #include <unordered_map>
 
 
+void Openc2eImgui::Image(Texture texture) {
+	ImGui::Image(texture.as<ImTextureID>(), ImVec2(texture.width, texture.height));
+}
+
 void Openc2eImgui::DisabledButton(const char* text) {
 	ImGui::PushItemFlag(ImGuiItemFlags_Disabled, true);
 	ImGui::PushStyleVar(ImGuiStyleVar_Alpha, ImGui::GetStyle().Alpha * 0.5f);
 	ImGui::Button(text);
 	ImGui::PopItemFlag();
 	ImGui::PopStyleVar();	
+}
+
+bool Openc2eImgui::ImageButton(Texture tex, bool enabled) {
+		return ImageButton(TextureRect{tex, 0, 0, tex.width, tex.height}, enabled);
 }
 
 bool Openc2eImgui::ImageButton(TextureRect tex, bool enabled) {

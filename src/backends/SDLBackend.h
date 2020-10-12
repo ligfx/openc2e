@@ -34,6 +34,7 @@ protected:
 	int drawablewidth, drawableheight;
 	float scale = 1.0;
 	int viewport_offset_top = 0;
+	int viewport_offset_bottom = 0;
 	
 	SDLRenderTarget(SDLBackend *p) { parent = p; }
 
