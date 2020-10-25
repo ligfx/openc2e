@@ -44,6 +44,9 @@ void CobManager::update() {
 					if (b->type != "agnt") continue;
 					cobAgentBlock a(b);
 					objects.emplace_back(a.name, cob);
+					if (a.removescript.size() > 0) {
+						objects.back().is_removable = true;
+					}
 				}
 			}
 		}
@@ -144,5 +147,28 @@ void CobManager::inject(const CobFileInfo& info) {
 	std::string result = engine.executeNetwork(idata);
 	if (result.size()) {
 		fmt::print("warning: injection returned data (error?): {}\n", result);
+	}
+}
+
+void CobManager::remove(const CobFileInfo& info) {
+	if (engine.version != 2) {
+		// TODO: support RCB files
+		return;
+	}
+	
+	c2cobfile cobfile(info.filename);
+	auto block = utils::find_if(cobfile.blocks, [&](auto &b) {
+		return b->type == "agnt" && cobAgentBlock(b).name == info.name;
+	});
+	if (!block) {
+		throw creaturesException(fmt::format("Couldn't find agent {}", info.name));
+	}
+	cobAgentBlock a(*block);
+
+	std::string rdata = a.removescript + "\nrscr\n";
+	
+	std::string result = engine.executeNetwork(rdata);
+	if (result.size()) {
+		fmt::print("warning: removal returned data (error?): {}\n", result);
 	}
 }
