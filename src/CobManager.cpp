@@ -3,6 +3,7 @@
 #include "Engine.h"
 #include "fileformats/c1cobfile.h"
 #include "fileformats/c2cobfile.h"
+#include "PathResolver.h"
 #include "utils/ascii_tolower.h"
 #include "utils/find_if.h"
 #include "World.h"
@@ -16,41 +17,32 @@ namespace fs = ghc::filesystem;
 void CobManager::update() {
 	objects.clear();
 
-	for (unsigned int i = 0; i < world.data_directories.size(); i++) {
-		fs::path p = world.data_directories[i];
-		if (engine.version == 2) p = p / "Objects/";
-		if (!fs::exists(p) || !fs::is_directory(p)) {
-			continue;
-		}
-
-		fs::directory_iterator end_itr; // default constructor is the end
-		for (fs::directory_iterator itr(p); itr != end_itr; itr++) {
-			std::string cobext = itr->path().extension().string();
-			cobext = utils::ascii_tolower(cobext);
-			if (cobext != ".cob") continue;
-
-			std::string cob = itr->path().string();
-
-			if (engine.version == 1) {
-				std::ifstream cobstream(cob.c_str(), std::ios::binary);
-				if (!cobstream.fail()) {
-					c1cobfile cobfile = read_c1cobfile(cobstream);
-					objects.emplace_back(cobfile.name, cob);
+	std::string directory = "";
+	if (engine.version == 2) {
+		directory = "Objects";
+	}
+	for (auto cob : world.findFiles(directory, "*.cob")) {
+		if (engine.version == 1) {
+			std::ifstream cobstream(cob.c_str(), std::ios::binary);
+			if (!cobstream.fail()) {
+				c1cobfile cobfile = read_c1cobfile(cobstream);
+				objects.emplace_back(cobfile.name, cob);
+				if (world.findFile(fs::path(cob).stem().string() + ".rcb").size()) {
+					objects.back().is_removable = true;
 				}
-			} else if (engine.version == 2) {
-				c2cobfile cobfile(itr->path());
+			}
+		} else if (engine.version == 2) {
+			c2cobfile cobfile(cob);
 
-				for (auto b : cobfile.blocks) {
-					if (b->type != "agnt") continue;
-					cobAgentBlock a(b);
-					objects.emplace_back(a.name, cob);
-					if (a.removescript.size() > 0) {
-						objects.back().is_removable = true;
-					}
+			for (auto b : cobfile.blocks) {
+				if (b->type != "agnt") continue;
+				cobAgentBlock a(b);
+				objects.emplace_back(a.name, cob);
+				if (a.removescript.size() > 0) {
+					objects.back().is_removable = true;
 				}
 			}
 		}
-
 	}
 
 	std::sort(objects.begin(), objects.end(), [](auto &a, auto &b) { return a.name < b.name; });
@@ -82,8 +74,7 @@ Image CobManager::getPicture(const CobFileInfo& info) {
 void CobManager::inject(const CobFileInfo& info) {
 	std::string idata;
 	if (engine.version == 1) {
-		std::ifstream cobstream(info.filename, std::ios::binary);
-		c1cobfile cobfile = read_c1cobfile(cobstream);
+		c1cobfile cobfile = read_c1cobfile(info.filename);
 		for (auto s : cobfile.object_scripts) {
 			idata += s + "\n";
 		}
@@ -151,22 +142,28 @@ void CobManager::inject(const CobFileInfo& info) {
 }
 
 void CobManager::remove(const CobFileInfo& info) {
-	if (engine.version != 2) {
-		// TODO: support RCB files
-		return;
-	}
-	
-	c2cobfile cobfile(info.filename);
-	auto block = utils::find_if(cobfile.blocks, [&](auto &b) {
-		return b->type == "agnt" && cobAgentBlock(b).name == info.name;
-	});
-	if (!block) {
-		throw creaturesException(fmt::format("Couldn't find agent {}", info.name));
-	}
-	cobAgentBlock a(*block);
+	std::string rdata;
+	if (engine.version == 1) {
+		std::string rcbpath = world.findFile(fs::path(info.filename).stem().string() + ".rcb");
+		c1cobfile cobfile = read_c1cobfile(rcbpath);
+		for (auto s : cobfile.install_scripts) {
+			rdata += s + "\n";
+		}
 
-	std::string rdata = a.removescript + "\nrscr\n";
+	} else if (engine.version == 2) {
+		c2cobfile cobfile(info.filename);
+		auto block = utils::find_if(cobfile.blocks, [&](auto &b) {
+			return b->type == "agnt" && cobAgentBlock(b).name == info.name;
+		});
+		if (!block) {
+			throw creaturesException(fmt::format("Couldn't find agent {}", info.name));
+		}
+		cobAgentBlock a(*block);
+
+		rdata = a.removescript;
+	}
 	
+	rdata += "\nrscr\n";
 	std::string result = engine.executeNetwork(rdata);
 	if (result.size()) {
 		fmt::print("warning: removal returned data (error?): {}\n", result);
