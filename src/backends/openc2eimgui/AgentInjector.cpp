@@ -81,11 +81,11 @@ void DrawAgentInjector() {
 		}
 		DrawAgentPreview(s_cob_texture);
 
-		if (ImGui::Button("Add Object")) {
+		if (ImGui::Button("Add Object") && s_object_selected_index < s_object_injector.objects.size()) {
 			s_object_injector.inject(s_object_injector.objects[s_object_selected_index]);
 		}
 		ImGui::SameLine();
-		if (s_object_injector.objects[s_object_selected_index].is_removable) {
+		if (s_object_selected_index < s_object_injector.objects.size() && s_object_injector.objects[s_object_selected_index].is_removable) {
 			if (ImGui::Button("Remove Object")) {
 				s_object_injector.remove(s_object_injector.objects[s_object_selected_index]);
 			}

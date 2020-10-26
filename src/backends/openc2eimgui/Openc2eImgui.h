@@ -25,8 +25,7 @@ inline Texture GetTextureWithTransparencyFromExeFile(uint32_t resource) {
   auto image = engine.getExeFile()->getBitmap(resource);
   // TODO: don't make all pixels of this color transparent, only pixels of this
   // color that are connected to the edges of the image
-  image.transparent_color = ImageUtils::GetPixelColor(image, 0, 0);
-  return engine.backend->createTexture(image);
+  return engine.backend->createTextureWithTransparentColor(image, ImageUtils::GetPixelColor(image, 0, 0));
 }
 
 namespace Openc2eImgui {

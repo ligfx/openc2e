@@ -24,12 +24,9 @@ void DrawC2Toolbar() {
       ImGui::EndMenuBar();
     }
   
-    static Image s_stdicons;
     static Texture s_stdicons_tex;
-    if (!s_stdicons.data) {
-      s_stdicons = engine.getExeFile()->getBitmap(0xe3);
-      s_stdicons.transparent_color = ImageUtils::GetPixelColor(s_stdicons, 0, 0);
-      s_stdicons_tex = engine.backend->createTexture(s_stdicons);
+    if (!s_stdicons_tex) {
+      s_stdicons_tex = GetTextureWithTransparencyFromExeFile(0xe3);
     }
     
     Openc2eImgui::TextureRect icon_next{s_stdicons_tex, 0, 0, 22, 21};
@@ -41,12 +38,9 @@ void DrawC2Toolbar() {
     Openc2eImgui::TextureRect icon_help{s_stdicons_tex, 132, 0, 22, 21};
     Openc2eImgui::TextureRect icon_web{s_stdicons_tex, 154, 0, 22, 21};
     
-    static Image s_handicons;
     static Texture s_handicons_tex;
-    if (!s_handicons.data) {
-      s_handicons = engine.getExeFile()->getBitmap(0xe4);
-      s_handicons.transparent_color = ImageUtils::GetPixelColor(s_handicons, 0, 0);
-      s_handicons_tex = engine.backend->createTexture(s_handicons);
+    if (!s_handicons_tex) {
+      s_handicons_tex = GetTextureWithTransparencyFromExeFile(0xe4);
     }
     
     Openc2eImgui::TextureRect icon_invisible{s_handicons_tex, 0, 0, 22, 21};
@@ -76,12 +70,9 @@ void DrawC2Toolbar() {
     
     ImGui::Separator();
     
-    static Image s_appleticons;
     static Texture s_appleticons_tex;
-    if (!s_appleticons.data) {
-      s_appleticons = engine.getExeFile()->getBitmap(0xe6);
-      s_appleticons.transparent_color = ImageUtils::GetPixelColor(s_appleticons, 0, 0);
-      s_appleticons_tex = engine.backend->createTexture(s_appleticons);
+    if (!s_appleticons_tex) {
+      s_appleticons_tex = GetTextureWithTransparencyFromExeFile(0xe6);
     }
 
     Openc2eImgui::TextureRect icon_hatchery{s_appleticons_tex, 0, 0, 22, 21};
@@ -118,9 +109,7 @@ void DrawC2Toolbar() {
     
     static Texture s_favtoolbaricons_tex;
     if (!s_favtoolbaricons_tex) {
-      Image favtoolbaricons = engine.getExeFile()->getBitmap(0xe5);
-      favtoolbaricons.transparent_color = ImageUtils::GetPixelColor(favtoolbaricons, 0, 0);
-      s_favtoolbaricons_tex = engine.backend->createTexture(favtoolbaricons);
+      s_favtoolbaricons_tex = GetTextureWithTransparencyFromExeFile(0xe5);
     }
     Openc2eImgui::TextureRect icon_say{s_favtoolbaricons_tex, 0, 0, 22, 21};
     Openc2eImgui::TextureRect icon_go{s_favtoolbaricons_tex, 22, 0, 22, 21};
