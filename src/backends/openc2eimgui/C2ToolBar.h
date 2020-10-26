@@ -89,7 +89,9 @@ void DrawC2Toolbar() {
     Openc2eImgui::TextureRect icon_unknown_magnifyingglass{s_appleticons_tex, 242, 0, 22, 21};
     Openc2eImgui::TextureRect icon_unknown_maybe_neurosciencekit{s_appleticons_tex, 264, 0, 22, 21};
     
-    Openc2eImgui::ImageButton(icon_hatchery);
+    if (Openc2eImgui::ImageButton(icon_hatchery, IsHatcheryEnabled())) {
+      SetHatcheryOpen(true);
+    };
     Openc2eImgui::ImageButton(icon_ownerskit, false);
     Openc2eImgui::ImageButton(icon_healthkit, false);
     Openc2eImgui::ImageButton(icon_graveyard, false);

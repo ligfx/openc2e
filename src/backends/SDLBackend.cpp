@@ -37,8 +37,6 @@
 #include <imgui_sdl.h>
 #include <imgui_internal.h>
 
-SDLBackend *g_backend;
-
 // reasonable defaults
 constexpr int OPENC2E_DEFAULT_WIDTH = 800;
 constexpr int OPENC2E_DEFAULT_HEIGHT = 600;
@@ -568,7 +566,7 @@ int SDLBackend::run() {
 		DrawAgentInjector();
 		DrawBrainViewer();
 		DrawCreatureGrapher();
-		// DrawHatchery();
+		DrawHatchery();
 
 		world.drawWorld();
 

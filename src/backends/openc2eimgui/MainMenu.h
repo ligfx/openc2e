@@ -11,6 +11,7 @@
 #include "historyManager.h"
 #include "PointerAgent.h"
 #include "World.h"
+#include <fmt/core.h>
 
 static void NewDebugNorn() {
   if (engine.version > 2) return; // TODO: fixme
@@ -61,7 +62,7 @@ static void NewDebugNorn() {
 static void NewRandomEgg() {
   std::string eggscript;
 	/* create the egg obj */
-	eggscript = fmt::sprintf("new: simp eggs 8 %d 2000 0\n", ((rand() % 6) * 8));
+	eggscript = fmt::format("new: simp eggs 8 {} 2000 0\n", ((rand() % 6) * 8));
 	/* set the pose */
 	eggscript += "pose 3\n";	
 	/* set the correct class/attributes */
@@ -71,7 +72,7 @@ static void NewRandomEgg() {
 		eggscript += "setv cls2 2 5 2\nsetv attr 195\n";
 	/* create the genome */
 	if (engine.version == 1)
-		eggscript += fmt::sprintf("new: gene tokn dad%d tokn mum%d obv0\n", (1 + rand() % 6), (1 + rand() % 6));
+		eggscript += fmt::format("new: gene tokn dad%d tokn mum{} obv0\n", (1 + rand() % 6), (1 + rand() % 6));
 	else if (engine.version == 2)
 		eggscript += "new: gene tokn norn tokn norn obv0\n";
 	/* set the gender */
@@ -82,9 +83,9 @@ static void NewRandomEgg() {
 	/* move it into place */
 	/* TODO: good positions? */
 	if (engine.version == 1)
-		eggscript += fmt::sprintf("mvto %d 870\n", (2600 + rand() % 200));
+		eggscript += fmt::format("mvto {} 870\n", (2600 + rand() % 200));
 	else if (engine.version == 2)
-		eggscript += fmt::sprintf("mvto %d 750\n", (4900 + rand() % 350));
+		eggscript += fmt::format("mvto {} 750\n", (4900 + rand() % 350));
 
 	/* c2: enable gravity */
 	if (engine.version == 2)
@@ -138,9 +139,9 @@ void DrawMainMenu() {
     ImGui::EndMenu();
   }
   if (ImGui::BeginMenu("Tools")) {
-    // if (ImGui::MenuItem("Hatchery", nullptr, false, IsHatcheryEnabled())) {
-    //   s_hatchery_open = true;
-    // }
+    if (ImGui::MenuItem("Hatchery", nullptr, false, IsHatcheryEnabled())) {
+      s_hatchery_open = true;
+    }
     if (ImGui::MenuItem("Agent Injector", nullptr, false, IsAgentInjectorEnabled())) {
       SetAgentInjectorOpen(true);
     }

@@ -11,6 +11,18 @@ void Openc2eImgui::Image(Texture texture) {
 	ImGui::Image(texture.as<ImTextureID>(), ImVec2(texture.width, texture.height));
 }
 
+void Openc2eImgui::DrawTexture(Texture texture, ImVec2 p, float transparency) {
+	ImDrawList* drawlist = ImGui::GetWindowDrawList();
+	drawlist->AddImage(
+		texture.as<ImTextureID>(),
+		p,
+		p + ImVec2(texture.width, texture.height),
+		ImVec2(0, 0),
+		ImVec2(1, 1),
+		IM_COL32(255, 255, 255, transparency * 255)
+	);
+}
+
 void Openc2eImgui::DisabledButton(const char* text) {
 	ImGui::PushItemFlag(ImGuiItemFlags_Disabled, true);
 	ImGui::PushStyleVar(ImGuiStyleVar_Alpha, ImGui::GetStyle().Alpha * 0.5f);

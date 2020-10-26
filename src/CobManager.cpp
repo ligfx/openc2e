@@ -9,7 +9,7 @@
 #include "World.h"
 
 #include <algorithm>
-#include <fstream>
+#include <fmt/format.h>
 #include <ghc/filesystem.hpp>
 
 namespace fs = ghc::filesystem;
@@ -23,13 +23,10 @@ void CobManager::update() {
 	}
 	for (auto cob : world.findFiles(directory, "*.cob")) {
 		if (engine.version == 1) {
-			std::ifstream cobstream(cob.c_str(), std::ios::binary);
-			if (!cobstream.fail()) {
-				c1cobfile cobfile = read_c1cobfile(cobstream);
-				objects.emplace_back(cobfile.name, cob);
-				if (world.findFile(fs::path(cob).stem().string() + ".rcb").size()) {
-					objects.back().is_removable = true;
-				}
+			c1cobfile cobfile = read_c1cobfile(cob);
+			objects.emplace_back(cobfile.name, cob);
+			if (world.findFile(fs::path(cob).stem().string() + ".rcb").size()) {
+				objects.back().is_removable = true;
 			}
 		} else if (engine.version == 2) {
 			c2cobfile cobfile(cob);
@@ -50,8 +47,7 @@ void CobManager::update() {
 
 Image CobManager::getPicture(const CobFileInfo& info) {
 	if (engine.version == 1) {
-		std::ifstream cobstream(info.filename, std::ios::binary);
-		c1cobfile cobfile = read_c1cobfile(cobstream);
+		c1cobfile cobfile = read_c1cobfile(info.filename);
 
 		if (cobfile.picture.width > 0 && cobfile.picture.height > 0) {
 			// TODO: don't require casting

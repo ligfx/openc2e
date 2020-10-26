@@ -43,6 +43,7 @@ public:
 };
 
 void Image(Texture texture);
+void DrawTexture(Texture texture, ImVec2 p, float transparency = 1.0);
 
 void DisabledButton(const char* text);
 bool ImageButton(Texture texture, bool enabled = true);
