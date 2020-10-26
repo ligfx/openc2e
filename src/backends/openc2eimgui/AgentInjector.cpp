@@ -18,7 +18,7 @@ static size_t s_object_selected_index = 0;
 
 static CobManager s_object_injector;
 
-static bool s_agent_injector_open = true;
+static bool s_agent_injector_open = false;
 
 static void DrawAgentPreview(Texture& texture) {
 	ImVec2 size = ImVec2(std::max<float>(300, ImGui::GetWindowContentRegionWidth()), 211);

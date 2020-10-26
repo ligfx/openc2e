@@ -3,7 +3,7 @@
 #include "Openc2eImgui.h"
 #include <imgui.h>
 
-static bool s_creature_grapher_open = true;
+static bool s_creature_grapher_open = false;
 
 void DrawCreatureGrapher() {
   if (Openc2eImgui::BeginWindow("Creature Grapher", &s_creature_grapher_open)) {
