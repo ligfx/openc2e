@@ -55,7 +55,6 @@ else()
 
 	find_package(SDL2 REQUIRED)
 	find_package(SDL2_mixer REQUIRED)
-	find_package(X11 REQUIRED) # Workaround for https://bugzilla.libsdl.org/show_bug.cgi?id=5289
 endif()
 
 if (OPENC2E_USE_SERIALIZATION)
@@ -259,10 +258,6 @@ target_link_libraries(openc2e
 	imgui_sdl
 	SDL2::SDL2
 )
-if(X11_FOUND) # Workaround for https://bugzilla.libsdl.org/show_bug.cgi?id=5289
-	target_link_libraries(openc2e ${X11_LIBRARIES})
-	target_include_directories(openc2e PRIVATE ${X11_INCLUDE_DIR})
-endif()
 
 add_executable(change_breed_slot src/tools/change_breed_slot.cpp)
 target_link_libraries(change_breed_slot openc2e-fileformats)

@@ -37,14 +37,6 @@
 #include <imgui_sdl.h>
 #include <imgui_internal.h>
 
-#if defined(SDL_VIDEO_DRIVER_X11)
-// Workaround for https://bugzilla.libsdl.org/show_bug.cgi?id=5289
-#include "SDL_config.h"
-#undef SDL_VIDEO_DRIVER_DIRECTFB // pulls in directfb.h otherwise
-#include "SDL_syswm.h"
-#include <X11/Xlib.h>
-#endif
-
 SDLBackend *g_backend;
 
 // reasonable defaults
@@ -146,68 +138,6 @@ void SDLBackend::init() {
 		assert(SDL_GetRendererOutputSize(renderer, &w, &h) == 0);
 		ImGuiSDL::Initialize(renderer, w, h);
 	}
-
-	// SDL_ShowCursor(false);
-	SDL_StartTextInput();
-}
-
-void SDLBackend::initFrom(void *window_id) {
-	int init = SDL_INIT_VIDEO;
-
-	if (SDL_Init(init) < 0)
-		throw creaturesException(std::string("SDL error during initialization: ") + SDL_GetError());
-
-	window = SDL_CreateWindowFrom(window_id);
-	if (!window) {
-		throw creaturesException(std::string("SDL error creating window: ") + SDL_GetError());
-	}
-	renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_TARGETTEXTURE);
-	if (!renderer) {
-		throw creaturesException(std::string("SDL error creating renderer: ") + SDL_GetError());
-	}
-
-	{
-		SDL_RendererInfo info;
-		info.name = nullptr;
-		SDL_GetRendererInfo(renderer, &info);
-		printf("* SDL Renderer: %s\n", info.name);
-	}
-
-#if defined(SDL_VIDEO_DRIVER_X11)
-	// Workaround for https://bugzilla.libsdl.org/show_bug.cgi?id=5289
-	SDL_SysWMinfo info;
-	SDL_VERSION(&info.version);
-	SDL_GetWindowWMInfo(window, &info);
-	if (info.subsystem == SDL_SYSWM_X11) {
-		XSelectInput(info.info.x11.display, info.info.x11.window,
-		             (FocusChangeMask | EnterWindowMask | LeaveWindowMask |
-		              ExposureMask | ButtonReleaseMask | PointerMotionMask |
-		              KeyPressMask | KeyReleaseMask | PropertyChangeMask |
-		              StructureNotifyMask | KeymapStateMask));
-	}
-#endif
-
-{
-	ImGui::CreateContext();
-	ImGuiIO& io = ImGui::GetIO();
-	// io.ConfigFlags |= ImGuiConfigFlags_NoMouseCursorChange;
-
-	io.Fonts->Clear();
-	// ImFontConfig cfg;
-	// cfg.SizePixels = 26;
-	// io.Fonts->AddFontDefault(&cfg);
-	// io.Fonts->Build();
-	//
-	// ImGui::GetStyle().ScaleAllSizes(2);
-
-	ImGui_ImplSDL2_Init(window);
-}
-
-{
-	int w = 0, h = 0;
-	assert(SDL_GetRendererOutputSize(renderer, &w, &h) == 0);
-	ImGuiSDL::Initialize(renderer, w, h);
-}
 
 	// SDL_ShowCursor(false);
 	SDL_StartTextInput();
