@@ -353,14 +353,6 @@ target_link_libraries(praydumper openc2e-fileformats)
 add_executable(praybuilder src/tools/praybuilder.cpp)
 target_link_libraries(praybuilder openc2e-fileformats)
 
-add_executable(praytoolqt src/tools/praytoolqt.cpp)
-target_link_libraries(praytoolqt openc2e-fileformats Qt5::Widgets)
-set_target_properties(praytoolqt PROPERTIES
-	AUTOMOC ON
-	AUTORCC ON
-	AUTOUIC ON
-)
-
 add_executable(spritedumper src/tools/spritedumper.cpp)
 target_link_libraries(spritedumper openc2e-fileformats fmt ghc_filesystem)
 
