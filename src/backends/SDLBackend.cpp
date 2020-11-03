@@ -73,7 +73,7 @@ void SDLBackend::init() {
 		SDL_WINDOWPOS_UNDEFINED,
 		SDL_WINDOWPOS_UNDEFINED,
 		OPENC2E_DEFAULT_WIDTH, OPENC2E_DEFAULT_HEIGHT,
-		SDL_WINDOW_RESIZABLE | SDL_WINDOW_ALLOW_HIGHDPI
+		SDL_WINDOW_RESIZABLE
 	);
 	if (!window) {
 		throw creaturesException(std::string("SDL error creating window: ") + SDL_GetError());

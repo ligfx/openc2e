@@ -15,6 +15,8 @@
 #include <functional>
 #include <unordered_map>
 
+#include "SDL_opengl.h"
+
 namespace
 {
 	struct Device* CurrentDevice = nullptr;
@@ -543,8 +545,32 @@ namespace ImGuiSDL
 		SDL_DelEventWatch(ImGuiSDLEventWatch, nullptr);
 	}
 
+	// static void
+	// GL_SetShader(GL_RenderData * data, GL_Shader shader)
+	// {
+	//     if (data->shaders && shader != data->current.shader) {
+	//         GL_SelectShader(data->shaders, shader);
+	//         data->current.shader = shader;
+	//     }
+	// }
+
+
+typedef void (APIENTRY * GL_EnableClientState_Func)(GLenum cap);
+typedef void (APIENTRY * GL_VertexPointer_Func)(GLint size, GLenum type, GLsizei stride, const void* ptr);
+typedef void (APIENTRY * GL_ColorPointer_Func)(GLint size, GLenum type, GLsizei stride, const void* ptr);
+typedef void (APIENTRY * GL_TexCoordPointer_Func)(GLint size, GLenum type, GLsizei stride, const void* ptr);
+typedef void (APIENTRY * GL_DrawElements_Func)(GLenum mode, GLsizei count, GLenum type, const void* indices);
+typedef GLenum (APIENTRY * GL_GetError_Func)();
+typedef void (APIENTRY * GL_UseProgramObjectARB_Func)(GLhandleARB program);
+typedef void (APIENTRY * GL_Enable_Func)(GLenum cap);
+typedef void (APIENTRY * GL_Disable_Func)(GLenum cap);
+typedef GLboolean (APIENTRY * GL_IsEnabled_Func)(GLenum cap);
+typedef void (APIENTRY * GL_GetIntegerv_Func)(GLenum pname, GLint *data);
+typedef void (APIENTRY * GL_Scissor_Func)(GLint x, GLint y, GLsizei width, GLsizei height);
+
 	void Render(ImDrawData* drawData)
-	{
+	{		
+		
 		if (CurrentDevice->CacheWasInvalidated) {
 			CurrentDevice->CacheWasInvalidated = false;
 			CurrentDevice->TriangleCache.Reset();
@@ -566,6 +592,19 @@ namespace ImGuiSDL
 		SDL_Texture* initialRenderTarget = SDL_GetRenderTarget(CurrentDevice->Renderer);
 
 		ImGuiIO& io = ImGui::GetIO();
+		
+		// SDL_Rect rect;
+		// rect.x = 0;
+		// rect.y = 0;
+		// rect.w = 0;
+		// rect.h = 0;
+		// SDL_RenderFillRect(CurrentDevice->Renderer, &rect); // get SHADER_SOLID
+		// assume we still have SHADER_RGBA or whatever is needed for textures
+		SDL_RenderFlush(CurrentDevice->Renderer); // flush command queue
+
+		((GL_EnableClientState_Func)SDL_GL_GetProcAddress("glEnableClientState"))(GL_VERTEX_ARRAY);
+		((GL_EnableClientState_Func)SDL_GL_GetProcAddress("glEnableClientState"))(GL_COLOR_ARRAY);
+		((GL_EnableClientState_Func)SDL_GL_GetProcAddress("glEnableClientState"))(GL_TEXTURE_COORD_ARRAY);
 
 		for (int n = 0; n < drawData->CmdListsCount; n++)
 		{
@@ -573,17 +612,56 @@ namespace ImGuiSDL
 			auto vertexBuffer = commandList->VtxBuffer;
 			auto indexBuffer = commandList->IdxBuffer.Data;
 
+			// GL_ActivateRenderer(CurrentDevice->Renderer);
+			// TODO: use textures
+			
+			// ((GL_UseProgramObjectARB_FUNC)SDL_GL_GetProcAddress("glUseProgramObjectARB")(SHADER_SOLID));
+			
+			// GL_SetShader(data, SHADER_SOLID);
+			// GL_SetBlendMode(data, renderer->blendMode);
+			
+			// glEnableClientState(GL_VERTEX_ARRAY);
+			
+			((GL_VertexPointer_Func)SDL_GL_GetProcAddress("glVertexPointer"))(2, GL_FLOAT, sizeof(ImDrawVert), &vertexBuffer[0].pos);
+			((GL_ColorPointer_Func)SDL_GL_GetProcAddress("glColorPointer"))(4, GL_UNSIGNED_BYTE, sizeof(ImDrawVert), &vertexBuffer[0].col);
+			((GL_TexCoordPointer_Func)SDL_GL_GetProcAddress("glTexCoordPointer"))(2, GL_FLOAT, sizeof(ImDrawVert), &vertexBuffer[0].uv);
+			
+			
+			
+			GLenum err;
+			while ((err = ((GL_GetError_Func)SDL_GL_GetProcAddress("glGetError"))()) != GL_NO_ERROR) {
+				printf("gl error %i\n", err);
+			}
+
 			for (int cmd_i = 0; cmd_i < commandList->CmdBuffer.Size; cmd_i++)
 			{
 				const ImDrawCmd* drawCommand = &commandList->CmdBuffer[cmd_i];
 
-				const Device::ClipRect clipRect = {
-					static_cast<int>(drawCommand->ClipRect.x),
-					static_cast<int>(drawCommand->ClipRect.y),
-					static_cast<int>(drawCommand->ClipRect.z - drawCommand->ClipRect.x),
-					static_cast<int>(drawCommand->ClipRect.w - drawCommand->ClipRect.y)
-				};
-				CurrentDevice->SetClipRect(clipRect);
+				// have texture now
+				SDL_GL_BindTexture((SDL_Texture*)drawCommand->TextureId, NULL, NULL);
+				GLenum err;
+				while ((err = ((GL_GetError_Func)SDL_GL_GetProcAddress("glGetError"))()) != GL_NO_ERROR) {
+					printf("gl error %i\n", err);
+				}
+				// TODO: texture modmode
+				// TODO: texture blend mode
+				// TODO: yuv12 stuff
+				// TODO: set shader according to texture type
+				// something about !GL_shaders_textureSize_supported
+				
+				int framebuffer_height;
+				SDL_GetRendererOutputSize(CurrentDevice->Renderer, nullptr, &framebuffer_height);
+				
+				int old_scissor[4];
+				bool scissor_was_enabled = ((GL_IsEnabled_Func)SDL_GL_GetProcAddress("glIsEnabled"))(GL_SCISSOR_TEST);
+				((GL_Enable_Func)SDL_GL_GetProcAddress("glEnable"))(GL_SCISSOR_TEST);
+				((GL_GetIntegerv_Func)SDL_GL_GetProcAddress("glGetIntegerv"))(GL_SCISSOR_BOX, old_scissor);
+				((GL_Scissor_Func)SDL_GL_GetProcAddress("glScissor"))(
+					drawCommand->ClipRect.x,
+					framebuffer_height - drawCommand->ClipRect.w,
+					drawCommand->ClipRect.z - drawCommand->ClipRect.x,
+					drawCommand->ClipRect.w - drawCommand->ClipRect.y
+				);
 
 				if (drawCommand->UserCallback)
 				{
@@ -591,64 +669,24 @@ namespace ImGuiSDL
 				}
 				else
 				{
-					// Loops over triangles.
-					for (unsigned int i = 0; i + 3 <= drawCommand->ElemCount; i += 3)
-					{
-						num_triangles++;
-						ImDrawVert v0 = vertexBuffer[indexBuffer[i + 0]];
-						ImDrawVert v1 = vertexBuffer[indexBuffer[i + 1]];
-						ImDrawVert v2 = vertexBuffer[indexBuffer[i + 2]];
-
-						const Rect bounding = Rect::CalculateBoundingBox(v0, v1, v2);
-						const bool isTriangleUniformColor = v0.col == v1.col && v1.col == v2.col;
-						const bool doesTriangleUseOnlyColor = bounding.UsesOnlyColor();
-
-						if ((bounding.MinX > clipRect.X + clipRect.Width || bounding.MaxX < clipRect.X)
-							&& (bounding.MinY > clipRect.Y + clipRect.Height || bounding.MaxY < clipRect.Y)
-						) {
-							// Not in clip rect, ignore
-							continue;
-						}
-
-						SDL_Texture *texture = doesTriangleUseOnlyColor ? nullptr : (SDL_Texture*)drawCommand->TextureId;
-
-						// First we check if there is a cached version of this triangle already waiting for us. If so, we can just do a super fast texture copy.
-						v0.pos.x -= (int)bounding.MinX; v0.pos.y -= (int)bounding.MinY;
-						v1.pos.x -= (int)bounding.MinX; v1.pos.y -= (int)bounding.MinY;
-						v2.pos.x -= (int)bounding.MinX; v2.pos.y -= (int)bounding.MinY;
-
-						const Device::GenericTriangleKey key = std::make_tuple(
-							std::make_tuple(v0.pos.x, v0.pos.y, v0.uv.x, v0.uv.y, v0.col),
-							std::make_tuple(v1.pos.x, v1.pos.y, v1.uv.x, v1.uv.y, v1.col),
-							std::make_tuple(v2.pos.x, v2.pos.y, v2.uv.x, v2.uv.y, v2.col),
-							texture
-						);
-
-						if (CurrentDevice->TriangleCache.Contains(key)) {
-							const auto& cached = CurrentDevice->TriangleCache.At(key);
-							const SDL_Rect destination = { (int)bounding.MinX, (int)bounding.MinY, (int)cached->Width, (int)cached->Height };
-							SDL_RenderCopy(CurrentDevice->Renderer, cached->Texture, nullptr, &destination);
-						} else {
-							auto cached = std::make_unique<Device::TriangleCacheItem>();
-							cached->Width = bounding.MaxX - bounding.MinX + 1;
-							cached->Height = bounding.MaxY - bounding.MinY + 1;
-							cached->Texture = CurrentDevice->MakeTexture(cached->Width, cached->Height);
-
-							CurrentDevice->UseAsRenderTarget(cached->Texture);
-							SDL_SetRenderDrawBlendMode(CurrentDevice->Renderer, SDL_BLENDMODE_NONE);
-							DrawTriangle(v0, v1, v2, texture);
-							CurrentDevice->UseAsRenderTarget(initialRenderTarget);
-							SDL_SetRenderDrawBlendMode(CurrentDevice->Renderer, SDL_BLENDMODE_BLEND);
-
-							const SDL_Rect destination = { (int)bounding.MinX, (int)bounding.MinY, (int)cached->Width, (int)cached->Height };
-							SDL_RenderCopy(CurrentDevice->Renderer, cached->Texture, nullptr, &destination);
-
-							CurrentDevice->TriangleCache.Insert(key, std::move(cached));
-						}
+					((GL_DrawElements_Func)SDL_GL_GetProcAddress("glDrawElements"))(GL_TRIANGLES, drawCommand->ElemCount, GL_UNSIGNED_SHORT, indexBuffer);
+					GLenum err;
+					while ((err = ((GL_GetError_Func)SDL_GL_GetProcAddress("glGetError"))()) != GL_NO_ERROR) {
+						printf("gl error %i\n", err);
 					}
 				}
 
 				indexBuffer += drawCommand->ElemCount;
+				SDL_GL_UnbindTexture((SDL_Texture*)drawCommand->TextureId);
+				if (!scissor_was_enabled) {
+					((GL_Disable_Func)SDL_GL_GetProcAddress("glDisable"))(GL_SCISSOR_TEST);
+				}
+				((GL_Scissor_Func)SDL_GL_GetProcAddress("glScissor"))(
+					old_scissor[0],
+					old_scissor[1],
+					old_scissor[2],
+					old_scissor[3]
+				);
 			}
 		}
 
