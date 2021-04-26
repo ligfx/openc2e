@@ -71,6 +71,11 @@ class Map {
 	std::shared_ptr<Room> roomAt(float, float);
 	std::vector<std::shared_ptr<Room>> roomsAt(float, float);
 
+	// Return the point where a line from src to dest either (1) collides with a wall (2) collides
+	// with a door of incompatible perm (3) gets to dest without any collisions. `room` is usually
+	// the room containing the src point.
+	Point simpleCollideLineWithRoomSystem(Point src, Point dest, std::shared_ptr<Room> room, int perm);
+
 	bool collideLineWithRoomSystem(Point src, Point dest, std::shared_ptr<Room>& room, Point& where, Line& wall, unsigned int& walldir, int perm);
 	bool collideLineWithRoomBoundaries(Point src, Point dest, std::shared_ptr<Room> room, std::shared_ptr<Room>& newroom, Point& where, Line& wall, unsigned int& walldir, int perm);
 

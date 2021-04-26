@@ -160,6 +160,14 @@ std::vector<std::shared_ptr<Room>> Map::roomsAt(float _x, float _y) {
 	return m->roomsAt(_x, _y);
 }
 
+Point Map::simpleCollideLineWithRoomSystem(Point src, Point dest, std::shared_ptr<Room> room, int perm) {
+	Point where;
+	Line dummywall;
+	unsigned int dummywalldir;
+	collideLineWithRoomSystem(src, dest, room, where, dummywall, dummywalldir, perm);
+	return where;
+}
+
 bool Map::collideLineWithRoomSystem(Point src, Point dest, std::shared_ptr<Room>& room, Point& where, Line& wall, unsigned int& walldir, int perm) {
 	std::shared_ptr<Room> newRoom;
 

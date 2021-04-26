@@ -176,12 +176,8 @@ void v_OBST(caosVM* vm) {
 		return;
 	}
 
-	unsigned int dummy1;
-	Line dummy2;
-	Point point;
-	bool collided = world.map->collideLineWithRoomSystem(src, dest, ourRoom, point, dummy2, dummy1, vm->targ->perm);
-	// TODO: do something with collided?
-	(void)collided;
+	// TODO: do we care if the line collided or made it to dest?
+	Point point = world.map->simpleCollideLineWithRoomSystem(src, dest, ourRoom, vm->targ->perm);
 
 	switch (direction) {
 		case 0: vm->result.setFloat(src.x - point.x); break;
