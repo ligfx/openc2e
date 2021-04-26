@@ -732,9 +732,9 @@ void Agent::physicsTick() {
 				queueScript(6, 0, velx, vely); // TODO: include this? .. we need to include SOMETHING, c3 ball checks for <3
 
 				if (elas != 0) {
-					if (wall.getType() == HORIZONTAL) {
+					if (wall.isHorizontal()) {
 						vely = -vely;
-					} else if (wall.getType() == VERTICAL) {
+					} else if (wall.isVertical()) {
 						velx = -velx;
 					} else {
 						// line starts always have a lower x value than the end

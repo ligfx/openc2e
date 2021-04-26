@@ -45,16 +45,10 @@ struct Point {
 	}
 };
 
-enum linetype { NORMAL,
-	HORIZONTAL,
-	VERTICAL };
-
 class Line {
   protected:
 	FRIEND_SERIALIZE(Line)
 	Point start, end;
-	double x_icept, y_icept, slope;
-	linetype type;
 
   public:
 	void dump() const;
@@ -62,18 +56,11 @@ class Line {
 	Line() {
 		start = Point(0, 0);
 		end = Point(1, 1);
-		x_icept = y_icept = 0;
-		slope = 1;
-		type = NORMAL;
 	}
 
 	Line(const Line& l) {
 		start = l.start;
 		end = l.end;
-		x_icept = l.x_icept;
-		y_icept = l.y_icept;
-		slope = l.slope;
-		type = l.type;
 	}
 
 	Line(Point s, Point e);
@@ -81,69 +68,40 @@ class Line {
 	Line& operator=(const Line& l) {
 		start = l.start;
 		end = l.end;
-		x_icept = l.x_icept;
-		y_icept = l.y_icept;
-		slope = l.slope;
-		type = l.type;
 		return *this;
 	}
 
 	bool intersect(const Line& l, Point& where) const;
 
-	linetype getType() const { return type; }
-	double xIntercept() const { return x_icept; }
-	double yIntercept() const { return y_icept; }
-	double getSlope() const { return slope; }
+	bool isHorizontal() const { return start.y == end.y; }
+	bool isVertical() const { return start.x == end.x; }
+	float slope() const {
+		assert(!isVertical());
+		return (end.y - start.y) / (end.x - start.x);
+	}
 	const Point& getStart() const { return start; }
 	const Point& getEnd() const { return end; }
 
-	// TODO: this code hasn't really been tested - fuzzie
-	bool containsPoint(Point p) const {
-		if (type == VERTICAL) {
-			bool is_x = fabs(start.x - p.x) < 1;
-			bool is_y = containsY(p.y);
-			// TODO
-			//bool is_v = (start.x > (p.x + 0.5)) && (start.x < (p.x - 0.5));
-			//bool is_h = (start.y > (p.y + 0.5)) && (start.y < (p.y - 0.5));
-			return (is_x && is_y);
-		} else if (type == HORIZONTAL) {
-			bool is_y = fabs(start.y - p.y) < 1;
-			bool is_x = containsX(p.x);
-
-			return is_x && is_y;
+	Point pointAtX(double x) const {
+		assert(!isVertical());
+		if (isHorizontal()) {
+			return Point(x, start.y);
 		} else {
-			Point point_on_line = pointAtX(p.x);
-			return containsX(p.x) && fabs(point_on_line.y - p.y) < 1;
+			return Point(x, (x - start.x) * slope() + start.y);
 		}
 	}
-
-	Point pointAtX(double x) const {
-		assert(type != VERTICAL);
-		if (type == NORMAL)
-			return Point(x, (x - start.x) * slope + start.y);
-		else
-			return Point(x, start.y);
-	}
 	Point pointAtY(double y) const {
-		assert(type != HORIZONTAL);
-		if (type == NORMAL)
-			return Point((y - start.y) / slope + start.x, y);
-		else
+		assert(!isHorizontal());
+		if (isVertical()) {
 			return Point(start.x, y);
+		} else {
+			return Point((y - start.y) / slope() + start.x, y);
+		}
 	}
 
 	bool containsX(double x) const {
 		return x >= start.x && x <= end.x;
 	}
-
-	bool containsY(double y) const {
-		if (start.y > end.y)
-			return y <= start.y && y >= end.y;
-		else
-			return y >= start.y && y <= end.y;
-	}
-
-	void sanity_check() const;
 };
 
 template <class T = double>
@@ -166,26 +124,12 @@ class Vector {
 
 	T getMagnitude() const { return sqrt(x * x + y * y); }
 
-	Line extendFrom(const Point& p) const {
-		return Line(p, Point(p.x + x, p.y + y));
-	}
-
 	Vector scaleToMagnitude(T m) const {
 		return Vector(x / getMagnitude() * m, y / getMagnitude() * m);
 	}
 
 	Vector scale(T multiplier) const {
 		return Vector(x * multiplier, y * multiplier);
-	}
-
-	bool extendIntersect(const Point& start, Line barrier,
-		Vector& residual) const {
-		Line l = extendFrom(start);
-		Point i;
-		if (!l.intersect(barrier, i))
-			return false;
-		residual = Vector(i, Point(start.x + x, start.y + y));
-		return true;
 	}
 
 	T getX() const { return x; }
@@ -221,5 +165,3 @@ template <class T>
 Point operator+(const Point& p, const Vector<T>& v) {
 	return v + p;
 }
-
-/* vim: set noet: */

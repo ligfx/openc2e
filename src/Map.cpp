@@ -208,25 +208,18 @@ bool Map::collideLineWithRoomBoundaries(Point src, Point dest, std::shared_ptr<R
 	bool foundsomething = false;
 	// bool previousroom = newroom != nullptr;
 	Point oldpoint = where;
+
+	// movement is the line from src to dest
 	Line movement(src, dest);
 
 	Line x[4] = {room->left, room->right, room->top, room->bottom};
+	// so, go through each wall of the room - left, right, top, bottom
 	for (unsigned int i = 0; i < 4; i++) {
 		/*if (previousroom)
 			if (x[i].containsPoint(oldpoint)) continue; */
 
 		Point temppoint;
 		if (x[i].intersect(movement, temppoint)) {
-			if (!movement.containsPoint(temppoint)) {
-				std::cout << "physics bug: intersect wasn't on movement line at (" << temppoint.x << ", " << temppoint.y << ")" << std::endl;
-				std::cout << "room line: (" << x[i].getStart().x << ", " << x[i].getStart().y << ") to ";
-				std::cout << "(" << x[i].getEnd().x << ", " << x[i].getEnd().y << ")" << std::endl;
-				std::cout << "movement line: (" << src.x << ", " << src.y << ") to ";
-				std::cout << "(" << dest.x << ", " << dest.y << ")" << std::endl;
-				return false; // go away
-			}
-			assert(movement.containsPoint(temppoint));
-
 			//if (temppoint == src) return false; // for debug use: sneakily fail all movement between rooms
 
 			// see if this is nearer than any previous points we've found
