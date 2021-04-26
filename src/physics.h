@@ -71,7 +71,7 @@ class Line {
 		return *this;
 	}
 
-	bool intersect(const Line& l, Point& where) const;
+	static bool intersect(const Line& l1, const Line& l2, Point& where);
 
 	bool isHorizontal() const { return start.y == end.y; }
 	bool isVertical() const { return start.x == end.x; }

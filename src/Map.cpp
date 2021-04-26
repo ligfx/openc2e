@@ -219,7 +219,7 @@ bool Map::collideLineWithRoomBoundaries(Point src, Point dest, std::shared_ptr<R
 			if (x[i].containsPoint(oldpoint)) continue; */
 
 		Point temppoint;
-		if (x[i].intersect(movement, temppoint)) {
+		if (Line::intersect(x[i], movement, temppoint)) {
 			//if (temppoint == src) return false; // for debug use: sneakily fail all movement between rooms
 
 			// see if this is nearer than any previous points we've found

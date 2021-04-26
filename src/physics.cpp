@@ -35,23 +35,23 @@ Line::Line(Point s, Point e) {
 	end = e;
 }
 
-bool Line::intersect(const Line& l, Point& where) const {
-	auto denominator = (l.end.y - l.start.y) * (end.x - start.x) - (l.end.x - l.start.x) * (end.y - start.y);
+bool Line::intersect(const Line& l1, const Line& l2, Point& where) {
+	auto denominator = (l2.end.y - l2.start.y) * (l1.end.x - l1.start.x) - (l2.end.x - l2.start.x) * (l1.end.y - l1.start.y);
 	if (std::fabs(denominator) < 0.00001) {
 		// lines are parallel, e.g. they either don't intersect or they overlap
 		return false;
 	}
 
-	auto a = (l.end.x - l.start.x) * (start.y - l.start.y) - (l.end.y - l.start.y) * (start.x - l.start.x);
-	auto b = (end.x - start.x) * (start.y - l.start.y) - (end.y - start.y) * (start.x - l.start.x);
+	auto a = (l2.end.x - l2.start.x) * (l1.start.y - l2.start.y) - (l2.end.y - l2.start.y) * (l1.start.x - l2.start.x);
+	auto b = (l1.end.x - l1.start.x) * (l1.start.y - l2.start.y) - (l1.end.y - l1.start.y) * (l1.start.x - l2.start.x);
 
 	auto ua = a / denominator;
 	auto ub = b / denominator;
 
 	if (ua >= 0 && ua <= 1 && ub >= 0 && ub <= 1) {
 		// intersected!
-		auto x = start.x + ua * (end.x - start.x);
-		auto y = start.y + ua * (end.y - start.y);
+		auto x = l1.start.x + ua * (l1.end.x - l1.start.x);
+		auto y = l1.start.y + ua * (l1.end.y - l1.start.y);
 		where = Point(x, y);
 		return true;
 	}
