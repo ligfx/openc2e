@@ -219,7 +219,6 @@ add_library(openc2e-core STATIC
 	src/parseException.cpp
 	src/partzorder.cpp
 	src/PathResolver.cpp
-	src/physics.cpp
 	src/PointerAgent.cpp
 	src/Port.cpp
 	src/prayManager.cpp

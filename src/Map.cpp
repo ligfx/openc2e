@@ -23,6 +23,7 @@
 #include "MetaRoom.h"
 #include "Room.h"
 #include "creaturesException.h"
+#include "physicsUtils.h"
 
 #include <cassert>
 #include <iostream>
@@ -218,7 +219,7 @@ bool Map::collideLineWithRoomBoundaries(Point src, Point dest, std::shared_ptr<R
 		/*if (previousroom)
 			if (x[i].containsPoint(oldpoint)) continue; */
 
-		optional<Point> temppoint = Line::intersect(x[i], movement);
+		optional<Point> temppoint = physicsUtils::intersect(x[i], movement);
 		if (temppoint) {
 			//if (temppoint == src) return false; // for debug use: sneakily fail all movement between rooms
 

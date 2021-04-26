@@ -52,8 +52,6 @@ class Line {
 	Point start, end;
 
   public:
-	void dump() const;
-
 	Line() {
 		start = Point(0, 0);
 		end = Point(1, 1);
@@ -64,15 +62,18 @@ class Line {
 		end = l.end;
 	}
 
-	Line(Point s, Point e);
+	Line(Point s, Point e) {
+		if (s.x > e.x)
+			std::swap(s, e);
+		start = s;
+		end = e;
+	}
 
 	Line& operator=(const Line& l) {
 		start = l.start;
 		end = l.end;
 		return *this;
 	}
-
-	static optional<Point> intersect(const Line& l1, const Line& l2);
 
 	bool isHorizontal() const { return start.y == end.y; }
 	bool isVertical() const { return start.x == end.x; }
