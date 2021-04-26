@@ -26,4 +26,10 @@ optional<Point> intersect(const Line& l1, const Line& l2) {
 	return {};
 }
 
+auto squared_distance(const Point& p1, const Point& p2) {
+	double distx = p1.x - p2.x;
+	double disty = p1.y - p2.y;
+	return distx * distx + disty * disty;
+}
+
 } // namespace physicsUtils

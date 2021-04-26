@@ -224,9 +224,7 @@ bool Map::collideLineWithRoomBoundaries(Point src, Point dest, std::shared_ptr<R
 			//if (temppoint == src) return false; // for debug use: sneakily fail all movement between rooms
 
 			// see if this is nearer than any previous points we've found
-			double distx = temppoint->x - src.x;
-			double disty = temppoint->y - src.y;
-			double d = distx * distx + disty * disty;
+			double d = physicsUtils::squared_distance(temppoint.value(), src);
 			if (d > distance)
 				continue;
 
