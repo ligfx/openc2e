@@ -73,9 +73,6 @@ void c_DBG_OUTV(caosVM* vm) {
 		fmt::print("{:0.06f}", val.getFloat());
 	} else if (val.hasInt()) {
 		fmt::print("{}", val.getInt());
-	} else if (val.hasVector()) {
-		const Vector<float>& v = val.getVector();
-		fmt::print("({:0.6f}, {:0.6f})", v.x, v.y);
 	} else
 		throw badParamException();
 	fmt::print("\n");
@@ -389,7 +386,6 @@ void v_DBG_SIZO(caosVM* vm) {
 	SIZEOF_OUT(Agent);
 	SIZEOF_OUT(std::string);
 	SIZEOF_OUT(AgentRef);
-	SIZEOF_OUT(Vector<float>);
 #ifdef PROFILE_ALLOCATION_COUNT
 	AllocationCounter::walk(oss);
 #else

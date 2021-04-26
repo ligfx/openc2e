@@ -23,7 +23,6 @@
 #include "alloc_count.h"
 #include "bytestring.h"
 #include "caosException.h"
-#include "physics.h"
 #include "serfwd.h"
 
 #include <mpark/variant.hpp>
@@ -53,8 +52,7 @@ enum variableType {
 	CAOSFLOAT,
 	CAOSSTR,
 	CAOSBYTESTRING,
-	CAOSFACEVALUE,
-	CAOSVEC
+	CAOSFACEVALUE
 };
 
 const char* variableTypeToString(variableType);
@@ -64,7 +62,7 @@ class caosValue {
 	COUNT_ALLOC(caosValue)
 	FRIEND_SERIALIZE(caosValue)
   protected:
-	mpark::variant<int, float, AgentRef, std::string, bytestring_t, FaceValue, nulltype_tag, Vector<float>> value;
+	mpark::variant<int, float, AgentRef, std::string, bytestring_t, FaceValue, nulltype_tag> value;
 
   public:
 	caosValue();
@@ -75,7 +73,6 @@ class caosValue {
 	caosValue(const std::string& v);
 	caosValue(const bytestring_t& v);
 	caosValue(const FaceValue& v);
-	caosValue(const Vector<float>& v);
 	caosValue(const caosValue&);
 	caosValue& operator=(const caosValue&);
 	~caosValue();
@@ -92,7 +89,6 @@ class caosValue {
 	bool hasDecimal() const;
 	bool hasNumber() const;
 	bool hasByteStr() const;
-	bool hasVector() const;
 
 	void setInt(int i);
 	void setFloat(float i);
@@ -100,7 +96,6 @@ class caosValue {
 	void setAgent(const AgentRef& r);
 	void setString(const std::string& i);
 	void setByteStr(const bytestring_t& bs);
-	void setVector(const Vector<float>& v);
 	int getInt() const;
 	float getFloat() const;
 	void getString(std::string& s) const;
@@ -108,7 +103,6 @@ class caosValue {
 	std::shared_ptr<Agent> getAgent() const;
 	const AgentRef& getAgentRef() const;
 	const bytestring_t& getByteStr() const;
-	const Vector<float>& getVector() const;
 
 	bool operator==(const caosValue& v) const;
 	bool operator!=(const caosValue& v) const { return !(*this == v); }

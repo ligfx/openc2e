@@ -194,10 +194,6 @@ inline auto vmparamhelper<float>(const caosValue& val) {
 	return val.getFloat();
 }
 template <>
-inline auto vmparamhelper<Vector<float>>(const caosValue& val) {
-	return val.getVector();
-}
-template <>
 inline auto vmparamhelper<std::shared_ptr<Agent>>(const caosValue& val) {
 	return val.getAgent();
 }
@@ -219,7 +215,6 @@ inline auto vmparamhelper<AgentRef>(const caosValue& val) {
 #define VM_PARAM_STRING(name) VM_PARAM_OF_TYPE(name, std::string)
 #define VM_PARAM_INTEGER(name) VM_PARAM_OF_TYPE(name, int)
 #define VM_PARAM_FLOAT(name) VM_PARAM_OF_TYPE(name, float)
-#define VM_PARAM_VECTOR(name) VM_PARAM_OF_TYPE(name, Vector<float>)
 #define VM_PARAM_AGENT(name) VM_PARAM_OF_TYPE(name, std::shared_ptr<Agent>)
 // TODO: is usage of valid_agent correct here, or should we be caos_asserting?
 #define VM_PARAM_VALIDAGENT(name) \

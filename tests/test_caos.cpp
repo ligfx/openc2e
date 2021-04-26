@@ -93,5 +93,3 @@ TEST(caos, timeslice) {
 }
 
 TEST(caos, variables) { run_script("c3", readfile("../tests/variables.cos")); }
-
-TEST(caos, vector) { run_script("c3", readfile("../tests/vector.cos")); }

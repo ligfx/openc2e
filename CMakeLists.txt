@@ -181,7 +181,6 @@ add_library(openc2e-core STATIC
 	src/caos/caosVM_sounds.cpp
 	src/caos/caosVM_time.cpp
 	src/caos/caosVM_variables.cpp
-	src/caos/caosVM_vectors.cpp
 	src/caos/caosVM_vehicles.cpp
 	src/caos/caosVM_world.cpp
 	${GEN}/cataloglexer.cpp

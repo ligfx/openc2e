@@ -41,8 +41,6 @@ const char* variableTypeToString(variableType type) {
 			return "bytestring";
 		case CAOSFACEVALUE:
 			return "facevalue";
-		case CAOSVEC:
-			return "vector";
 	}
 }
 
@@ -54,7 +52,6 @@ struct typeVisit {
 	variableType operator()(nulltype_tag) const { return CAOSNULL; }
 	variableType operator()(const bytestring_t&) const { return CAOSBYTESTRING; }
 	variableType operator()(const FaceValue&) const { return CAOSFACEVALUE; }
-	variableType operator()(const Vector<float>&) const { return CAOSVEC; }
 };
 
 #define BAD_TYPE(et, gt) \
@@ -83,9 +80,6 @@ struct intVisit {
 		}
 	}
 	int operator()(const FaceValue& fv) const { return fv.pose; }
-	int operator()(const Vector<float>& v) const {
-		return (int)v.getMagnitude();
-	}
 	BAD_TYPE(int, std::string);
 	BAD_TYPE(int, AgentRef);
 	BAD_TYPE(int, bytestring_t);
@@ -95,7 +89,6 @@ struct intVisit {
 struct floatVisit {
 	float operator()(int i) const { return (float)i; }
 	float operator()(float f) const { return f; }
-	float operator()(const Vector<float>& v) const { return v.getMagnitude(); }
 	float operator()(const FaceValue& fv) const { return fv.pose; }
 	BAD_TYPE(float, std::string);
 	BAD_TYPE(float, AgentRef);
@@ -115,7 +108,6 @@ struct stringVisit {
 	BAD_TYPE(std::string, int);
 	BAD_TYPE(std::string, float);
 	BAD_TYPE(std::string, bytestring_t);
-	BAD_TYPE(std::string, Vector<float>);
 };
 
 struct agentVisit {
@@ -128,20 +120,6 @@ struct agentVisit {
 	BAD_TYPE(AgentRef, float);
 	BAD_TYPE(AgentRef, bytestring_t);
 	BAD_TYPE(AgentRef, FaceValue);
-	BAD_TYPE(AgentRef, Vector<float>);
-};
-
-struct vectorVisit {
-	const Vector<float>& operator()(const Vector<float>& v) const {
-		return v;
-	}
-	BAD_TYPE(Vector<float>, std::string);
-	BAD_TYPE(Vector<float>, nulltype_tag);
-	BAD_TYPE(Vector<float>, int);
-	BAD_TYPE(Vector<float>, float);
-	BAD_TYPE(Vector<float>, bytestring_t);
-	BAD_TYPE(Vector<float>, FaceValue);
-	BAD_TYPE(Vector<float>, AgentRef);
 };
 
 
@@ -195,9 +173,6 @@ caosValue::caosValue(const bytestring_t& v) {
 caosValue::caosValue(const FaceValue& v)
 	: value(v) {
 }
-caosValue::caosValue(const Vector<float>& v) {
-	setVector(v);
-}
 
 bool caosValue::isEmpty() const {
 	return getType() == CAOSNULL;
@@ -215,16 +190,13 @@ bool caosValue::hasString() const {
 	return getType() == CAOSSTR || getType() == CAOSFACEVALUE;
 }
 bool caosValue::hasDecimal() const {
-	return getType() == CAOSINT || getType() == CAOSFLOAT || getType() == CAOSFACEVALUE || getType() == CAOSVEC;
+	return getType() == CAOSINT || getType() == CAOSFLOAT || getType() == CAOSFACEVALUE;
 }
 bool caosValue::hasNumber() const {
 	return hasDecimal();
 }
 bool caosValue::hasByteStr() const {
 	return getType() == CAOSBYTESTRING;
-}
-bool caosValue::hasVector() const {
-	return getType() == CAOSVEC;
 }
 
 void caosValue::setInt(int i) {
@@ -244,9 +216,6 @@ void caosValue::setString(const std::string& i) {
 }
 void caosValue::setByteStr(const bytestring_t& bs) {
 	value = bs;
-}
-void caosValue::setVector(const Vector<float>& v) {
-	value = v;
 }
 
 int caosValue::getInt() const {
@@ -282,9 +251,6 @@ const bytestring_t& caosValue::getByteStr() const {
 		value);
 }
 
-const Vector<float>& caosValue::getVector() const {
-	return visit(vectorVisit(), value);
-}
 
 std::string caosValue::dump() const {
 	switch (getType()) {
@@ -309,8 +275,6 @@ std::string caosValue::dump() const {
 		}
 		case CAOSFACEVALUE:
 			return fmt::format("FaceValue ({}, \"{}\")", getInt(), getString());
-		case CAOSVEC:
-			return fmt::format("Vector ({}, {})", getVector().x, getVector().y);
 	};
 }
 
@@ -324,8 +288,6 @@ bool caosValue::operator==(const caosValue& v) const {
 		return this->getString() == v.getString();
 	} else if (this->hasAgent() && v.hasAgent()) {
 		return this->getAgent() == v.getAgent();
-	} else if (this->hasVector() && v.hasVector()) {
-		return this->getVector() == v.getVector();
 	} else if (engine.version < 3) {
 		// C1/C2 allow you to compare agents to an integer (unid), since agents are integers..
 		// TODO: do this for >/< too?
@@ -345,18 +307,6 @@ bool caosValue::operator>(const caosValue& v) const {
 		return this->getFloat() > v.getFloat();
 	} else if (this->hasString() && v.hasString()) {
 		return this->getString() > v.getString();
-	} else if (this->hasVector() && v.hasVector()) {
-		// XXX this is totally arbitrary
-		const Vector<float>& v1 = this->getVector();
-		const Vector<float>& v2 = v.getVector();
-		if (v1.x > v2.x)
-			return true;
-		else if (v1.x < v2.x)
-			return false;
-		else if (v1.y > v2.y)
-			return true;
-		else
-			return false;
 	}
 
 	throw caosException(std::string("caosValue operator > couldn't compare ") + this->dump() + "and " + v.dump());
@@ -367,8 +317,6 @@ bool caosValue::operator<(const caosValue& v) const {
 		return this->getFloat() < v.getFloat();
 	} else if (this->hasString() && v.hasString()) {
 		return this->getString() < v.getString();
-	} else if (this->hasVector() && v.hasVector()) {
-		return (*this != v) && !(*this > v);
 	}
 
 	throw caosException(std::string("caosValue operator < couldn't compare ") + this->dump() + "and " + v.dump());
