@@ -229,16 +229,16 @@ bool Map::collideLineWithRoomBoundaries(Point src, Point dest, std::shared_ptr<R
 				continue;
 
 			// work out which room is next along our movement vector
-			// TODO: this code utterly sucks, doesn't work properly
+			// TODO: does this work properly?
+			Point unitvec = physicsUtils::as_unit_vector(Point(dest.x - src.x, dest.y - src.y));
 			float newx, newy;
 			/*if (temppoint == src) { // TODO: this is not an accurate check!! likely cause of falling through PERM
 				// we might be on a PERM line! check backwards.
 				newx = temppoint->x + (src.x <= dest.x ? (src.x == dest.x ? 0.0 : -0.5) : 0.5);
 				newy = temppoint->y + (src.y <= dest.y ? (src.y == dest.y ? 0.0 : -0.5) : 0.5);
 			} else {*/
-			newx = temppoint->x + (src.x <= dest.x ? (src.x == dest.x ? 0.0 : 0.5) : -0.5);
-			newy = temppoint->y + (src.y <= dest.y ? (src.y == dest.y ? 0.0 : 0.5) : -0.5);
-			//}
+			newx = temppoint->x + unitvec.x;
+			newy = temppoint->y + unitvec.y;
 
 			if (room->containsPoint(newx, newy)) { // if a little along our movement vector is still in our room, forget it
 				/*std::cout << "physics debug: next room is original room at (" << temppoint->x << ", " << temppoint->y << ")" << std::endl;

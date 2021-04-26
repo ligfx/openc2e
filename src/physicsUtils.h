@@ -32,4 +32,9 @@ auto squared_distance(const Point& p1, const Point& p2) {
 	return distx * distx + disty * disty;
 }
 
+Point as_unit_vector(const Point& p) {
+	auto magnitude = std::sqrt(p.x * p.x + p.y * p.y);
+	return Point(p.x / magnitude, p.y / magnitude);
+}
+
 } // namespace physicsUtils
