@@ -20,6 +20,7 @@
 #pragma once
 
 #include "serfwd.h"
+#include "utils/optional.h"
 
 #include <cassert>
 #include <cmath> // sqrt
@@ -71,7 +72,7 @@ class Line {
 		return *this;
 	}
 
-	static bool intersect(const Line& l1, const Line& l2, Point& where);
+	static optional<Point> intersect(const Line& l1, const Line& l2);
 
 	bool isHorizontal() const { return start.y == end.y; }
 	bool isVertical() const { return start.x == end.x; }

@@ -35,11 +35,11 @@ Line::Line(Point s, Point e) {
 	end = e;
 }
 
-bool Line::intersect(const Line& l1, const Line& l2, Point& where) {
+optional<Point> Line::intersect(const Line& l1, const Line& l2) {
 	auto denominator = (l2.end.y - l2.start.y) * (l1.end.x - l1.start.x) - (l2.end.x - l2.start.x) * (l1.end.y - l1.start.y);
 	if (std::fabs(denominator) < 0.00001) {
 		// lines are parallel, e.g. they either don't intersect or they overlap
-		return false;
+		return {};
 	}
 
 	auto a = (l2.end.x - l2.start.x) * (l1.start.y - l2.start.y) - (l2.end.y - l2.start.y) * (l1.start.x - l2.start.x);
@@ -52,10 +52,9 @@ bool Line::intersect(const Line& l1, const Line& l2, Point& where) {
 		// intersected!
 		auto x = l1.start.x + ua * (l1.end.x - l1.start.x);
 		auto y = l1.start.y + ua * (l1.end.y - l1.start.y);
-		where = Point(x, y);
-		return true;
+		return Point(x, y);
 	}
-	return false;
+	return {};
 }
 
 /* vim: set noet: */

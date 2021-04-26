@@ -218,13 +218,13 @@ bool Map::collideLineWithRoomBoundaries(Point src, Point dest, std::shared_ptr<R
 		/*if (previousroom)
 			if (x[i].containsPoint(oldpoint)) continue; */
 
-		Point temppoint;
-		if (Line::intersect(x[i], movement, temppoint)) {
+		optional<Point> temppoint = Line::intersect(x[i], movement);
+		if (temppoint) {
 			//if (temppoint == src) return false; // for debug use: sneakily fail all movement between rooms
 
 			// see if this is nearer than any previous points we've found
-			double distx = temppoint.x - src.x;
-			double disty = temppoint.y - src.y;
+			double distx = temppoint->x - src.x;
+			double disty = temppoint->y - src.y;
 			double d = distx * distx + disty * disty;
 			if (d > distance)
 				continue;
@@ -234,15 +234,15 @@ bool Map::collideLineWithRoomBoundaries(Point src, Point dest, std::shared_ptr<R
 			float newx, newy;
 			/*if (temppoint == src) { // TODO: this is not an accurate check!! likely cause of falling through PERM
 				// we might be on a PERM line! check backwards.
-				newx = temppoint.x + (src.x <= dest.x ? (src.x == dest.x ? 0.0 : -0.5) : 0.5);
-				newy = temppoint.y + (src.y <= dest.y ? (src.y == dest.y ? 0.0 : -0.5) : 0.5);
+				newx = temppoint->x + (src.x <= dest.x ? (src.x == dest.x ? 0.0 : -0.5) : 0.5);
+				newy = temppoint->y + (src.y <= dest.y ? (src.y == dest.y ? 0.0 : -0.5) : 0.5);
 			} else {*/
-			newx = temppoint.x + (src.x <= dest.x ? (src.x == dest.x ? 0.0 : 0.5) : -0.5);
-			newy = temppoint.y + (src.y <= dest.y ? (src.y == dest.y ? 0.0 : 0.5) : -0.5);
+			newx = temppoint->x + (src.x <= dest.x ? (src.x == dest.x ? 0.0 : 0.5) : -0.5);
+			newy = temppoint->y + (src.y <= dest.y ? (src.y == dest.y ? 0.0 : 0.5) : -0.5);
 			//}
 
 			if (room->containsPoint(newx, newy)) { // if a little along our movement vector is still in our room, forget it
-				/*std::cout << "physics debug: next room is original room at (" << temppoint.x << ", " << temppoint.y << ")" << std::endl;
+				/*std::cout << "physics debug: next room is original room at (" << temppoint->x << ", " << temppoint->y << ")" << std::endl;
 				std::cout << "room line: (" << x[i].getStart().x << ", " << x[i].getStart().y << ") to ";
 				std::cout << "(" << x[i].getEnd().x << ", " << x[i].getEnd().y << ")" << std::endl;
 				std::cout << "movement line: (" << movement.getStart().x << ", " << movement.getStart().y << ") to ";
@@ -279,7 +279,7 @@ bool Map::collideLineWithRoomBoundaries(Point src, Point dest, std::shared_ptr<R
 				}
 			}*/
 
-			std::shared_ptr<Room> z = roomAt(temppoint.x, temppoint.y); // TODO: evil performance-killing debug check
+			std::shared_ptr<Room> z = roomAt(temppoint->x, temppoint->y); // TODO: evil performance-killing debug check
 			if (!z) {
 				// TODO: commented out this error message for sake of fuzzie's sanity, but it's still an issue
 				/*std::cout << "physics bug: fell out of room system at (" << where.x << ", " << where.y << ")" << std::endl;
@@ -293,7 +293,7 @@ bool Map::collideLineWithRoomBoundaries(Point src, Point dest, std::shared_ptr<R
 			// it is nearer and not the same room, so make it our priority
 			distance = d;
 			foundsomething = true;
-			where = temppoint;
+			where = temppoint.value();
 			wall = x[i];
 			walldir = i;
 			newroom = nextroom;
