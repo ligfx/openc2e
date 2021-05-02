@@ -26,6 +26,21 @@ optional<Point> intersect(const Line& l1, const Line& l2) {
 	return {};
 }
 
+bool collinear(const Point& a, const Point& b, const Point& c) {
+	return std::fabs((b.y - a.y) * (c.x - a.x) - (b.x - a.x) * (c.y - a.y)) < 0.00001;
+}
+
+bool between(double x, double a, double b) {
+	return std::min(a, b) <= x && x <= std::max(a, b);
+}
+
+bool containsPoint(const Line& l, const Point& p) {
+	if (!collinear(l.getStart(), l.getEnd(), p)) {
+		return false;
+	}
+	return between(p.x, l.getStart().x, l.getEnd().x) && between(p.y, l.getStart().y, l.getEnd().y);
+}
+
 auto squared_distance(const Point& p1, const Point& p2) {
 	double distx = p1.x - p2.x;
 	double disty = p1.y - p2.y;
