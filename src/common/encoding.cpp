@@ -374,8 +374,12 @@ size_t utf16le_decode(const uint8_t* buf, char32_t* out) {
 	uint16_t c1 = read16le(buf);
 	if (c1 >= 0xd800 && c1 < 0xdc00) {
 		uint16_t c2 = read16le(buf + 2);
-		*out = ((c1 & 0x3ff) << 10) + (c2 & 0x3ff) + 0x10000;
-		return 4;
+		if (c2 >= 0xdc00 && c2 < 0xe000) {
+			*out = ((c1 & 0x3ff) << 10) + (c2 & 0x3ff) + 0x10000;
+			return 4;
+		} else {
+			return 0;
+		}
 	}
 	*out = c1;
 	return 2;
@@ -483,6 +487,9 @@ std::string utf16le_to_utf8(uint8_t* data, size_t num_bytes) {
 	while (p < data + num_bytes) {
 		char32_t codepoint;
 		size_t bytes_read = utf16le_decode(p, &codepoint);
+		if (bytes_read == 0) {
+			throw std::domain_error("Invalid UTF-16-LE bytes");
+		}
 		s += codepoint_to_utf8(codepoint);
 		p += bytes_read;
 	}
