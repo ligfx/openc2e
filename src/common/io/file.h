@@ -11,7 +11,7 @@ class filereader final : public seekablereader {
 	~filereader() override;
 	void close();
 
-	size_t read(uint8_t* buf, size_t n) override;
+	size_t read_some(uint8_t* buf, size_t n) override;
 	void seek(int64_t offset, seek_type whence) override;
 	size_t tell() override;
 
@@ -26,7 +26,7 @@ class filewriter final : public writer {
 	~filewriter() override;
 	void close();
 
-	size_t write(const uint8_t* buf, size_t n) override;
+	size_t write_some(const uint8_t* buf, size_t n) override;
 
   private:
 	FILE* m_file = nullptr;

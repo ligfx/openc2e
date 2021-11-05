@@ -16,7 +16,7 @@ class spanreader final : public seekablereader {
 	spanreader(const T& t)
 		: spanreader(t.data(), t.size()) {}
 
-	size_t read(uint8_t* buf, size_t n) override;
+	size_t read_some(uint8_t* buf, size_t n) override;
 	void seek(int64_t offset, seek_type whence) override;
 	size_t tell() override;
 

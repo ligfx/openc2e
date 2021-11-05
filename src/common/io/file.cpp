@@ -13,18 +13,6 @@ filereader::filereader(const std::string& filename) {
 	}
 }
 
-// filereader::filereader(const path& filename) {
-// #ifdef _WIN32
-// 	// TODO: only use _wfopen if we have non-ASCII characters or UNC path? Hmm.
-// 	m_file = _wfopen(filename.to_wstring().c_str(), L"rb");
-// #else
-// 	m_file = fopen(filename.c_str(), "rb");
-// #endif
-// 	if (m_file == nullptr) {
-// 		throw io_error(fmt::format("Error opening '{}', errno {}", filename, errno));
-// 	}
-// }
-
 filereader::~filereader() {
 	if (m_file) {
 		close();
@@ -40,7 +28,7 @@ void filereader::close() {
 	m_file = nullptr;
 }
 
-size_t filereader::read(uint8_t* buf, size_t n) {
+size_t filereader::read_some(uint8_t* buf, size_t n) {
 	if (m_file == nullptr) {
 		throw io_error("Attempted reading from an empty filereader object");
 	}
@@ -152,7 +140,7 @@ void filewriter::close() {
 	}
 }
 
-size_t filewriter::write(const uint8_t* buf, size_t n) {
+size_t filewriter::write_some(const uint8_t* buf, size_t n) {
 	if (m_file == nullptr) {
 		throw io_error("Attempted writing to an empty filewriter object");
 	}

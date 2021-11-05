@@ -3,7 +3,7 @@
 #include <string.h>
 
 
-size_t spanreader::read(uint8_t* buf, size_t n) {
+size_t spanreader::read_some(uint8_t* buf, size_t n) {
 	if (m_buffer == nullptr || m_position >= m_buffer_size || n == 0) {
 		return 0;
 	}

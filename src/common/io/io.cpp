@@ -1,11 +1,11 @@
 #include "io.h"
 
 
-void reader::read_exact(uint8_t* buf, size_t n) {
+void reader::read(uint8_t* buf, size_t n) {
 	size_t bytes_read = 0;
 	while (bytes_read < n) {
 		try {
-			bytes_read += read(buf + bytes_read, n - bytes_read);
+			bytes_read += read_some(buf + bytes_read, n - bytes_read);
 		} catch (const io_interrupted&) {
 			continue;
 		}
@@ -20,7 +20,7 @@ std::vector<uint8_t> reader::read_to_end() {
 	while (true) {
 		uint8_t b[1];
 		try {
-			size_t bytes_read = read(b, 1);
+			size_t bytes_read = read_some(b, 1);
 			if (bytes_read == 0) {
 				break;
 			}
@@ -47,12 +47,12 @@ std::vector<uint8_t> seekablereader::read_to_end() {
 	seek(original_pos);
 	// TODO: faster to not value initialize?
 	std::vector<uint8_t> result(size);
-	read_exact(result.data(), size);
+	read(result.data(), size);
 	// need to try reading more in case size was wrong?
 	while (true) {
 		uint8_t b[1];
 		try {
-			size_t bytes_read = read(b, 1);
+			size_t bytes_read = read_some(b, 1);
 			if (bytes_read == 0) {
 				break;
 			}
@@ -64,11 +64,11 @@ std::vector<uint8_t> seekablereader::read_to_end() {
 	return result;
 }
 
-void writer::write_all(const uint8_t* buf, size_t n) {
+void writer::write(const uint8_t* buf, size_t n) {
 	size_t bytes_written = 0;
 	while (bytes_written < n) {
 		try {
-			bytes_written += write(buf + bytes_written, n - bytes_written);
+			bytes_written += write_some(buf + bytes_written, n - bytes_written);
 		} catch (const io_interrupted&) {
 			continue;
 		}

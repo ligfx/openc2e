@@ -10,11 +10,11 @@ const std::string contents = R"(
       some file contents
   )";
 
-TEST(io, file) {
+TEST(common_io, file) {
 	const std::string tempname = "testfile.txt";
 	{
 		filewriter out(tempname);
-		out.write_all((const uint8_t*)contents.data(), contents.size());
+		out.write((const uint8_t*)contents.data(), contents.size());
 	}
 	{
 		filereader in(tempname);
@@ -24,26 +24,26 @@ TEST(io, file) {
 	}
 }
 
-TEST(io, spanreader) {
+TEST(common_io, spanreader) {
 	spanreader in((const uint8_t*)contents.data(), contents.size());
 	std::vector<uint8_t> _buf = in.read_to_end();
 	std::string buf(_buf.begin(), _buf.end());
 	EXPECT_EQ(contents, buf);
 }
 
-TEST(io, vectorwriter) {
+TEST(common_io, vectorwriter) {
 	vectorwriter v;
-	v.write_all((const uint8_t*)contents.data(), contents.size());
+	v.write((const uint8_t*)contents.data(), contents.size());
 
 	std::string buf(v.vector().begin(), v.vector().end());
 	EXPECT_EQ(contents, buf);
 }
 
-TEST(io, mmapreader) {
+TEST(common_io, mmapreader) {
 	const std::string tempname = "testfile.txt";
 	{
 		filewriter out(tempname);
-		out.write_all((const uint8_t*)contents.data(), contents.size());
+		out.write((const uint8_t*)contents.data(), contents.size());
 	}
 	{
 		mappedfile mm(tempname);

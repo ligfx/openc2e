@@ -24,8 +24,8 @@ class io_notseekable : public io_error {
 class reader {
   public:
 	virtual ~reader() = default;
-	virtual size_t read(uint8_t* buf, size_t n) = 0;
-	void read_exact(uint8_t* buf, size_t n);
+	virtual size_t read_some(uint8_t* buf, size_t n) = 0;
+	void read(uint8_t* buf, size_t n);
 	virtual std::vector<uint8_t> read_to_end();
 };
 
@@ -45,6 +45,6 @@ class seekablereader : public reader {
 class writer {
   public:
 	virtual ~writer() = default;
-	virtual size_t write(const uint8_t* buf, size_t n) = 0;
-	void write_all(const uint8_t* buf, size_t n);
+	virtual size_t write_some(const uint8_t* buf, size_t n) = 0;
+	void write(const uint8_t* buf, size_t n);
 };

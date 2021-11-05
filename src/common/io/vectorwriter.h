@@ -7,7 +7,7 @@
 class vectorwriter final : public writer {
   public:
 	vectorwriter() = default;
-	size_t write(const uint8_t* buf, size_t n) {
+	size_t write_some(const uint8_t* buf, size_t n) {
 		m_vector.insert(m_vector.end(), buf, buf + n);
 		return n;
 	}
