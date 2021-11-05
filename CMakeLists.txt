@@ -106,8 +106,11 @@ include_directories(BEFORE
 # Targets
 add_library(openc2e-common STATIC
 	src/common/encoding.cpp
+	src/common/io/file.cpp
+	src/common/io/io.cpp
 	src/common/mappedfile.cpp
 	src/common/readfile.cpp
+	src/common/io/spanreader.cpp
 	src/common/string_in.cpp
 	src/common/userlocale.cpp
 	src/common/case_insensitive_filesystem.cpp
@@ -350,6 +353,7 @@ add_executable(test_openc2e
 	src/tests/test_encoding.cpp
 	src/tests/test_pray.cpp
 	src/tests/test_common.cpp
+	src/tests/test_common_io.cpp
 )
 target_link_libraries(test_openc2e openc2e-core gtest gtest_main)
 if(COMMAND gtest_discover_testsp)

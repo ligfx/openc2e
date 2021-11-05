@@ -12,6 +12,9 @@ class span {
 		: data_(first), size_(count) {}
 	span(T* first, T* last)
 		: data_(first), size_(last - first) {}
+	template <class R, size_t N>
+	span(R (&arr)[N])
+		: data_(arr), size_(N) {}
 	template <class R>
 	span(R&& r)
 		: data_(r.data()), size_(r.size()) {}
