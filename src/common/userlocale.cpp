@@ -3,10 +3,14 @@
 
 #include "userlocale.h"
 
+#include "encoding.h"
+
 #include <algorithm>
 
 #if defined(_WIN32)
-#include <codecvt>
+#ifndef WIN32_LEAN_AND_MEAN
+#define WIN32_LEAN_AND_MEAN
+#endif
 #include <windows.h>
 #elif defined(__APPLE__)
 #import <CoreFoundation/CoreFoundation.h>
@@ -24,14 +28,13 @@ std::vector<std::string> get_preferred_languages() {
 	if (GetUserPreferredUILanguages(MUI_LANGUAGE_NAME, &num_languages, NULL, &size_buffer)) {
 		std::vector<wchar_t> buffer(size_buffer);
 		if (GetUserPreferredUILanguages(MUI_LANGUAGE_NAME, &num_languages, buffer.data(), &size_buffer)) {
-			std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>, wchar_t> converter;
 			size_t p = 0;
 			for (size_t i = 0; p < size_buffer && i < num_languages; ++i) {
 				std::wstring wlang(buffer.data() + p);
 				if (wlang.empty()) {
 					break;
 				}
-				std::string lang = converter.to_bytes(wlang);
+				std::string lang = wstring_to_string(wlang);
 				languages.push_back(lang);
 				p += wlang.size() + 1;
 			}

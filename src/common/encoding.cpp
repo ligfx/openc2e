@@ -6,30 +6,36 @@
 #include <assert.h>
 #include <stdexcept>
 
-std::string codepoint_to_utf8(char32_t c) {
-	std::array<uint8_t, 5> s = {0, 0, 0, 0, 0};
+static_vector<uint8_t, 4> utf8_encode(char32_t c) {
+	static_vector<uint8_t, 4> buf;
 	if (c <= 0x7f) {
-		s[0] = c;
+		buf += c;
 	} else if (c <= 0x7ff) {
-		s[0] = 0xc0 | (c >> 6);
-		s[1] = 0x80 | (c & 0x3f);
+		buf += 0xc0 | (c >> 6);
+		buf += 0x80 | (c & 0x3f);
 	} else if (c <= 0xffff) {
-		s[0] = 0xe0 | (c >> 12);
-		s[1] = 0x80 | ((c >> 6) & 0x3f);
-		s[2] = 0x80 | (c & 0x3f);
+		buf += 0xe0 | (c >> 12);
+		buf += 0x80 | ((c >> 6) & 0x3f);
+		buf += 0x80 | (c & 0x3f);
 	} else if (c <= 0x10ffff) {
-		s[0] = 0xf0 | (c >> 18);
-		s[1] = 0x80 | ((c >> 12) & 0x3f);
-		s[2] = 0x80 | ((c >> 6) & 0x3f);
-		s[3] = 0x80 | (c & 0x3f);
-	} else {
-		throw std::domain_error("Can't convert " + std::to_string(c) + " into UTF-8");
+		buf += 0xf0 | (c >> 18);
+		buf += 0x80 | ((c >> 12) & 0x3f);
+		buf += 0x80 | ((c >> 6) & 0x3f);
+		buf += 0x80 | (c & 0x3f);
 	}
-	return std::string((char*)s.data());
+	return buf;
 }
 
-static int utf8decode(const unsigned char* s, char32_t* c) {
-	int n = 0;
+std::string codepoint_to_utf8(char32_t c) {
+	auto s = utf8_encode(c);
+	if (s.size() == 0) {
+		throw std::domain_error("Can't convert " + std::to_string(c) + " into UTF-8");
+	}
+	return std::string(s.begin(), s.end());
+}
+
+size_t utf8decode(const uint8_t* s, char32_t* c) {
+	size_t n = 0;
 	if (s[0] <= 0x7f) {
 		n = 1;
 		*c = (char32_t)s[0];
@@ -153,7 +159,7 @@ static char32_t utf8_combine_diacriticals(char32_t c, char32_t combining) {
 
 static char32_t utf8_to_codepoint(const std::string& s, size_t& pos) {
 	char32_t c;
-	int bytes_read = utf8decode((unsigned char*)s.data() + pos, &c);
+	size_t bytes_read = utf8decode((uint8_t*)s.data() + pos, &c);
 	if (bytes_read == 0) {
 		throw std::domain_error("Invalid UTF-8 codepoint starting with " + std::to_string(s[pos]));
 	}
@@ -161,17 +167,41 @@ static char32_t utf8_to_codepoint(const std::string& s, size_t& pos) {
 	return c;
 }
 
-bool is_valid_utf8(const std::string& str) {
+bool is_valid_utf8(const char* s) {
+	if (s == nullptr) {
+		return true;
+	}
 	size_t pos = 0;
-	while (pos < str.size()) {
+	while (s[pos] != '\0') {
 		char32_t codepoint;
-		int bytes_read = utf8decode((unsigned char*)str.c_str() + pos, &codepoint);
+		size_t bytes_read = utf8decode((unsigned char*)s + pos, &codepoint);
 		if (bytes_read == 0) {
 			return false;
 		}
 		pos += bytes_read;
 	}
 	return true;
+}
+
+bool is_valid_utf8(const std::string& str) {
+	return is_valid_utf8(str.c_str());
+}
+
+std::string to_utf8_lossy(const std::basic_string<uint8_t>& s) {
+	std::string result;
+	const uint8_t* p = s.data();
+	while (*p != '\0') {
+		char32_t codepoint;
+		size_t bytes_read = utf8decode(p, &codepoint);
+		if (bytes_read > 0) {
+			result.insert(result.end(), p, p + bytes_read);
+			p += bytes_read;
+		} else {
+			result += "\xef\xbf\xbd";
+			p += 1;
+		}
+	}
+	return result;
 }
 
 std::string cp1252_to_utf8(const std::string& cp1252_str) {
@@ -319,24 +349,142 @@ bool cp1252_isprint(unsigned char c) {
 	return true;
 }
 
-static char32_t utf16le_to_codepoint(uint8_t** p) {
-	assert(p);
-	assert(*p);
-	uint16_t c1 = read16le(*p);
-	*p += 2;
+size_t utf16_decode(const uint16_t* buf, char32_t* out) {
+	assert(buf);
+	assert(out);
+
+	uint16_t c1 = *buf;
 	if (c1 >= 0xd800 && c1 < 0xdc00) {
-		uint16_t c2 = read16le(*p);
-		*p += 2;
-		return ((c1 & 0x3ff) << 10) + (c2 & 0x3ff) + 0x10000;
+		uint16_t c2 = *(buf + 1);
+		if (c2 >= 0xdc00 && c2 < 0xe000) {
+			*out = ((c1 & 0x3ff) << 10) + (c2 & 0x3ff) + 0x10000;
+			return 2;
+		} else {
+			return 0;
+		}
 	}
-	return c1;
+	*out = c1;
+	return 1;
+}
+
+size_t utf16le_decode(const uint8_t* buf, char32_t* out) {
+	assert(buf);
+	assert(out);
+
+	uint16_t c1 = read16le(buf);
+	if (c1 >= 0xd800 && c1 < 0xdc00) {
+		uint16_t c2 = read16le(buf + 2);
+		*out = ((c1 & 0x3ff) << 10) + (c2 & 0x3ff) + 0x10000;
+		return 4;
+	}
+	*out = c1;
+	return 2;
+}
+
+size_t utf32_decode(const uint32_t* buf, char32_t* out) {
+	assert(buf);
+	assert(out);
+	*out = buf[0];
+	return 1;
+}
+
+
+template <int N>
+size_t wchar_decode_impl(const wchar_t* buf, char32_t* out);
+
+template <>
+size_t wchar_decode_impl<2>(const wchar_t* buf, char32_t* out) {
+	return utf16_decode((const uint16_t*)buf, out);
+}
+
+template <>
+size_t wchar_decode_impl<4>(const wchar_t* buf, char32_t* out) {
+	return utf32_decode((const uint32_t*)buf, out);
+}
+
+size_t wchar_decode(const wchar_t* buf, char32_t* out) {
+	return wchar_decode_impl<sizeof(wchar_t)>(buf, out);
+}
+
+static_vector<uint16_t, 2> utf16_encode(char32_t codepoint) {
+	static_vector<uint16_t, 2> buf;
+	if (codepoint > 0xffff) {
+		buf += ((codepoint - 0x10000) >> 10) + 0xd800;
+		buf += (codepoint & 0x3ff) + 0xdc00;
+	} else {
+		buf += codepoint;
+	}
+	return buf;
+}
+
+static_vector<uint32_t, 1> utf32_encode(char32_t codepoint) {
+	static_vector<uint32_t, 1> buf;
+	buf += codepoint;
+	return buf;
+}
+
+template <int N>
+auto wchar_encode_impl(char32_t codepoint);
+
+template <>
+auto wchar_encode_impl<2>(char32_t codepoint) {
+	return utf16_encode(codepoint);
+}
+
+template <>
+auto wchar_encode_impl<4>(char32_t codepoint) {
+	return utf32_encode(codepoint);
+}
+
+auto wchar_encode(char32_t codepoint) {
+	return wchar_encode_impl<sizeof(wchar_t)>(codepoint);
+}
+
+std::string wstring_to_string(const std::wstring& s) {
+	std::string result;
+	const wchar_t* p = s.data();
+	while (true) {
+		char32_t codepoint;
+		size_t units_read = wchar_decode(p, &codepoint);
+		if (codepoint == 0) {
+			break;
+		}
+		result += codepoint_to_utf8(codepoint);
+		p += units_read;
+	}
+	return result;
+}
+
+
+std::wstring string_to_wstring(const std::string& s) {
+	std::wstring result;
+
+	const uint8_t* p = (const uint8_t*)s.c_str();
+	while (true) {
+		char32_t codepoint;
+		size_t bytes_read = utf8decode(p, &codepoint);
+		if (bytes_read == 0) {
+			throw std::domain_error("Invalid UTF-8 string");
+		}
+		if (codepoint == 0) {
+			break;
+		}
+		p += bytes_read;
+
+		auto buf = wchar_encode(codepoint);
+		result.append(buf.begin(), buf.end());
+	}
+	return result;
 }
 
 std::string utf16le_to_utf8(uint8_t* data, size_t num_bytes) {
 	std::string s;
 	uint8_t* p = data;
 	while (p < data + num_bytes) {
-		s += codepoint_to_utf8(utf16le_to_codepoint(&p));
+		char32_t codepoint;
+		size_t bytes_read = utf16le_decode(p, &codepoint);
+		s += codepoint_to_utf8(codepoint);
+		p += bytes_read;
 	}
 	return s;
 }
