@@ -20,6 +20,7 @@
 #include "c2cobfile.h"
 
 #include "common/Exception.h"
+#include "common/encoding.h"
 #include "common/endianlove.h"
 
 #include <algorithm>
@@ -29,23 +30,23 @@
 
 c2cobfile::c2cobfile(std::string _path)
 	: path(_path) {
-	file.open(path.c_str(), std::ios::binary);
-
-	if (!file.is_open())
+	try {
+		file = filereader(path);
+	} catch (io_error&) {
 		throw Exception(std::string("couldn't open COB file \"") + path + "\"");
+	}
 
 	// TODO: c1 cob support
-	char majic[4];
+	uint8_t majic[4];
 	file.read(majic, 4);
-	if (strncmp(majic, "cob2", 4) != 0)
+	if (memcmp(majic, "cob2", 4) != 0)
 		throw Exception(std::string("bad magic of C2 COB file \"") + path + "\"");
 
-	while (!file.eof()) {
+
+	while (file.has_more_data()) {
 		// TODO: catch exceptions, and free all blocks before passing it up the stack
 		cobBlock* b = new cobBlock(this);
 		blocks.push_back(b);
-
-		file.peek(); // make sure eof() gets set
 	}
 }
 
@@ -56,16 +57,21 @@ c2cobfile::~c2cobfile() {
 }
 
 cobBlock::cobBlock(c2cobfile* p) {
-	std::istream& file = p->getStream();
+	seekablereader& file = p->getStream();
 
-	char cobtype[4];
+	uint8_t cobtype[4];
 	file.read(cobtype, 4);
-	type = std::string(cobtype, 4);
+	if (!is_valid_ascii(cobtype, 4)) {
+		// TODO: is CP1252 allowed?
+		// TODO: debug representation, instead of lossy UTF-8?
+		throw Exception("bad type of C2 COB block \"" + to_utf8_lossy(cobtype, 4) + "\"");
+	}
+	type = ascii_to_utf8(cobtype, 4);
 
 	size = read32le(file);
 
-	offset = file.tellg();
-	file.seekg(size, std::ios::cur);
+	offset = file.tell();
+	file.ignore(size);
 
 	loaded = false;
 	buffer = 0;
@@ -79,18 +85,20 @@ cobBlock::~cobBlock() {
 
 void cobBlock::load() {
 	assert(!loaded);
-	std::istream& file = parent->getStream();
+	seekablereader& file = parent->getStream();
 
-	file.clear();
-	file.seekg(offset);
-	if (!file.good())
+	try {
+		file.seek(offset);
+	} catch (io_error&) {
 		throw Exception("Failed to seek to block offset.");
+	}
 
 	loaded = true;
 
-	buffer = new unsigned char[size];
-	file.read((char*)buffer, size);
-	if (!file.good()) {
+	buffer = new uint8_t[size];
+	try {
+		file.read(buffer, size);
+	} catch (io_error&) {
 		free();
 		throw Exception("Failed to read block.");
 	}
@@ -106,14 +114,16 @@ void cobBlock::free() {
 }
 
 // TODO: argh, isn't there a better way to do this?
-std::string readstring(std::istream& file) {
+std::string readstring(reader& file) {
 	unsigned int i = 0, n = 4096;
 	char* buf = (char*)malloc(n);
 
 	while (true) {
-		file.read(&buf[i], 1);
-		if (!file.good())
+		try {
+			file.read(reinterpret_cast<uint8_t*>(&buf[i]), 1);
+		} catch (io_error&) {
 			throw Exception("Failed to read string.");
+		}
 
 		// found null terminator
 		if (buf[i] == 0) {
@@ -134,12 +144,13 @@ std::string readstring(std::istream& file) {
 
 cobAgentBlock::cobAgentBlock(cobBlock* p) {
 	parent = p;
-	std::istream& file = p->getParent()->getStream();
+	seekablereader& file = p->getParent()->getStream();
 
-	file.clear();
-	file.seekg(p->getOffset());
-	if (!file.good())
+	try {
+		file.seek(p->getOffset());
+	} catch (io_error&) {
 		throw Exception("Failed to seek to block offset.");
+	}
 
 	quantityremaining = read16le(file);
 	lastusage = read32le(file);
@@ -148,7 +159,7 @@ cobAgentBlock::cobAgentBlock(cobBlock* p) {
 	usebymonth = read8(file);
 	usebyyear = read16le(file);
 
-	file.seekg(12, std::ios::cur); // unused
+	file.ignore(12); // unused
 
 	name = readstring(file);
 	description = readstring(file);
@@ -175,22 +186,23 @@ cobAgentBlock::cobAgentBlock(cobBlock* p) {
 	thumbnail.height = read16le(file);
 	thumbnail.format = if_rgb565;
 	thumbnail.data = shared_array<uint8_t>(2 * thumbnail.width * thumbnail.height);
-	file.read((char*)thumbnail.data.data(), 2 * thumbnail.width * thumbnail.height);
+	file.read(thumbnail.data.data(), 2 * thumbnail.width * thumbnail.height);
 }
 
 cobAgentBlock::~cobAgentBlock() = default;
 
 cobFileBlock::cobFileBlock(cobBlock* p) {
 	parent = p;
-	std::istream& file = p->getParent()->getStream();
+	seekablereader& file = p->getParent()->getStream();
 
-	file.clear();
-	file.seekg(p->getOffset());
-	if (!file.good())
+	try {
+		file.seek(p->getOffset());
+	} catch (io_error&) {
 		throw Exception("Failed to seek to block offset.");
+	}
 
 	filetype = read16le(file);
-	file.seekg(4, std::ios::cur); // unused
+	file.ignore(4); // unused
 	filesize = read32le(file);
 
 	// filenames should be read as lower-case to ease comparison
@@ -210,12 +222,13 @@ unsigned char* cobFileBlock::getFileContents() {
 
 cobAuthBlock::cobAuthBlock(cobBlock* p) {
 	parent = p;
-	std::istream& file = p->getParent()->getStream();
+	seekablereader& file = p->getParent()->getStream();
 
-	file.clear();
-	file.seekg(p->getOffset());
-	if (!file.good())
+	try {
+		file.seek(p->getOffset());
+	} catch (io_error&) {
 		throw Exception("Failed to seek to block offset.");
+	}
 
 	daycreated = read8(file);
 	monthcreated = read8(file);

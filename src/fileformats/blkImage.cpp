@@ -20,11 +20,10 @@
 #include "blkImage.h"
 
 #include "common/endianlove.h"
+#include "common/io/io.h"
 #include "common/throw_ifnot.h"
 
-#include <iostream>
-
-Image ReadBlkFile(std::istream& in) {
+Image ReadBlkFile(seekablereader& in) {
 	uint32_t flags = read32le(in);
 	bool is_565 = (flags & 0x01);
 	imageformat imgformat = is_565 ? if_rgb565 : if_rgb555;
@@ -55,7 +54,7 @@ Image ReadBlkFile(std::istream& in) {
 		for (size_t j = 0; j < widthinsprites; j++) {
 			const unsigned int whereweare = j * heightinsprites + i;
 			// TODO: don't seek, it's slow
-			in.seekg(offsets[whereweare]);
+			in.seek(offsets[whereweare]);
 			for (int blocky = 0; blocky < 128; blocky++) {
 				readmany16le(in, (uint16_t*)&(buffer[(i * 128 + blocky) * totalwidth * 2 + j * 128 * 2]), 128);
 			}

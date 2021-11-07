@@ -22,7 +22,7 @@
 #include "c1defaultpalette.h"
 #include "common/endianlove.h"
 
-static MultiImage ReadPrototypeSprFile(std::istream& in, int numframes, uint32_t first_offset) {
+static MultiImage ReadPrototypeSprFile(seekablereader& in, int numframes, uint32_t first_offset) {
 	MultiImage images(numframes);
 
 	std::vector<uint16_t> offsets(numframes);
@@ -41,15 +41,15 @@ static MultiImage ReadPrototypeSprFile(std::istream& in, int numframes, uint32_t
 
 	for (int i = 0; i < numframes; i++) {
 		// TODO: don't seek
-		in.seekg(offsets[i]);
+		in.seek(offsets[i]);
 		images[i].data = shared_array<uint8_t>(images[i].width * images[i].height);
-		in.read(reinterpret_cast<char*>(images[i].data.data()), images[i].width * images[i].height);
+		in.read(images[i].data.data(), images[i].width * images[i].height);
 	}
 
 	return images;
 }
 
-MultiImage ReadSprFile(std::istream& in) {
+MultiImage ReadSprFile(seekablereader& in) {
 	int numframes = read16le(in);
 	MultiImage images(numframes);
 
@@ -83,9 +83,9 @@ MultiImage ReadSprFile(std::istream& in) {
 
 	for (int i = 0; i < numframes; i++) {
 		// TODO: don't seek
-		in.seekg(offsets[i]);
+		in.seek(offsets[i]);
 		images[i].data = shared_array<uint8_t>(images[i].width * images[i].height);
-		in.read(reinterpret_cast<char*>(images[i].data.data()), images[i].width * images[i].height);
+		in.read(images[i].data.data(), images[i].width * images[i].height);
 	}
 
 	return images;

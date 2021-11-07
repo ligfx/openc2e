@@ -22,32 +22,28 @@
 #include "common/Exception.h"
 #include "common/encoding.h"
 #include "common/endianlove.h"
-#include "common/spanstream.h"
+#include "common/io/spanreader.h"
 
 #include <cstring>
 #include <zlib.h>
 
-PrayFileReader::PrayFileReader(std::istream& stream_)
+PrayFileReader::PrayFileReader(bufferedseekablereader& stream_)
 	: stream(stream_) {
-	char majic[4];
+	uint8_t majic[4];
 	stream.read(majic, 4);
-	if (strncmp(majic, "PRAY", 4) != 0)
+	if (memcmp(majic, "PRAY", 4) != 0)
 		throw Exception("bad magic of PRAY file");
 
-	while (true) {
-		stream.peek();
-		if (stream.eof()) {
-			break;
-		}
-		if (!stream) {
+	while (stream.has_more_data()) {
+		try {
+			block_offsets.push_back(stream.tell());
+
+			stream.ignore(132); // skip type and name
+			uint32_t compressedsize = read32le(stream);
+			stream.ignore(8 + compressedsize);
+		} catch (io_error&) {
 			throw Exception("Stream failure while reading PRAY file");
 		}
-
-		block_offsets.push_back(stream.tellg());
-
-		stream.seekg(132, std::ios::cur); // skip type and name
-		uint32_t compressedsize = read32le(stream);
-		stream.seekg(8 + compressedsize, std::ios::cur);
 	}
 }
 
@@ -59,23 +55,25 @@ size_t PrayFileReader::getNumBlocks() {
 }
 
 std::string PrayFileReader::getBlockType(size_t i) {
-	stream.seekg(block_offsets[i]);
+	stream.seek(block_offsets[i]);
 	char type[5];
 	type[4] = 0;
-	stream.read(type, 4);
+	// TODO: assert CP1252 and decode into UTF-8
+	stream.read(reinterpret_cast<uint8_t*>(type), 4);
 	return type;
 }
 
 std::string PrayFileReader::getBlockName(size_t i) {
-	stream.seekg(block_offsets[i] + 4);
+	stream.seek(block_offsets[i] + 4);
 	char name[129];
 	name[128] = 0;
-	stream.read(name, 128);
+	// TODO: assert CP1252 and decode into UTF-8
+	stream.read(reinterpret_cast<uint8_t*>(name), 128);
 	return ensure_utf8(name);
 }
 
 bool PrayFileReader::getBlockIsCompressed(size_t i) {
-	stream.seekg(block_offsets[i] + 140);
+	stream.seek(block_offsets[i] + 140);
 	uint32_t flags = read32le(stream);
 	return ((flags & 1) == 1);
 }
@@ -83,7 +81,7 @@ bool PrayFileReader::getBlockIsCompressed(size_t i) {
 std::vector<unsigned char> PrayFileReader::getBlockRawData(size_t i) {
 	std::string name = getBlockName(i);
 
-	stream.seekg(block_offsets[i] + 132);
+	stream.seek(block_offsets[i] + 132);
 	uint32_t compressedsize = read32le(stream);
 	uint32_t size = read32le(stream);
 	uint32_t flags = read32le(stream);
@@ -96,9 +94,10 @@ std::vector<unsigned char> PrayFileReader::getBlockRawData(size_t i) {
 
 	if (compressed) {
 		// TODO: check pray_uncompress_sanity_check
-		std::vector<unsigned char> src(compressedsize);
-		stream.read((char*)src.data(), compressedsize);
-		if (!stream.good()) {
+		std::vector<uint8_t> src(compressedsize);
+		try {
+			stream.read(src.data(), src.size());
+		} catch (io_error&) {
 			throw Exception("Failed to read all of compressed block.");
 		}
 		uLongf usize = size;
@@ -117,8 +116,9 @@ std::vector<unsigned char> PrayFileReader::getBlockRawData(size_t i) {
 			throw Exception("Decompressed data is not the correct size.");
 		}
 	} else {
-		stream.read((char*)buffer.data(), size);
-		if (!stream.good()) {
+		try {
+			stream.read(buffer.data(), buffer.size());
+		} catch (io_error&) {
 			throw Exception("Failed to read all of uncompressed block.");
 		}
 	}
@@ -126,11 +126,12 @@ std::vector<unsigned char> PrayFileReader::getBlockRawData(size_t i) {
 	return buffer;
 }
 
-static std::string tagStringRead(std::istream& in) {
+static std::string tagStringRead(reader& in) {
 	unsigned int len = read32le(in);
 
 	std::string data(len, '0');
-	in.read(&data[0], len);
+	// TODO: assert CP1252 and decode into UTF-8
+	in.read(reinterpret_cast<uint8_t*>(&data[0]), len);
 	return data;
 }
 
@@ -141,7 +142,7 @@ std::pair<std::map<std::string, uint32_t>, std::map<std::string, std::string>> P
 	std::map<std::string, std::string> stringValues;
 
 	auto buffer = getBlockRawData(i);
-	spanstream s(buffer);
+	spanreader s(buffer);
 
 	unsigned int nointvalues = read32le(s);
 	for (unsigned int i = 0; i < nointvalues; i++) {
@@ -165,11 +166,7 @@ std::pair<std::map<std::string, uint32_t>, std::map<std::string, std::string>> P
 		}
 	}
 
-	if (!s) {
-		throw Exception("Stream failure reading tags from PRAY block \"" + name + "\"");
-	}
-	s.peek();
-	if (!s.eof()) {
+	if (s.has_more_data()) {
 		throw Exception("Didn't read whole block while reading tags from PRAY block \"" + name + "\"");
 	}
 

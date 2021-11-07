@@ -1,9 +1,9 @@
 #pragma once
 
 #include "common/Exception.h"
+#include "common/io/io.h"
 
 #include <ghc/filesystem.hpp>
-#include <iosfwd>
 #include <string>
 #include <vector>
 
@@ -32,4 +32,4 @@ struct CatalogueFile {
 
 
 CatalogueFile readCatalogueFile(ghc::filesystem::path);
-CatalogueFile readCatalogueFile(std::istream& in);
+CatalogueFile readCatalogueFile(reader& in);

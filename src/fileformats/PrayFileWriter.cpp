@@ -2,13 +2,13 @@
 
 #include "common/encoding.h"
 #include "common/endianlove.h"
-#include "common/vectorstream.h"
+#include "common/io/vectorwriter.h"
 
 #include <cassert>
 #include <vector>
 #include <zlib.h>
 
-PrayFileWriter::PrayFileWriter(std::ostream& stream_)
+PrayFileWriter::PrayFileWriter(writer& stream_)
 	: stream(stream_) {
 	stream.write("PRAY", 4);
 }
@@ -66,7 +66,7 @@ void PrayFileWriter::writeBlockTags(
 	const std::map<std::string, unsigned int>& integer_tags,
 	const std::map<std::string, std::string>& string_tags,
 	PrayFileWriter::Compression compression) {
-	vectorstream os;
+	vectorwriter os;
 
 	write32le(os, integer_tags.size());
 	for (auto kv : integer_tags) {

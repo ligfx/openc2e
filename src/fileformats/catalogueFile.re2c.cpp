@@ -1,9 +1,9 @@
 #include "catalogueFile.h"
+#include "common/io/file.h"
 #include "common/readfile.h"
 
 #include <assert.h>
 #include <fmt/core.h>
-#include <fstream>
 
 enum CatalogueParserTokenType {
 	CTOK_EOI = 0,
@@ -155,11 +155,11 @@ struct CatalogueParser {
 };
 
 CatalogueFile readCatalogueFile(ghc::filesystem::path p) {
-	std::ifstream in(p, std::ios_base::binary);
+	filereader in(p);
 	return readCatalogueFile(in);
 }
 
-CatalogueFile readCatalogueFile(std::istream& in) {
+CatalogueFile readCatalogueFile(reader& in) {
 	std::string data = readfile(in);
 	CatalogueParser parser(data.c_str());
 	return parser.parse();

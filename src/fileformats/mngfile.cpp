@@ -19,19 +19,20 @@
 #include "mngfile.h"
 
 #include "common/Exception.h"
+#include "common/encoding.h"
 #include "common/endianlove.h"
+#include "common/io/spanreader.h"
 #include "common/mappedfile.h"
 #include "common/shared_array.h"
-#include "common/spanstream.h"
 #include "mngparser.h"
 
 #include <algorithm>
 #include <assert.h>
 #include <fmt/core.h>
 
-void decryptbuf(char* buf, int len) {
+void decryptbuf(uint8_t* buf, int len) {
 	int i;
-	unsigned char pad = 5;
+	uint8_t pad = 5;
 	for (i = 0; i < len; i++) {
 		buf[i] ^= pad;
 		pad += 0xC1;
@@ -43,12 +44,13 @@ MNGFile::MNGFile() = default;
 MNGFile::MNGFile(std::string n) {
 	name = n;
 
-	mappedfile m(n);
-	spanstream stream(m);
-	if (!stream) {
+	mappedfile m;
+	try {
+		m = mappedfile(n);
+	} catch (mappedfileerror&) {
 		throw MNGFileException("open failed");
 	}
-	stream.exceptions(spanstream::failbit | spanstream::badbit);
+	spanreader stream(m);
 
 	// Read metavariables from beginning of file
 	uint32_t numsamples = read32le(stream);
@@ -70,10 +72,10 @@ MNGFile::MNGFile(std::string n) {
 
 	// read and decode the MNG script
 	// TODO: warning if scriptoffset isn't in usual place?
-	stream.seekg(scriptoffset);
-	script = std::string(scriptlength, '\0');
-	stream.read(&script[0], scriptlength);
-	decryptbuf(const_cast<char*>(script.c_str()), scriptlength);
+	stream.seek(scriptoffset);
+	std::vector<uint8_t> buffer = stream.read_vector(scriptlength);
+	decryptbuf(buffer.data(), buffer.size());
+	script = ascii_to_utf8(buffer);
 
 	auto mngscript = mngparse(script);
 
@@ -85,12 +87,12 @@ MNGFile::MNGFile(std::string n) {
 	// read the samples
 	for (uint32_t i = 0; i < numsamples; i++) {
 		// TODO: warning if sample isn't in expected place?
-		stream.seekg(sample_headers[i].position);
+		stream.seek(sample_headers[i].position);
 		shared_array<uint8_t> data(sample_headers[i].size + 16);
 		memcpy(&data[0], "RIFF", 4);
 		write32le(&data[4], sample_headers[i].size + 4);
 		memcpy(&data[8], "WAVEfmt ", 8);
-		stream.read(reinterpret_cast<char*>(&data[16]), sample_headers[i].size);
+		stream.read(&data[16]), sample_headers[i].size);
 		samples.push_back(data);
 	}
 }

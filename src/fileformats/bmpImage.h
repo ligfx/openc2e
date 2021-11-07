@@ -20,10 +20,10 @@
 #pragma once
 
 #include "common/Image.h"
+#include "common/io/io.h"
 
-#include <iosfwd>
 #include <string>
 
-Image ReadBmpFile(std::istream& in);
+Image ReadBmpFile(reader& in);
 Image ReadBmpFile(const std::string& path);
-Image ReadDibFile(std::istream& in);
+Image ReadDibFile(reader& in);

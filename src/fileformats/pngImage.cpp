@@ -2,19 +2,19 @@
 
 #include "ImageUtils.h"
 #include "common/Exception.h"
+#include "common/io/file.h"
 #include "common/scope_guard.h"
 
-#include <fstream>
 #include <memory>
 #include <png.h>
 #include <zlib.h>
 
 void WritePngFile(const Image& image, const std::string& path) {
-	std::ofstream out(path, std::ios_base::binary);
+	filewriter out(path);
 	return WritePngFile(image, out);
 }
 
-void WritePngFile(const Image& image, std::ostream& out) {
+void WritePngFile(const Image& image, writer& out) {
 	if (image.width == 0 || image.height == 0 || !image.data) {
 		throw Exception("Can't write image with no data");
 	}
@@ -39,11 +39,11 @@ void WritePngFile(const Image& image, std::ostream& out) {
 	}
 
 	auto write_data_fn = [](png_structp png, png_bytep buf, png_size_t size) {
-		std::ostream* out = (std::ostream*)png_get_io_ptr(png);
-		out->write((char*)buf, size);
+		writer* out = (writer*)png_get_io_ptr(png);
+		out->write(buf, size);
 	};
 	auto flush_data_fn = [](png_structp png) {
-		std::ostream* out = (std::ostream*)png_get_io_ptr(png);
+		writer* out = (writer*)png_get_io_ptr(png);
 		out->flush();
 	};
 

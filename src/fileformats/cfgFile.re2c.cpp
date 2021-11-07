@@ -1,8 +1,8 @@
 #include "cfgFile.h"
+#include "common/io/file.h"
 #include "common/readfile.h"
 
 #include <assert.h>
-#include <fstream>
 
 enum tokentype {
 	CFG_BARE_STRING,
@@ -74,7 +74,7 @@ const char* tokentype_to_charp(tokentype type) {
 	}
 }
 
-std::map<std::string, std::string> readcfgfile(std::istream& in) {
+std::map<std::string, std::string> readcfgfile(reader& in) {
 	std::string data = readfile(in);
 	std::map<std::string, std::string> result;
 
@@ -133,6 +133,6 @@ std::map<std::string, std::string> readcfgfile(std::istream& in) {
 }
 
 std::map<std::string, std::string> readcfgfile(ghc::filesystem::path p) {
-	std::ifstream in(p, std::ios_base::binary);
+	filereader in(p);
 	return readcfgfile(in);
 }

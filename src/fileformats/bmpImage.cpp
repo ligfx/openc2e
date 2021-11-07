@@ -21,9 +21,9 @@
 
 #include "common/Exception.h"
 #include "common/endianlove.h"
+#include "common/io/file.h"
 #include "common/throw_ifnot.h"
 
-#include <fstream>
 #include <memory>
 #include <string.h>
 
@@ -33,22 +33,22 @@
 #define BI_BITFIELDS 3
 
 Image ReadBmpFile(const std::string& path) {
-	std::ifstream in(path, std::ios_base::binary);
+	filereader in(path);
 	return ReadBmpFile(in);
 }
 
-Image ReadBmpFile(std::istream& in) {
-	char magic[2];
+Image ReadBmpFile(reader& in) {
+	uint8_t magic[2];
 	in.read(magic, 2);
-	if (std::string(magic, 2) != "BM")
+	if (memcmp(magic, "BM", 2) != 0)
 		throw Exception("Doesn't seem to be a BMP file.");
 
-	in.seekg(12, std::ios::cur); // skip filesize, reserved bytes, and data offset
+	in.ignore(12); // skip filesize, reserved bytes, and data offset
 
 	return ReadDibFile(in);
 }
 
-Image ReadDibFile(std::istream& in) {
+Image ReadDibFile(reader& in) {
 	uint32_t biWidth, biHeight;
 	shared_array<Color> palette;
 	imageformat imgformat;
@@ -101,7 +101,7 @@ Image ReadDibFile(std::istream& in) {
 			imgformat = if_index8;
 			unsigned int num_palette_entries = biColorsUsed != 0 ? biColorsUsed : (biBitCount == 4 ? 16 : 256);
 			std::vector<uint8_t> filepalette(num_palette_entries * 4);
-			in.read((char*)filepalette.data(), filepalette.size());
+			in.read(filepalette.data(), filepalette.size());
 			palette = shared_array<Color>(num_palette_entries);
 			for (unsigned int i = 0; i < num_palette_entries; i++) {
 				palette[i].r = filepalette[(i * 4) + 2];
@@ -129,12 +129,12 @@ Image ReadDibFile(std::istream& in) {
 
 		bmpdata = shared_array<uint8_t>(rowsize * biHeight);
 		for (size_t i = 0; i < biHeight; ++i) {
-			in.read((char*)bmpdata.data() + (biHeight - 1 - i) * rowsize, rowsize);
-			in.seekg(stride - rowsize, std::ios_base::cur);
+			in.read(bmpdata.data() + (biHeight - 1 - i) * rowsize, rowsize);
+			in.ignore(stride - rowsize);
 		}
 	} else {
 		bmpdata = shared_array<uint8_t>(biSizeImage);
-		in.read((char*)bmpdata.data(), biSizeImage);
+		in.read(bmpdata.data(), biSizeImage);
 	}
 
 	if (biBitCount == 4 && biCompression == BI_RGB) {

@@ -16,14 +16,14 @@
  *  Lesser General Public License for more details.
  *
  */
-#include <iostream>
+#include "common/io/io.h"
 
 class attFile {
   public:
 	unsigned int attachments[16][20];
 	unsigned int noattachments[16];
 	unsigned int nolines;
-	friend std::istream& operator>>(std::istream&, attFile&);
+	friend bufferedreader& operator>>(bufferedreader&, attFile&);
 };
 
 /* vim: set noet: */

@@ -20,5 +20,6 @@
 #pragma once
 
 #include "common/Image.h"
+#include "common/io/io.h"
 
-MultiImage ReadSprFile(std::istream& in);
+MultiImage ReadSprFile(seekablereader& in);

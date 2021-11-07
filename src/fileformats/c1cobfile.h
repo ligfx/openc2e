@@ -1,9 +1,9 @@
 #pragma once
 
 #include "common/Image.h"
+#include "common/io/io.h"
 
 #include <cstdint>
-#include <iosfwd>
 #include <string>
 #include <vector>
 
@@ -24,4 +24,4 @@ struct c1cobfile {
 };
 
 c1cobfile read_c1cobfile(const std::string& path);
-c1cobfile read_c1cobfile(std::istream& in);
+c1cobfile read_c1cobfile(reader& in);

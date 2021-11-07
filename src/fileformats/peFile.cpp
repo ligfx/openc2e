@@ -23,7 +23,7 @@
 #include "common/Exception.h"
 #include "common/encoding.h"
 #include "common/endianlove.h"
-#include "common/spanstream.h"
+#include "common/io/spanreader.h"
 
 /*
  * This isn't a full PE parser, but it manages to extract resources from the
@@ -32,15 +32,17 @@
 
 peFile::peFile(fs::path filepath) {
 	path = filepath;
-	file.open(path.string().c_str(), std::ios::binary);
-
-	if (!file.is_open())
+	try {
+		file = filereader(path);
+	} catch (io_error&) {
 		throw Exception(std::string("couldn't open PE file \"") + path.string() + "\"");
+	}
+
 
 	// check the signature of the file
-	char majic[2];
+	uint8_t majic[2];
 	file.read(majic, 2);
-	if (strncmp(majic, "MZ", 2) != 0)
+	if (memcmp(majic, "MZ", 2) != 0)
 		throw Exception(std::string("couldn't understand PE file \"") + path.string() + "\" (not a PE file?)");
 
 	// skip the rest of the DOS header
@@ -52,8 +54,8 @@ peFile::peFile(fs::path filepath) {
 		throw Exception(std::string("couldn't understand PE file \"") + path.string() + "\" (DOS program?)");
 
 	// seek to the PE header and check the signature
-	file.seekg(e_lfanew, std::ios::beg);
-	char pemajic[4];
+	file.seek(e_lfanew);
+	uint8_t pemajic[4];
 	file.read(pemajic, 4);
 	if (memcmp(pemajic, "PE\0\0", 4) != 0)
 		throw Exception(std::string("couldn't understand PE file \"") + path.string() + "\" (corrupt?)");
@@ -70,8 +72,8 @@ peFile::peFile(fs::path filepath) {
 
 	std::map<std::string, peSection> sections;
 	for (unsigned int i = 0; i < nosections; i++) {
-		char section_name[9];
-		section_name[8] = 0;
+		uint8_t section_name[8];
+		// what encoding is this? ascii? raw bytes?
 		file.read(section_name, 8);
 
 		file.ignore(4);
@@ -80,7 +82,7 @@ peFile::peFile(fs::path filepath) {
 		section.vaddr = read32le(file);
 		section.size = read32le(file);
 		section.offset = read32le(file);
-		sections[std::string(section_name)] = section;
+		sections[ascii_to_utf8(section_name, 8)] = section;
 
 		file.ignore(16);
 	}
@@ -95,7 +97,7 @@ peFile::peFile(fs::path filepath) {
 }
 
 void peFile::parseResourcesLevel(peSection& s, unsigned int off, unsigned int level) {
-	file.seekg(off, std::ios::beg);
+	file.seek(off);
 
 	file.ignore(12);
 
@@ -106,7 +108,7 @@ void peFile::parseResourcesLevel(peSection& s, unsigned int off, unsigned int le
 		uint32_t name = read32le(file);
 		uint32_t offset = read32le(file);
 
-		unsigned int here = file.tellg();
+		unsigned int here = file.tell();
 
 		if (level == 0) {
 			currtype = name;
@@ -125,7 +127,7 @@ void peFile::parseResourcesLevel(peSection& s, unsigned int off, unsigned int le
 		} else {
 			/* bottom level, file data is here */
 
-			file.seekg(s.offset + offset, std::ios::beg);
+			file.seek(s.offset + offset);
 
 			uint32_t offset = read32le(file);
 			offset += s.offset;
@@ -144,7 +146,7 @@ void peFile::parseResourcesLevel(peSection& s, unsigned int off, unsigned int le
 			resources.push_back(info);
 		}
 
-		file.seekg(here, std::ios::beg);
+		file.seek(here);
 	}
 }
 
@@ -181,8 +183,8 @@ optional<resourceInfo> peFile::findResource(
 
 shared_array<uint8_t> peFile::getResourceData(resourceInfo r) {
 	shared_array<uint8_t> data(r.size);
-	file.seekg(r.offset, std::ios::beg);
-	file.read((char*)data.data(), r.size);
+	file.seek(r.offset);
+	file.read(data.data(), r.size);
 	return data;
 }
 
@@ -194,7 +196,7 @@ Image peFile::getBitmap(uint32_t name) {
 		return {};
 
 	auto data = getResourceData(*r);
-	spanstream ss(data.data(), data.size());
+	spanreader ss(data.data(), data.size());
 	Image bmp = ReadDibFile(ss);
 	return bmp;
 }

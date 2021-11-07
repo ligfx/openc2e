@@ -18,16 +18,21 @@
  */
 #include "attFile.h"
 
+#include "common/io/text.h"
+
 #include <cassert>
 #include <cctype>
 #include <string>
 
-std::istream& operator>>(std::istream& i, attFile& f) {
+bufferedreader& operator>>(bufferedreader& i, attFile& f) {
 	// TODO: replace this whole thing with a proper parser
 	f.nolines = 0;
 
 	std::string s;
-	while (std::getline(i, s)) {
+	while (i.has_more_data()) {
+		std::vector<uint8_t> buf = read_text_line(i);
+		// TODO: enforce encoding? this should actually just be parsed, so meh
+		s = std::string((char*)buf.data(), buf.size());
 		if (s.size() == 0)
 			return i;
 		if (f.nolines >= 16)

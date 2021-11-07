@@ -2,28 +2,27 @@
 
 #include "c1defaultpalette.h"
 #include "common/endianlove.h"
+#include "common/io/file.h"
 #include "common/throw_ifnot.h"
 
 #include <cassert>
-#include <fstream>
 
-static std::string read_string(std::istream& in) {
+static std::string read_string(reader& in) {
 	uint16_t length = read8(in);
 	if (length == 255) {
 		length = read16le(in);
 	}
-	std::vector<uint8_t> script(length + 1);
-	script.back() = '\0';
-	in.read((char*)script.data(), length);
-	return {(char*)script.data()};
+	std::vector<uint8_t> script(length);
+	in.read(script.data(), length);
+	return std::string(reinterpret_cast<char*>(script.data()), script.size());
 }
 
 c1cobfile read_c1cobfile(const std::string& path) {
-	std::ifstream in(path, std::ios::binary);
+	filereader in(path);
 	return read_c1cobfile(in);
 }
 
-c1cobfile read_c1cobfile(std::istream& in) {
+c1cobfile read_c1cobfile(reader& in) {
 	c1cobfile cob;
 
 	uint16_t version = read16le(in);
@@ -57,7 +56,7 @@ c1cobfile read_c1cobfile(std::istream& in) {
 	if (cob.picture.width > 0 && cob.picture.height > 0) {
 		cob.picture.data = shared_array<uint8_t>(cob.picture.width * cob.picture.height);
 		for (size_t i = 0; i < cob.picture.height; ++i) {
-			in.read((char*)cob.picture.data.data() + cob.picture.width * (cob.picture.height - 1 - i), cob.picture.width);
+			in.read(cob.picture.data.data() + cob.picture.width * (cob.picture.height - 1 - i), cob.picture.width);
 		}
 	}
 

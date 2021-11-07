@@ -6,8 +6,8 @@
 #include "charsetdta.h"
 #include "common/Exception.h"
 #include "common/ascii_tolower.h"
+#include "common/io/spanreader.h"
 #include "common/mappedfile.h"
-#include "common/spanstream.h"
 #include "s16Image.h"
 #include "sprImage.h"
 
@@ -26,7 +26,7 @@ MultiImage ReadImage(std::string path) {
 	ext = ascii_tolower(ext);
 
 	mappedfile m(path);
-	spanstream in(m);
+	spanreader in(m);
 	if (ext == ".spr") {
 		return ReadSprFile(in);
 	}

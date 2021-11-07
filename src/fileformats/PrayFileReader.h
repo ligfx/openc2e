@@ -19,7 +19,8 @@
 
 #pragma once
 
-#include <iostream>
+#include "common/io/io.h"
+
 #include <map>
 #include <string>
 #include <vector>
@@ -30,11 +31,11 @@ using PrayTagBlock = std::pair<std::map<std::string, uint32_t>, std::map<std::st
 
 class PrayFileReader {
   protected:
-	std::istream& stream;
+	bufferedseekablereader& stream;
 	std::vector<size_t> block_offsets;
 
   public:
-	PrayFileReader(std::istream& stream);
+	PrayFileReader(bufferedseekablereader& stream);
 	~PrayFileReader();
 
 	size_t getNumBlocks();

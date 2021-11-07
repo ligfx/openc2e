@@ -1,8 +1,9 @@
 #pragma once
 
 
+#include "common/io/io.h"
+
 #include <cstdint>
-#include <iosfwd>
 #include <string>
 #include <vector>
 
@@ -13,4 +14,4 @@ struct hedfile {
 };
 
 hedfile read_hedfile(const std::string& path);
-hedfile read_hedfile(std::istream& in);
+hedfile read_hedfile(bufferedreader& in);

@@ -20,5 +20,6 @@
 #pragma once
 
 #include "common/Image.h"
+#include "common/io/io.h"
 
-Image ReadBlkFile(std::istream& in);
+Image ReadBlkFile(seekablereader& in);
