@@ -19,7 +19,8 @@
 
 #pragma once
 
-#include <iostream>
+#include "common/io/io.h"
+
 #include <stdint.h>
 #include <string.h>
 #ifdef _WIN32
@@ -62,14 +63,14 @@ static inline uint32_t byte_swap_32(uint32_t val) {
 	return ((val & 0xff000000) >> 24) | ((val & 0xff0000) >> 8) | ((val & 0xff00) << 8) | ((val & 0xff) << 24);
 }
 
-static inline uint8_t read8(std::istream& s) {
+static inline uint8_t read8(reader& s) {
 	uint8_t t;
-	s.read(reinterpret_cast<char*>(&t), 1);
+	s.read(reinterpret_cast<uint8_t*>(&t), 1);
 	return t;
 }
 
-static inline void write8(std::ostream& s, uint8_t v) {
-	s.write(reinterpret_cast<char*>(&v), 1);
+static inline void write8(writer& s, uint8_t v) {
+	s.write(reinterpret_cast<uint8_t*>(&v), 1);
 }
 
 static inline uint16_t read16le(const uint8_t* buf) {
@@ -78,20 +79,20 @@ static inline uint16_t read16le(const uint8_t* buf) {
 	return is_little_endian() ? val : byte_swap_16(val);
 }
 
-static inline uint16_t read16le(std::istream& s) {
+static inline uint16_t read16le(reader& s) {
 	uint16_t val;
-	s.read(reinterpret_cast<char*>(&val), 2);
+	s.read(reinterpret_cast<uint8_t*>(&val), 2);
 	return is_little_endian() ? val : byte_swap_16(val);
 }
 
-static inline void write16le(std::ostream& s, uint16_t v) {
+static inline void write16le(writer& s, uint16_t v) {
 	uint16_t t = is_little_endian() ? v : byte_swap_16(v);
-	s.write(reinterpret_cast<char*>(&t), 2);
+	s.write(reinterpret_cast<uint8_t*>(&t), 2);
 }
 
-static inline void readmany16le(std::istream& s, uint16_t* out, size_t n) {
+static inline void readmany16le(reader& s, uint16_t* out, size_t n) {
 	// this needs to be fast! it's used in the sprite file reading functions
-	s.read(reinterpret_cast<char*>(out), n * 2);
+	s.read(reinterpret_cast<uint8_t*>(out), n * 2);
 	if (!is_little_endian()) {
 		for (size_t i = 0; i < n; ++i) {
 			out[i] = byte_swap_16(out[i]);
@@ -99,15 +100,15 @@ static inline void readmany16le(std::istream& s, uint16_t* out, size_t n) {
 	}
 }
 
-static inline uint32_t read32le(std::istream& s) {
+static inline uint32_t read32le(reader& s) {
 	uint32_t t;
-	s.read(reinterpret_cast<char*>(&t), 4);
+	s.read(reinterpret_cast<uint8_t*>(&t), 4);
 	return is_little_endian() ? t : byte_swap_32(t);
 }
 
-static inline void write32le(std::ostream& s, uint32_t v) {
+static inline void write32le(writer& s, uint32_t v) {
 	uint32_t t = is_little_endian() ? v : byte_swap_32(v);
-	s.write(reinterpret_cast<char*>(&t), 4);
+	s.write(reinterpret_cast<uint8_t*>(&t), 4);
 }
 
 static inline void write32le(uint8_t* b, uint32_t v) {
@@ -118,19 +119,19 @@ static inline void write32le(uint8_t* b, uint32_t v) {
 // big-endian integers are used in two places: c2e genome files (yes, for some
 // crazy reason!), and macOS versions of spritefiles (.m16, .n16, and .blk)
 
-static inline uint16_t read16be(std::istream& s) {
+static inline uint16_t read16be(reader& s) {
 	uint16_t t;
-	s.read(reinterpret_cast<char*>(&t), 2);
+	s.read(reinterpret_cast<uint8_t*>(&t), 2);
 	return is_little_endian() ? byte_swap_16(t) : t;
 }
 
-static inline void write16be(std::ostream& s, uint16_t v) {
+static inline void write16be(writer& s, uint16_t v) {
 	uint16_t t = is_little_endian() ? byte_swap_16(v) : v;
-	s.write(reinterpret_cast<char*>(&t), 2);
+	s.write(reinterpret_cast<uint8_t*>(&t), 2);
 }
 
-static inline void readmany16be(std::istream& s, uint16_t* out, size_t n) {
-	s.read(reinterpret_cast<char*>(out), n * 2);
+static inline void readmany16be(reader& s, uint16_t* out, size_t n) {
+	s.read(reinterpret_cast<uint8_t*>(out), n * 2);
 	if (is_little_endian()) {
 		for (size_t i = 0; i < n; ++i) {
 			// gets optimized into fast SIMD instructions on Clang and MSVC at
@@ -140,8 +141,8 @@ static inline void readmany16be(std::istream& s, uint16_t* out, size_t n) {
 	}
 }
 
-static inline uint32_t read32be(std::istream& s) {
+static inline uint32_t read32be(reader& s) {
 	uint32_t t;
-	s.read(reinterpret_cast<char*>(&t), 4);
+	s.read(reinterpret_cast<uint8_t*>(&t), 4);
 	return is_little_endian() ? byte_swap_32(t) : t;
 }
