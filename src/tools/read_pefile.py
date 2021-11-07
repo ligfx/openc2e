@@ -172,7 +172,7 @@ if __name__ == "__main__":
 # #include "fileformats/bmpImage.h"
 # #include "common/encoding.h"
 # #include "common/endianlove.h"
-# #include "common/spanstream.h"
+# #include "common/io/spanreader.h"
 #
 # /*
 #  * This isn't a full PE parser, but it manages to extract resources from the
@@ -343,7 +343,7 @@ if __name__ == "__main__":
 # 		return {};
 #
 # 	auto data = getResourceData(*r);
-# 	spanstream ss(data.data(), data.size());
+# 	spanreader ss(data.data(), data.size());
 # 	Image bmp = ReadDibFile(ss);
 # 	return bmp;
 # }

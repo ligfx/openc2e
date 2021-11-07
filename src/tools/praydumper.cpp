@@ -1,22 +1,16 @@
 #include "common/endianlove.h"
+#include "common/io/file.h"
+#include "common/io/io.h"
+#include "common/io/spanreader.h"
 #include "common/optional.h"
 #include "common/span.h"
-#include "common/spanstream.h"
 #include "fileformats/PrayFileReader.h"
 
 #include <array>
-#include <fstream>
 #include <ghc/filesystem.hpp>
 #include <iostream>
 
 namespace fs = ghc::filesystem;
-
-using std::cerr;
-using std::cout;
-using std::endl;
-using std::ifstream;
-using std::ofstream;
-using std::vector;
 
 const std::array<std::string, 11> tagblocks = {
 	"AGNT", // C3 agent
@@ -52,117 +46,97 @@ optional<PrayTagBlock> get_block_as_tags(PrayFileReader& file, int i) {
 	}
 	auto buf = file.getBlockRawData(i);
 	// maybe it's a tag block anyways?
-	spanstream s(buf);
-	unsigned int nointvalues = read32le(s);
-	if (s.fail()) {
+	spanreader s(buf);
+	try {
+		unsigned int nointvalues = read32le(s);
+
+		std::map<std::string, unsigned int> integerValues;
+		for (unsigned int i = 0; i < nointvalues; i++) {
+			unsigned int keylength = read32le(s);
+			if (keylength > 256) {
+				return {};
+			}
+
+			std::string key(keylength, '0');
+			// TODO: assert CP1252, encode as UTF-8
+			s.read((uint8_t*)&key[0], keylength);
+			if (!is_printable(key)) {
+				return {};
+			}
+
+			unsigned int value = read32le(s);
+			integerValues[key] = value;
+		}
+
+		unsigned int nostrvalues = read32le(s);
+		std::map<std::string, std::string> stringValues;
+		for (unsigned int i = 0; i < nostrvalues; i++) {
+			unsigned int keylength = read32le(s);
+
+			std::string key(keylength, '0');
+			// TODO: assert CP1252, encode as UTF-8
+			s.read((uint8_t*)&key[0], keylength);
+			if (!is_printable(key)) {
+				return {};
+			}
+
+			unsigned int valuelength = read32le(s);
+			std::string value(valuelength, '0');
+			// TODO: assert CP1252, encode as UTF-8
+			s.read((uint8_t*)&value[0], valuelength);
+			if (!is_printable(value)) {
+				return {};
+			}
+
+			stringValues[key] = value;
+		}
+
+		// s.peek();
+		// if (!s.eof()) {
+		// 	return {};
+		// }
+
+		std::cerr << "Unknown block type '" << file.getBlockType(i) << "' looks like a tag block" << std::endl;
+		return PrayTagBlock(integerValues, stringValues);
+	} catch (io_error&) {
 		return {};
 	}
-
-
-	std::map<std::string, unsigned int> integerValues;
-	for (unsigned int i = 0; i < nointvalues; i++) {
-		unsigned int keylength = read32le(s);
-		if (s.fail()) {
-			return {};
-		}
-		if (keylength > 256) {
-			return {};
-		}
-
-		std::string key(keylength, '0');
-		s.read(&key[0], keylength);
-		if (s.fail()) {
-			return {};
-		}
-		if (!is_printable(key)) {
-			return {};
-		}
-
-		unsigned int value = read32le(s);
-		if (s.fail()) {
-			return {};
-		}
-
-		integerValues[key] = value;
-	}
-
-	unsigned int nostrvalues = read32le(s);
-	if (s.fail()) {
-		return {};
-	}
-
-	std::map<std::string, std::string> stringValues;
-	for (unsigned int i = 0; i < nostrvalues; i++) {
-		unsigned int keylength = read32le(s);
-		if (s.fail()) {
-			return {};
-		}
-
-		std::string key(keylength, '0');
-		s.read(&key[0], keylength);
-		if (s.fail()) {
-			return {};
-		}
-		if (!is_printable(key)) {
-			return {};
-		}
-
-		unsigned int valuelength = read32le(s);
-		if (s.fail()) {
-			return {};
-		}
-
-		std::string value(valuelength, '0');
-		s.read(&value[0], valuelength);
-		if (s.fail()) {
-			return {};
-		}
-		if (!is_printable(value)) {
-			return {};
-		}
-
-		stringValues[key] = value;
-	}
-	s.peek();
-	if (!s.eof()) {
-		return {};
-	}
-	cerr << "Unknown block type '" << file.getBlockType(i) << "' looks like a tag block" << endl;
-	return PrayTagBlock(integerValues, stringValues);
 }
 
 int main(int argc, char** argv) {
 	if (argc != 2) {
-		cerr << "syntax: praydumper filename" << endl;
+		std::cerr << "syntax: praydumper filename" << std::endl;
 		return 1;
 	}
 
 	fs::path inputfile = fs::path(argv[1]);
 	if (!fs::exists(inputfile)) {
-		cerr << "input file doesn't exist!" << endl;
+		std::cerr << "input file doesn't exist!" << std::endl;
 		return 1;
 	}
 
 	fs::path output_directory = inputfile.stem();
 	if (fs::exists(output_directory)) {
-		cerr << "Output directory " << output_directory << " already exists" << endl;
+		std::cerr << "Output directory " << output_directory << " already exists" << std::endl;
 		exit(1);
 	}
 	if (!fs::create_directory(output_directory)) {
-		cerr << "Couldn't create output directory " << output_directory << endl;
+		std::cerr << "Couldn't create output directory " << output_directory << std::endl;
 		exit(1);
 	}
 
 	std::string pray_source_filename = (output_directory / inputfile.stem()).string() + ".txt";
 	std::ofstream pray_source(pray_source_filename);
-	cout << "Writing \"" << pray_source_filename << "\"" << endl;
-	pray_source << "(- praydumper-generated PRAY file from '" << inputfile.filename().string() << "' -)" << endl;
-	pray_source << endl
-				<< "\"en-GB\"" << endl;
+	std::cout << "Writing \"" << pray_source_filename << "\"" << std::endl;
+	pray_source << "(- praydumper-generated PRAY file from '" << inputfile.filename().string() << "' -)" << std::endl;
+	pray_source << std::endl
+				<< "\"en-GB\"" << std::endl;
 
-	std::ifstream in(inputfile.string(), std::ios::binary);
-	if (!in) {
-		cerr << "Error opening file " << inputfile << endl;
+	filereader in;
+	try {
+		in = filereader(inputfile);
+	} catch (io_error&) {
+		std::cerr << "Error opening file " << inputfile << std::endl;
 		exit(1);
 	}
 
@@ -173,35 +147,35 @@ int main(int argc, char** argv) {
 
 		auto tags = get_block_as_tags(file, i);
 		if (tags) {
-			pray_source << endl
-						<< "group " << file.getBlockType(i) << " \"" << file.getBlockName(i) << "\"" << endl;
+			pray_source << std::endl
+						<< "group " << file.getBlockType(i) << " \"" << file.getBlockName(i) << "\"" << std::endl;
 
 			auto int_tags = tags->first;
 			auto string_tags = tags->second;
 
 			for (auto y : int_tags) {
-				pray_source << "\"" << y.first << "\" " << y.second << endl;
+				pray_source << "\"" << y.first << "\" " << y.second << std::endl;
 			}
 
 			for (auto y : string_tags) {
 				std::string name = y.first;
 				if ((name.substr(0, 7) == "Script ") || (name.substr(0, 13) == "Remove script")) {
 					name = file.getBlockName(i) + " - " + name + ".cos";
-					cout << "Writing " << (output_directory / name) << endl;
-					ofstream output(output_directory / name);
+					std::cout << "Writing " << (output_directory / name) << std::endl;
+					filewriter output(output_directory / name);
 					output.write(y.second.c_str(), y.second.size());
-					pray_source << "\"" << y.first << "\" @ \"" << name << "\"" << endl;
+					pray_source << "\"" << y.first << "\" @ \"" << name << "\"" << std::endl;
 				} else {
-					pray_source << "\"" << y.first << "\" \"" << y.second << "\"" << endl;
+					pray_source << "\"" << y.first << "\" \"" << y.second << "\"" << std::endl;
 				}
 			}
 		} else {
-			pray_source << endl
-						<< "inline " << file.getBlockType(i) << " \"" << file.getBlockName(i) << "\" \"" << file.getBlockName(i) << "\"" << endl;
-			cout << "Writing " << (output_directory / file.getBlockName(i)) << endl;
-			ofstream output(output_directory / file.getBlockName(i));
+			pray_source << std::endl
+						<< "inline " << file.getBlockType(i) << " \"" << file.getBlockName(i) << "\" \"" << file.getBlockName(i) << "\"" << std::endl;
+			std::cout << "Writing " << (output_directory / file.getBlockName(i)) << std::endl;
+			filewriter output(output_directory / file.getBlockName(i));
 			auto buf = file.getBlockRawData(i);
-			output.write((char*)buf.data(), buf.size());
+			output.write(buf.data(), buf.size());
 		}
 	}
 }

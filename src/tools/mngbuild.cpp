@@ -1,9 +1,9 @@
 #include "common/endianlove.h"
+#include "common/io/file.h"
 #include "common/readfile.h"
 #include "fileformats/mngparser.h"
 
 #include <fmt/format.h>
-#include <fstream>
 #include <ghc/filesystem.hpp>
 
 namespace fs = ghc::filesystem;
@@ -38,7 +38,7 @@ int main(int argc, char** argv) {
 
 	std::string output_path(fs::path(script_path).stem().string() + ".mng");
 	fmt::print("Writing to {}\n", output_path);
-	std::ofstream out(output_path, std::ios_base::binary);
+	filewriter out(output_path);
 
 	fmt::print("Writing header...\n");
 	const int number_of_samples = sample_names.size();
@@ -66,7 +66,7 @@ int main(int argc, char** argv) {
 
 	fmt::print("Writing script...\n");
 	decryptbuf((char*)script.data(), script.size());
-	out.write((char*)script.data(), script_size);
+	out.write(script.data(), script_size);
 
 	fmt::print("Writing samples...\n");
 	for (auto s : sample_names) {

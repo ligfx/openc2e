@@ -1,10 +1,10 @@
+#include "common/io/file.h"
 #include "openc2e-audiobackend/SDLMixerBackend.h"
 #include "openc2e-core/Catalogue.h"
 #include "openc2e-core/VoiceData.h"
 
 #include <algorithm>
 #include <fmt/format.h>
-#include <fstream>
 #include <ghc/filesystem.hpp>
 #include <thread>
 
@@ -32,7 +32,7 @@ int main(int argc, char** argv) {
 		catalogue.initFrom(fs::path(datadirectory) / "Catalogue", "en");
 		voices = VoiceData(voice);
 	} else {
-		std::ifstream in(fs::path(datadirectory) / (voice + ".vce"));
+		filereader in(fs::path(datadirectory) / (voice + ".vce"));
 		voices = VoiceData(in);
 	}
 	if (!voices) {

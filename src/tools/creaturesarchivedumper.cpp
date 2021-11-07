@@ -1,9 +1,10 @@
 #include "common/endianlove.h"
-#include "common/spanstream.h"
+#include "common/io/file.h"
+#include "common/io/spanreader.h"
 
 #include <fmt/format.h>
-#include <fstream>
 #include <ghc/filesystem.hpp>
+#include <iostream>
 #include <zlib.h>
 
 namespace fs = ghc::filesystem;
@@ -22,14 +23,14 @@ int main(int argc, char** argv) {
 		exit(1);
 	}
 
-	std::ifstream in(input_path, std::ios::binary);
-	std::vector<uint8_t> data(std::istreambuf_iterator<char>{in}, {});
+	filereader in(input_path);
+	auto data = in.read_to_end();
 	fmt::print("data size = {}\n", data.size());
 
-	spanstream s(data);
+	spanreader s(data);
 	std::string magic;
 	magic.resize(CREATURES_ARCHIVE_MAGIC.size());
-	s.read(&magic[0], magic.size());
+	s.read(reinterpret_cast<uint8_t*>(&magic[0]), magic.size());
 
 
 	if (magic != CREATURES_ARCHIVE_MAGIC) {
@@ -55,11 +56,11 @@ int main(int argc, char** argv) {
 		}
 	}
 
-	fmt::print("stream position = {}\n", s.tellg());
+	fmt::print("stream position = {}\n", s.tell());
 
 	std::vector<uint8_t> decompressed_data(data.size() * 20); // TODO: ???
 	uLongf usize = decompressed_data.size();
-	int r = uncompress((Bytef*)decompressed_data.data(), (uLongf*)&usize, (Bytef*)data.data() + s.tellg(), data.size() - s.tellg());
+	int r = uncompress((Bytef*)decompressed_data.data(), (uLongf*)&usize, (Bytef*)data.data() + s.tell(), data.size() - s.tell());
 	if (r != Z_OK) {
 		std::string o;
 		switch (r) {

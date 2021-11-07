@@ -1,11 +1,11 @@
 #include "common/Exception.h"
+#include "common/io/file.h"
 #include "fileformats/ImageUtils.h"
 #include "fileformats/c1defaultpalette.h"
 #include "fileformats/paletteFile.h"
 #include "fileformats/pngImage.h"
 
 #include <fmt/format.h>
-#include <fstream>
 #include <ghc/filesystem.hpp>
 
 namespace fs = ghc::filesystem;
@@ -140,7 +140,7 @@ int main(int argc, char** argv) {
 		}();
 		fmt::print("{}\n", frame_filename);
 
-		std::ofstream out(frame_filename, std::ios::binary);
+		filewriter out(frame_filename);
 		WritePngFile(image[i], out);
 	}
 }

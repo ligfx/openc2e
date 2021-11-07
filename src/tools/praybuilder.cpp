@@ -1,9 +1,10 @@
+#include "common/io/file.h"
+#include "common/io/io.h"
 #include "common/overload.h"
 #include "fileformats/Caos2PrayParser.h"
 #include "fileformats/PrayFileWriter.h"
 #include "fileformats/PraySourceParser.h"
 
-#include <fstream>
 #include <ghc/filesystem.hpp>
 #include <iostream>
 #include <map>
@@ -48,8 +49,10 @@ int main(int argc, char** argv) {
 		}
 
 		std::cout << "Writing output to \"" << output_filename << "\"" << std::endl;
-		std::ofstream out(output_filename, std::ios::binary);
-		if (!out) {
+		filewriter out;
+		try {
+			out = filewriter(output_filename);
+		} catch (io_error&) {
 			std::cerr << "Couldn't open \"" << output_filename << "\"" << std::endl;
 			exit(1);
 		}

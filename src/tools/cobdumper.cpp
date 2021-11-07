@@ -1,5 +1,7 @@
 #include "common/Exception.h"
 #include "common/endianlove.h"
+#include "common/io/file.h"
+#include "common/io/io.h"
 #include "common/string_in.h"
 #include "fileformats/c1cobfile.h"
 #include "fileformats/c2cobfile.h"
@@ -9,7 +11,6 @@
 #include "openc2e-core/dialect.h"
 
 #include <fmt/format.h>
-#include <fstream>
 #include <ghc/filesystem.hpp>
 #include <iostream>
 
@@ -101,11 +102,11 @@ int main(int argc, char** argv) {
 
 	fs::path stem = input_path.stem();
 
-	std::ifstream in(input_path, std::ios::binary);
+	filereader in(input_path);
 
-	unsigned char magic[4];
-	in.read((char*)magic, 4);
-	in.seekg(0);
+	uint8_t magic[4];
+	in.read(magic, 4);
+	in.seek(0);
 
 	if (memcmp(magic, "cob2", 4) == 0) {
 		fmt::print("\"cob2\"\n");
