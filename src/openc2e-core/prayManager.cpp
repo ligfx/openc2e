@@ -26,6 +26,7 @@
 
 #include <cassert>
 #include <ghc/filesystem.hpp>
+#include <iostream>
 
 PrayBlock::PrayBlock() {
 }
@@ -43,9 +44,12 @@ void PrayBlock::load() {
 		return;
 	}
 
-	std::ifstream in(filename, std::ios::binary);
-	if (!in)
+	filereader in;
+	try {
+		in = filereader(filename);
+	} catch (io_error&) {
 		throw Exception(std::string("couldn't open PRAY file \"") + filename + "\"");
+	}
 	PrayFileReader file(in);
 
 	for (size_t i = 0; i < file.getNumBlocks(); i++) {
@@ -68,9 +72,12 @@ void PrayBlock::parseTags() {
 		return;
 	}
 
-	std::ifstream in(filename, std::ios::binary);
-	if (!in)
+	filereader in;
+	try {
+		in = filereader(filename);
+	} catch (io_error&) {
 		throw Exception(std::string("couldn't open PRAY file \"") + filename + "\"");
+	}
 	PrayFileReader file(in);
 
 	for (size_t i = 0; i < file.getNumBlocks(); i++) {
@@ -92,9 +99,12 @@ prayManager::~prayManager() {
 }
 
 void prayManager::addFile(const fs::path& filename) {
-	std::ifstream in(filename.string(), std::ios::binary);
-	if (!in)
+	filereader in;
+	try {
+		in = filereader(filename);
+	} catch (io_error&) {
 		throw Exception(std::string("couldn't open PRAY file \"") + filename.string() + "\"");
+	}
 	PrayFileReader f(in);
 
 	for (size_t i = 0; i < f.getNumBlocks(); i++) {

@@ -46,17 +46,17 @@ void AllocationCounter::decrement() {
 	atomic_decrement(curCount);
 }
 
-void AllocationCounter::dump(std::ostream& s) {
+void AllocationCounter::dump(writer& s) {
 	s << getName() << "; Live objects:" << getCount() << " Max residency: " << getMaxCount() << " Total allocation count: " << getTotalAllocs() << std::endl;
 }
 
-void AllocationCounter::walk_one(std::ostream& s) {
+void AllocationCounter::walk_one(writer& s) {
 	dump(s);
 	if (next)
 		next->walk_one(s);
 }
 
-void AllocationCounter::walk(std::ostream& s) {
+void AllocationCounter::walk(writer& s) {
 	if (!alloc_count_walk)
 		s << "No counters registered!" << std::endl;
 	else

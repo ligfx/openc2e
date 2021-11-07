@@ -24,10 +24,10 @@
 #include "alloc_count.h"
 #include "bytestring.h"
 #include "caosValue.h"
+#include "common/io/io.h"
 #include "common/macro_stringify.h"
 
 #include <array>
-#include <iosfwd>
 #include <memory>
 #include <type_traits>
 
@@ -88,8 +88,8 @@ class caosVM {
 	std::vector<caosValue> auxStack;
 	std::vector<callStackItem> callStack;
 
-	std::istream* inputstream;
-	std::ostream* outputstream;
+	bufferedreader* inputstream;
+	writer* outputstream;
 
 	// ...which includes variables accessible to script
 	std::array<caosValue, 100> var;
@@ -113,7 +113,7 @@ class caosVM {
 		_p_[1] = two;
 	}
 	void setOwner(Agent* a) { owner = a; }
-	void setOutputStream(std::ostream& o) { outputstream = &o; }
+	void setOutputStream(writer& o) { outputstream = &o; }
 
 	class CreatureAgent* getTargCreatureAgent();
 	class Creature* getTargCreature();

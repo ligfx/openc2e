@@ -21,12 +21,14 @@
 #include "PathResolver.h"
 #include "World.h"
 #include "caosVM.h"
+#include "common/io/file.h"
+#include "common/io/io.h"
+#include "common/io/owningstringreader.h"
+#include "common/io/text.h"
 #include "common/throw_ifnot.h"
 
 #include <fmt/core.h>
-#include <fstream>
 #include <ghc/filesystem.hpp>
-#include <iostream>
 #include <sstream>
 namespace fs = ghc::filesystem;
 
@@ -79,7 +81,7 @@ void c_FILE_GLOB(caosVM* vm) {
 		str += possiblefile.string() + "\n";
 	}
 
-	vm->inputstream = new std::istringstream(str);
+	vm->inputstream = new owningstringreader(std::move(str));
 }
 
 /**
@@ -110,9 +112,10 @@ void c_FILE_IOPE(caosVM* vm) {
 	c_FILE_ICLO(vm);
 
 	std::string fullfilename = calculateJournalFilename(directory, filename);
-	vm->inputstream = new std::ifstream(fullfilename.c_str());
 
-	if (vm->inputstream->fail()) {
+	try {
+		vm->inputstream = new filereader(fullfilename);
+	} catch (io_error&) {
 		delete vm->inputstream;
 		vm->inputstream = 0;
 	}
@@ -175,12 +178,14 @@ void c_FILE_OOPE(caosVM* vm) {
 
 	std::string fullfilename = calculateJournalFilename(directory, filename);
 
-	if (append)
-		vm->outputstream = new std::ofstream(fullfilename.c_str(), std::ios::app);
-	else
-		vm->outputstream = new std::ofstream(fullfilename.c_str(), std::ios::trunc);
-
-	if (vm->outputstream->fail()) {
+	try {
+		if (append) {
+			vm->outputstream = new filewriter(fullfilename, write_open_type::write_open_append);
+		} else {
+			vm->outputstream = new filewriter(fullfilename);
+		}
+	} catch (io_error&) {
+		delete vm->outputstream;
 		vm->outputstream = 0;
 		throw caosException(fmt::format("FILE OOPE failed to open {}", fullfilename));
 	}
@@ -208,9 +213,11 @@ void v_INNF(caosVM* vm) {
 	if (!vm->inputstream)
 		throw caosException("no input stream in INNF!");
 
-	float f = 0.0f;
-	*vm->inputstream >> f;
-	vm->result.setFloat(f);
+	try {
+		vm->result.setFloat(read_text_float(*vm->inputstream));
+	} catch (io_error&) {
+		vm->result.setFloat(0.0);
+	}
 }
 
 /**
@@ -223,9 +230,11 @@ void v_INNI(caosVM* vm) {
 	if (!vm->inputstream)
 		throw caosException("no input stream in INNI!");
 
-	int i = 0;
-	*vm->inputstream >> i;
-	vm->result.setInt(i);
+	try {
+		vm->result.setInt(read_text_int(*vm->inputstream));
+	} catch (io_error&) {
+		vm->result.setInt(0);
+	}
 }
 
 /**
@@ -237,9 +246,15 @@ void v_INNI(caosVM* vm) {
 void v_INNL(caosVM* vm) {
 	if (!vm->inputstream)
 		throw caosException("no input stream in INNL!");
-	std::string str;
-	std::getline(*vm->inputstream, str);
-	vm->result.setString(str);
+
+	try {
+		std::vector<uint8_t> line = read_text_line(*vm->inputstream);
+		// TODO: assert line is CP1252? the vm result is a caosvalue which should
+		// be in CP1252
+		vm->result.setString(std::string((char*)line.data(), line.size()));
+	} catch (io_error&) {
+		vm->result.setString("");
+	}
 }
 
 /**
@@ -249,12 +264,10 @@ void v_INNL(caosVM* vm) {
  Determines whether the current input stream is usable (0 or 1).
 */
 void v_INOK(caosVM* vm) {
-	if (!vm->inputstream)
-		vm->result.setInt(0);
-	else if (vm->inputstream->fail())
-		vm->result.setInt(0);
-	else
+	if (vm->inputstream && vm->inputstream->has_more_data())
 		vm->result.setInt(1);
+	else
+		vm->result.setInt(0);
 }
 
 /**

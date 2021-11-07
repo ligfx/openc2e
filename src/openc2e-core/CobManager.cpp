@@ -7,6 +7,7 @@
 #include "common/ascii_tolower.h"
 #include "common/case_insensitive_filesystem.h"
 #include "common/find_if.h"
+#include "common/io/file.h"
 #include "fileformats/c1cobfile.h"
 #include "fileformats/c2cobfile.h"
 
@@ -114,7 +115,7 @@ void CobManager::inject(const CobFileInfo& info) {
 			}
 			cobFileBlock f(*depBlock);
 
-			std::ofstream output;
+			filewriter output;
 			if (deptype == 0) {
 				output = createUserImageFile(depname);
 			} else if (deptype == 1) {
@@ -123,7 +124,7 @@ void CobManager::inject(const CobFileInfo& info) {
 				throw Exception("Unknown dependency type " + std::to_string(deptype));
 			}
 
-			output.write((char*)f.getFileContents(), f.filesize);
+			output.write(f.getFileContents(), f.filesize);
 		}
 
 		for (auto s : a.scripts) {

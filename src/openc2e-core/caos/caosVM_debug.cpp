@@ -23,6 +23,7 @@
 #include "caosScript.h"
 #include "caosVM.h"
 #include "cmddata.h"
+#include "common/io/io.h"
 #include "common/throw_ifnot.h"
 #include "dialect.h"
 
@@ -214,17 +215,17 @@ void c_MANN(caosVM* vm) {
 			found = true;
 			std::string d = i->docs;
 			// TODO: docs should always include name/parameters/etc, so should never be empty
-			if (d.size())
-				*vm->outputstream << std::string(i->docs) << std::endl;
-			else
-				*vm->outputstream << "no documentation for " << cmd << std::endl
-								  << std::endl;
+			if (d.size()) {
+				vm->outputstream->write_str(d + "\n");
+			} else {
+				vm->outputstream->write_str("no documentation for " + cmd + "\n");
+			}
 		}
 		i++;
 	}
 
 	if (!found) {
-		*vm->outputstream << "didn't find " << cmd << std::endl;
+		vm->outputstream->write_str("didn't find " + cmd + "\n");
 		return;
 	}
 }
@@ -251,11 +252,16 @@ void c_DBG_DISA(caosVM* vm) {
 	std::shared_ptr<script> s = world.scriptorium->getScript(family, genus, species, event);
 	if (s) {
 		if (s->fmly != family || s->gnus != genus || s->spcs != species) {
-			*vm->outputstream << "warning: search resulted in script from " << s->fmly << ", " << s->gnus << ", " << s->spcs << " script" << std::endl;
+			vm->outputstream->write_str(fmt::format(
+				"warning: search resulted in script from {}, {}, {} script\n",
+				s->fmly,
+				s->gnus,
+				s->spcs));
 		}
-		*vm->outputstream << s->dump();
-	} else
-		*vm->outputstream << "no such script" << std::endl;
+		vm->outputstream->write_str(s->dump());
+	} else {
+		vm->outputstream->write_str("no such script\n");
+	}
 }
 
 /**

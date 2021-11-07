@@ -33,7 +33,8 @@
 #include "VoiceData.h"
 #include "World.h"
 #include "caosVM.h"
-#include "common/namedifstream.h"
+#include "common/io/io.h"
+#include "common/io/namedfilereader.h"
 #include "common/throw_ifnot.h"
 #include "creaturesImage.h"
 #include "openc2e-audiobackend/AudioBackend.h"
@@ -1567,10 +1568,13 @@ void Agent::join(unsigned int outid, AgentRef dest, unsigned int inid) {
 
 void Agent::setVoice(std::string name) {
 	if (engine.version < 3) {
-		namedifstream f = openVoiceFile(name + ".vce");
-		if (!f.is_open() && f.fail()) {
+		namedfilereader f;
+		try {
+			f = openVoiceFile(name + ".vce");
+		} catch (io_error&) {
 			throw Exception(fmt::format("can't open {}.vce", name));
-		} else if (!f.is_open()) {
+		}
+		if (!f.is_open()) {
 			throw Exception(fmt::format("can't find {}.vce", name));
 		}
 		voice = std::shared_ptr<VoiceData>(new VoiceData(f));

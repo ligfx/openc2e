@@ -20,7 +20,8 @@
 #ifndef _SFCFILE_H
 #define _SFCFILE_H
 
-#include <istream>
+#include "common/io/io.h"
+
 #include <map>
 #include <string>
 #include <vector>
@@ -55,7 +56,7 @@ class SFCFile {
 	std::vector<SFCClass*> storage;
 	std::map<unsigned int, unsigned int> types;
 
-	std::istream* ourStream;
+	seekablereader* ourStream;
 
   public:
 	MapData* mapdata;
@@ -71,14 +72,15 @@ class SFCFile {
 
 	SFCFile() {}
 	~SFCFile();
-	void read(std::istream* i);
+	void read(seekablereader* i);
 	SFCClass* slurpMFC(unsigned int reqtype = 0);
 
 	uint8_t read8();
 	uint16_t read16();
 	uint32_t read32();
 	int32_t reads32() { return (int32_t)read32(); }
-	std::string readBytes(unsigned int n);
+	void ignore(size_t n);
+	std::vector<uint8_t> readBytes(unsigned int n);
 	std::string readstring();
 
 	void setVersion(unsigned int v);
@@ -101,7 +103,8 @@ class SFCClass {
 	uint16_t read16() { return parent->read16(); }
 	uint32_t read32() { return parent->read32(); }
 	signed int reads32() { return parent->reads32(); }
-	std::string readBytes(unsigned int n) { return parent->readBytes(n); }
+	void ignore(size_t n) { return parent->ignore(n); }
+	std::vector<uint8_t> readBytes(unsigned int n) { return parent->readBytes(n); }
 	std::string readstring() { return parent->readstring(); }
 
 	virtual void read() = 0;

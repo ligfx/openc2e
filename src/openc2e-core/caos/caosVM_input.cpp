@@ -23,8 +23,6 @@
 #include "World.h"
 #include "caosVM.h"
 
-#include <iostream>
-using std::cerr;
 
 /**
  CLAC (command) message (integer)

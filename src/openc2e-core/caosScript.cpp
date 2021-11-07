@@ -36,7 +36,6 @@
 #include <cassert>
 #include <cstring>
 #include <fmt/core.h>
-#include <iostream>
 #include <memory>
 
 using std::string;
@@ -294,7 +293,7 @@ void caosScript::putBackToken(caostoken*) {
 		// so make sure we refer to the token before it
 }
 
-void caosScript::parse(std::istream& in) {
+void caosScript::parse(reader& in) {
 	// slurp our input stream
 	return parse(readfile(in));
 }

@@ -22,7 +22,6 @@
 #include "common/Exception.h"
 
 #include <ghc/filesystem.hpp>
-#include <iostream>
 #include <istream>
 #include <map>
 #include <string>

@@ -22,8 +22,9 @@
 
 #else
 
+#include "common/io/io.h"
+
 #include <cstdlib>
-#include <iostream>
 #include <string>
 
 class AllocationCounter {
@@ -36,7 +37,7 @@ class AllocationCounter {
 		maxCount, totalAllocs;
 	AllocationCounter* next;
 
-	void walk_one(std::ostream&);
+	void walk_one(writer&);
 
   public:
 	virtual std::string getName() const = 0;
@@ -44,8 +45,8 @@ class AllocationCounter {
 	long getMaxCount() const { return maxCount; }
 	long getTotalAllocs() const { return totalAllocs; }
 
-	void dump(std::ostream&);
-	static void walk(std::ostream& s);
+	void dump(writer&);
+	static void walk(writer& s);
 
 	AllocationCounter() {
 		next = alloc_count_walk;

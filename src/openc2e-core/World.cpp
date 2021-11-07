@@ -34,6 +34,7 @@
 #include "SpritePart.h"
 #include "caosScript.h"
 #include "caosVM.h"
+#include "common/io/file.h"
 #include "common/throw_ifnot.h"
 #include "creatures/CreatureAgent.h"
 #include "creaturesImage.h"
@@ -45,6 +46,7 @@
 #include <cassert>
 #include <fmt/core.h>
 #include <ghc/filesystem.hpp>
+#include <iostream>
 #include <limits.h> // for MAXINT
 #include <memory>
 namespace fs = ghc::filesystem;
@@ -506,8 +508,7 @@ void World::executeInitScript(std::string x) {
 	assert(fs::exists(x));
 	assert(!fs::is_directory(x));
 
-	std::ifstream s(x.c_str());
-	assert(s.is_open());
+	filereader s(x);
 	//std::cout << "executing script " << x << "...\n";
 	//std::cout.flush(); std::cerr.flush();
 	try {
@@ -553,8 +554,7 @@ void World::executeBootstrap(bool switcher) {
 		std::string edenpath = findMainDirectoryFile("Eden.sfc");
 		if (fs::exists(edenpath) && !fs::is_directory(edenpath)) {
 			SFCFile sfc;
-			std::ifstream f(edenpath.c_str(), std::ios::binary);
-			f >> std::noskipws;
+			filereader f(edenpath);
 			sfc.read(&f);
 			sfc.copyToWorld();
 			return;
@@ -614,9 +614,7 @@ std::shared_ptr<genomeFile> World::loadGenome(std::string& genefile) {
 	auto filename = possibles[(int)((float)possibles.size() * (rand() / (RAND_MAX + 1.0)))];
 
 	std::shared_ptr<genomeFile> p(new genomeFile());
-	std::ifstream gfile(filename, std::ios::binary);
-	THROW_IFNOT(gfile.is_open());
-	gfile >> std::noskipws;
+	filereader gfile(filename);
 	gfile >> *(p.get());
 
 	return p;

@@ -24,18 +24,19 @@
 #include "caosScript.h" // PRAY INJT
 #include "caosVM.h"
 #include "common/case_insensitive_filesystem.h"
-#include "common/spanstream.h"
+#include "common/io/file.h"
+#include "common/io/spanreader.h"
 #include "common/throw_ifnot.h"
 #include "prayManager.h"
 
 #include <fmt/core.h>
-#include <fstream>
 #include <ghc/filesystem.hpp>
+#include <iostream>
 namespace fs = ghc::filesystem;
 
 bool prayInstall(std::string name, unsigned int type, bool actually_install) {
 	fs::path (*find_func)(fs::path);
-	std::ofstream (*create_func)(fs::path);
+	filewriter (*create_func)(fs::path);
 
 	switch (type) {
 		// case 0: find_func = &findMainFile; create_func = &createUserMainFile; directory = ""; break; // main
@@ -100,8 +101,8 @@ bool prayInstall(std::string name, unsigned int type, bool actually_install) {
 
 	p->load();
 
-	std::ofstream output = create_func(name);
-	output.write((char*)p->getBuffer(), p->getSize());
+	filewriter output = create_func(name);
+	output.write(p->getBuffer(), p->getSize());
 	// p->unload();
 
 	if (type == 7) {

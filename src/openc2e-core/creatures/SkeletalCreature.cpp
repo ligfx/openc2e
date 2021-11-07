@@ -38,13 +38,14 @@
 #include "Room.h"
 #include "World.h"
 #include "caosValue.h"
-#include "common/namedifstream.h"
+#include "common/io/namedfilereader.h"
 #include "common/throw_ifnot.h"
 #include "creaturesImage.h"
 #include "imageManager.h"
 
 #include <cassert>
 #include <fmt/core.h>
+#include <iostream>
 #include <memory>
 #include <typeinfo> // TODO: remove when genome system is fixed
 
@@ -233,7 +234,7 @@ void SkeletalCreature::skeletonInit() {
 			throw Exception(fmt::format("SkeletalCreature couldn't find an image for part {:c} of species {}, variant {}, stage {}", x, (int)partspecies, (int)partvariant, (int)creature->getStage()));
 
 		// find relevant ATT data
-		namedifstream attfile;
+		namedfilereader attfile;
 		int var = partvariant;
 		while (var > -1 && !attfile.is_open()) {
 			int stage_to_try = creature->getStage();
@@ -247,9 +248,11 @@ void SkeletalCreature::skeletonInit() {
 			throw Exception(fmt::format("SkeletalCreature couldn't find body data for part {:c} of species {}, variant {}, stage {}", x, (int)partspecies, (int)partvariant, creature->getStage()));
 
 		// load ATT file
-		if (attfile.fail())
+		try {
+			attfile >> att[i];
+		} catch (io_error&) {
 			throw Exception(fmt::format("SkeletalCreature couldn't load body data for part {:c} of species {}, variant {}, stage {} (tried file {})", x, (int)partspecies, (int)partvariant, creature->getStage(), attfile.name().string()));
-		attfile >> att[i];
+		}
 
 		images[i] = tintBodySprite(images[i]);
 	}

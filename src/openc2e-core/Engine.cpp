@@ -37,6 +37,8 @@
 #include "common/case_insensitive_filesystem.h"
 #include "common/encoding.h"
 #include "common/find_if.h"
+#include "common/io/owningstringreader.h"
+#include "common/io/vectorwriter.h"
 #include "common/userlocale.h"
 #include "fileformats/cfgFile.h"
 #include "fileformats/peFile.h"
@@ -292,15 +294,16 @@ std::string Engine::executeNetwork(std::string in) {
 	// now parse and execute the CAOS we obtained
 	caosVM vm(0); // needs to be outside 'try' so we can reset outputstream on exception
 	try {
-		std::istringstream s(in);
+		owningstringreader s(in);
 		caosScript script(gametype, "<network>"); // XXX
 		script.parse(s);
 		script.installScripts();
-		std::ostringstream o;
+
+		vectorwriter o;
 		vm.setOutputStream(o);
 		vm.runEntirely(script.installer);
 		vm.outputstream = 0; // otherwise would point to dead stack
-		return o.str();
+		return cp1252_to_utf8(o.vector());
 	} catch (Exception& e) {
 		vm.outputstream = 0; // otherwise would point to dead stack
 		return std::string("### EXCEPTION: ") + e.what();
@@ -1064,8 +1067,8 @@ bool Engine::initialSetup() {
 		if (!fs::exists(p))
 			fs::create_directory(p);
 		if (fs::is_directory(p)) {
-			std::ofstream f((p.string() + "/port").c_str(), std::ios::trunc);
-			f << std::to_string(listenport);
+			filewriter f(p.string() + "/port");
+			f.write_str(std::to_string(listenport));
 		}
 #endif
 	}
@@ -1136,8 +1139,7 @@ bool Engine::initialSetup() {
 					throw Exception("non-existant bootstrap file provided in C1/C2 mode");
 				// TODO: the default SFCFile loading code is in World, maybe this should be too..
 				SFCFile sfc;
-				std::ifstream f(scriptdir.string().c_str(), std::ios::binary);
-				f >> std::noskipws;
+				filereader f(scriptdir);
 				sfc.read(&f);
 				sfc.copyToWorld();
 			}

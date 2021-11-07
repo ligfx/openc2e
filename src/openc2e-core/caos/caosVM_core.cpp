@@ -21,11 +21,11 @@
 #include "PathResolver.h"
 #include "World.h"
 #include "caosVM.h"
+#include "common/io/io.h"
 #include "common/throw_ifnot.h"
 
 #include <fmt/core.h>
 #include <ghc/filesystem.hpp>
-#include <iostream>
 
 namespace fs = ghc::filesystem;
 
@@ -43,7 +43,6 @@ void c_OUTX(caosVM* vm) {
 		return;
 
 	std::string oh = "\"";
-
 	for (char i : val) {
 		switch (i) {
 			case '\r': oh += "\\r"; break;
@@ -55,8 +54,9 @@ void c_OUTX(caosVM* vm) {
 			default: oh += i;
 		}
 	}
+	oh += "\"";
 
-	*vm->outputstream << oh << "\"";
+	vm->outputstream->write_str(oh);
 }
 
 /**
@@ -80,7 +80,7 @@ void c_OUTS(caosVM* vm) {
 	if (!vm->outputstream)
 		return;
 
-	*vm->outputstream << val;
+	vm->outputstream->write_str(val);
 }
 
 /**
@@ -105,12 +105,12 @@ void c_OUTV(caosVM* vm) {
 		return;
 
 	if (val.hasFloat()) {
-		*vm->outputstream << fmt::format("{:0.06f}", val.getFloat());
+		vm->outputstream->write_str(fmt::format("{:0.06f}", val.getFloat()));
 	} else if (val.hasInt()) {
-		*vm->outputstream << val.getInt();
+		vm->outputstream->write_str(fmt::format("{}", val.getInt()));
 	} else if (val.hasVector()) {
 		const Vector<float>& v = val.getVector();
-		*vm->outputstream << fmt::format("({:0.6f}, {:%0.6f})", v.x, v.y);
+		vm->outputstream->write_str(fmt::format("({:0.6f}, {:%0.6f})", v.x, v.y));
 	} else
 		throw badParamException();
 }

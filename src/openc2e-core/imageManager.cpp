@@ -30,7 +30,6 @@
 
 #include <array>
 #include <fmt/format.h>
-#include <fstream>
 #include <ghc/filesystem.hpp>
 #include <iostream>
 #include <memory>

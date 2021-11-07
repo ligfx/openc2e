@@ -36,7 +36,9 @@
 #include "World.h"
 #include "caosScript.h"
 #include "common/Exception.h"
+#include "common/encoding.h"
 #include "common/endianlove.h"
+#include "common/io/io.h"
 #include "common/macro_stringify.h"
 #include "fileformats/sprImage.h"
 #include "imageManager.h"
@@ -80,7 +82,7 @@ SFCFile::~SFCFile() {
 	}
 }
 
-void SFCFile::read(std::istream* i) {
+void SFCFile::read(seekablereader* i) {
 	ourStream = i;
 
 	mapdata = (MapData*)slurpMFC(TYPE_MAPDATA);
@@ -90,7 +92,7 @@ void SFCFile::read(std::istream* i) {
 	uint8_t x = 0;
 	while (x == 0)
 		x = read8();
-	ourStream->seekg(-1, std::ios::cur);
+	ourStream->seek(-1, seek_type::seek_cur);
 
 	uint32_t numobjects = read32();
 	for (unsigned int i = 0; i < numobjects; i++) {
@@ -122,9 +124,9 @@ void SFCFile::read(std::istream* i) {
 	favplacey = read16();
 
 	if (version() == 0)
-		readBytes(25); // TODO
+		ignore(25); // TODO
 	else
-		readBytes(29); // TODO
+		ignore(29); // TODO
 
 	uint16_t numspeech = read16();
 	for (unsigned int i = 0; i < numspeech; i++) {
@@ -153,7 +155,7 @@ bool validSFCType(unsigned int type, unsigned int reqtype) {
 }
 
 SFCClass* SFCFile::slurpMFC(unsigned int reqtype) {
-	sfccheck(!ourStream->fail());
+	// sfccheck(!ourStream->fail());
 
 	// read the pid (this only works up to 0x7ffe, but we'll cope)
 	uint16_t pid = read16();
@@ -165,10 +167,7 @@ SFCClass* SFCFile::slurpMFC(unsigned int reqtype) {
 		// completely new class, read details
 		(void)read16(); // schemaid
 		uint16_t strlen = read16();
-		char* temp = new char[strlen];
-		ourStream->read(temp, strlen);
-		std::string classname(temp, strlen);
-		delete[] temp;
+		std::string classname = ascii_to_utf8(ourStream->read_vector(strlen));
 
 		pid = storage.size();
 
@@ -274,15 +273,11 @@ std::string SFCFile::readstring() {
 			strlen = read32();
 	}
 
-	return readBytes(strlen);
+	return cp1252_to_utf8(readBytes(strlen));
 }
 
-std::string SFCFile::readBytes(unsigned int n) {
-	char* temp = new char[n];
-	ourStream->read(temp, n);
-	std::string t = std::string(temp, n);
-	delete[] temp;
-	return t;
+std::vector<uint8_t> SFCFile::readBytes(unsigned int n) {
+	return ourStream->read_vector(n);
 }
 
 void SFCFile::setVersion(unsigned int v) {
@@ -344,7 +339,7 @@ void MapData::read() {
 			groundlevel = read32();
 		}
 
-		readBytes(800); // TODO
+		ignore(800); // TODO
 	}
 }
 
@@ -359,7 +354,7 @@ MapData::~MapData() {
 
 void CGallery::read() {
 	noframes = read32();
-	filename = parent->readBytes(4);
+	filename = ascii_to_utf8(parent->readBytes(4));
 	firstimg = read32();
 
 	// discard unknown bytes
@@ -427,7 +422,7 @@ void CRoom::read() {
 	radiationsource = reads32();
 
 	// discard unknown bytes
-	readBytes(800);
+	ignore(800);
 
 	uint16_t nopoints = read16();
 	for (unsigned int i = 0; i < nopoints; i++) {
@@ -445,16 +440,16 @@ void CRoom::read() {
 }
 
 void SFCMacro::read() {
-	readBytes(12); // TODO
+	ignore(12); // TODO
 
 	script = readstring();
 
 	read32();
 	read32();
 	if (parent->version() == 0)
-		readBytes(120);
+		ignore(120);
 	else
-		readBytes(480);
+		ignore(480);
 
 	owner = (SFCObject*)slurpMFC(TYPE_OBJECT);
 	sfccheck(owner);
@@ -462,10 +457,10 @@ void SFCMacro::read() {
 	sfccheck(read16() == 0);
 	targ = (SFCObject*)slurpMFC(TYPE_OBJECT);
 
-	readBytes(18);
+	ignore(18);
 
 	if (parent->version() == 1)
-		readBytes(16);
+		ignore(16);
 }
 
 void SFCEntity::read() {
@@ -494,9 +489,10 @@ void SFCEntity::read() {
 		// read the animation string
 		std::string tempstring;
 		if (parent->version() == 0)
-			tempstring = readBytes(32);
+			tempstring = ascii_to_utf8(readBytes(32));
 		else
-			tempstring = readBytes(99);
+			tempstring = ascii_to_utf8(readBytes(99));
+
 		// chop off non-null-terminated bits
 		animstring = std::string(tempstring.c_str());
 	} else {
@@ -564,7 +560,7 @@ void SFCObject::read() {
 	sfccheck(read16() == 0);
 
 	// read currently-looping sound, if any
-	currentsound = readBytes(4);
+	currentsound = ascii_to_utf8(readBytes(4));
 	if (currentsound[0] == 0)
 		currentsound.clear();
 
@@ -588,7 +584,7 @@ void SFCObject::read() {
 		aero = read32();
 
 		// discard unknown bytes
-		readBytes(6);
+		ignore(6);
 
 		// read threats
 		threat = read8();
@@ -674,7 +670,7 @@ void SFCBlackboard::read() {
 	// read blackboard strings
 	for (unsigned int i = 0; i < (parent->version() == 0 ? 16 : 48); i++) {
 		uint32_t value = read32();
-		std::string str = readBytes(11);
+		std::string str = cp1252_to_utf8(readBytes(11));
 		// chop off non-null-terminated bits
 		str = std::string(str.c_str());
 		strings.push_back(std::pair<uint32_t, std::string>(value, str));
@@ -708,7 +704,7 @@ void SFCLift::read() {
 	currentbutton = read32();
 
 	// discard unknown bytes
-	sfccheck(readBytes(5) == std::string("\xff\xff\xff\xff\x00", 5));
+	ignore(5);
 
 	for (unsigned int& i : callbuttony) {
 		i = read32();
@@ -762,9 +758,9 @@ void SFCPointerTool::read() {
 
 	// discard unknown bytes
 	if (parent->version() == 0)
-		readBytes(35);
+		ignore(35);
 	else
-		readBytes(51);
+		ignore(51);
 }
 
 void SFCCallButton::read() {

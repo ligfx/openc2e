@@ -23,6 +23,7 @@
 #include "bytecode.h"
 #include "caosValue.h"
 #include "cmddata.h"
+#include "common/io/io.h"
 #include "common/shared_str.h"
 #include "dialect.h"
 #include "fileformats/caostoken.h"
@@ -238,7 +239,7 @@ class caosScript { //: Collectable {
 	caosScript(const std::string& dialect, const std::string& filename);
 	caosScript() { d = NULL; }
 	void parse(const std::string& caostext);
-	void parse(std::istream& in);
+	void parse(reader& in);
 	~caosScript();
 	void installScripts();
 	void installInstallScript(unsigned char family, unsigned char genus, unsigned short species, unsigned short eventid);

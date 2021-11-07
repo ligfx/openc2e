@@ -22,10 +22,11 @@
 #include "World.h" // enum
 #include "caosScript.h" // CAOS
 #include "caosVM.h"
+#include "common/io/io.h"
+#include "common/io/vectorwriter.h"
 #include "common/throw_ifnot.h"
 
 #include <cmath> // sqrt
-#include <iostream>
 #include <memory>
 #include <sstream>
 
@@ -516,14 +517,12 @@ void v_CAOS(caosVM* vm) {
 
 		s.installScripts();
 
-		std::ostringstream oss;
-		sub->outputstream = &oss;
-
-
+		vectorwriter out;
+		sub->outputstream = &out;
 		sub->runEntirely(s.installer);
-
-		vm->result.setString(oss.str());
 		sub->outputstream = 0;
+		// TODO: is outputstream output in CP1252? hmm.
+		vm->result.setString(std::string(reinterpret_cast<const char*>(out.vector().data()), out.vector().size()));
 	} catch (Exception& e) {
 		sub->outputstream = 0; // very important that this isn't pointing onto dead stack when the VM is freed
 

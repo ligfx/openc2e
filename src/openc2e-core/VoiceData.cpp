@@ -20,6 +20,7 @@
 #include "VoiceData.h"
 
 #include "Catalogue.h"
+#include "common/encoding.h"
 #include "common/endianlove.h"
 
 #include <cassert>
@@ -30,14 +31,14 @@
 VoiceData::VoiceData() = default;
 
 // Creatures 1 and 2 store this data in .vce files
-VoiceData::VoiceData(std::istream& in) {
+VoiceData::VoiceData(reader& in) {
 	// voice files and associated delay
 	for (unsigned int i = 0; i < NUM_VOICE_FILES; i++) {
-		char temp[4];
-		in.read((char*)&temp, 4);
+		uint8_t temp[4];
+		in.read(temp, 4);
 		VoiceEntry entry;
 		if (temp[0])
-			entry.name = std::string(temp, 4);
+			entry.name = ascii_to_utf8(temp, 4);
 		entry.delay_ticks = read32le(in);
 		voices.push_back(entry);
 	}

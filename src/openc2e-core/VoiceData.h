@@ -20,7 +20,8 @@
 #ifndef _VOICEDATA_H
 #define _VOICEDATA_H
 
-#include <istream>
+#include "common/io/io.h"
+
 #include <string>
 #include <vector>
 
@@ -32,7 +33,7 @@ struct VoiceEntry {
 class VoiceData {
   public:
 	VoiceData();
-	VoiceData(std::istream& in);
+	VoiceData(reader& in);
 	VoiceData(std::string tagname);
 	operator bool() const;
 
