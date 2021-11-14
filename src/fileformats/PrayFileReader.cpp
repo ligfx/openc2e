@@ -56,20 +56,12 @@ size_t PrayFileReader::getNumBlocks() {
 
 std::string PrayFileReader::getBlockType(size_t i) {
 	stream.seek(block_offsets[i]);
-	char type[5];
-	type[4] = 0;
-	// TODO: assert CP1252 and decode into UTF-8
-	stream.read(reinterpret_cast<uint8_t*>(type), 4);
-	return type;
+	return read_cp1252_string(stream, 4);
 }
 
 std::string PrayFileReader::getBlockName(size_t i) {
 	stream.seek(block_offsets[i] + 4);
-	char name[129];
-	name[128] = 0;
-	// TODO: assert CP1252 and decode into UTF-8
-	stream.read(reinterpret_cast<uint8_t*>(name), 128);
-	return ensure_utf8(name);
+	return read_cp1252_string(stream, 128);
 }
 
 bool PrayFileReader::getBlockIsCompressed(size_t i) {
@@ -128,11 +120,7 @@ std::vector<unsigned char> PrayFileReader::getBlockRawData(size_t i) {
 
 static std::string tagStringRead(reader& in) {
 	unsigned int len = read32le(in);
-
-	std::string data(len, '0');
-	// TODO: assert CP1252 and decode into UTF-8
-	in.read(reinterpret_cast<uint8_t*>(&data[0]), len);
-	return data;
+	return read_cp1252_string(in, len);
 }
 
 std::pair<std::map<std::string, uint32_t>, std::map<std::string, std::string>> PrayFileReader::getBlockTags(size_t i) {

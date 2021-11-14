@@ -115,31 +115,7 @@ void cobBlock::free() {
 
 // TODO: argh, isn't there a better way to do this?
 std::string readstring(reader& file) {
-	unsigned int i = 0, n = 4096;
-	char* buf = (char*)malloc(n);
-
-	while (true) {
-		try {
-			file.read(reinterpret_cast<uint8_t*>(&buf[i]), 1);
-		} catch (io_error&) {
-			throw Exception("Failed to read string.");
-		}
-
-		// found null terminator
-		if (buf[i] == 0) {
-			std::string s = buf;
-			free(buf);
-			return s;
-		}
-
-		i++;
-
-		// out of space?
-		if (i == n) {
-			n = n * 2;
-			buf = (char*)realloc(buf, n);
-		}
-	}
+	return file.read_cp1252_until('\0');
 }
 
 cobAgentBlock::cobAgentBlock(cobBlock* p) {
