@@ -95,11 +95,6 @@ TEST(caos, strings) {
 	run_script("c3", readfile("../src/tests/strings.cos"));
 }
 
-TEST(caos, timeslice) {
-	run_script("c1", readfile("../src/tests/timeslice.cos"));
-	run_script("c2", readfile("../src/tests/timeslice.cos"));
-}
-
 TEST(caos, variables) {
 	run_script("c3", readfile("../src/tests/variables.cos"));
 }
