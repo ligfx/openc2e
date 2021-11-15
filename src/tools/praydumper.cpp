@@ -2,6 +2,7 @@
 #include "common/io/file.h"
 #include "common/io/io.h"
 #include "common/io/spanreader.h"
+#include "common/io/text.h"
 #include "common/optional.h"
 #include "common/span.h"
 #include "fileformats/PrayFileReader.h"
@@ -57,9 +58,7 @@ optional<PrayTagBlock> get_block_as_tags(PrayFileReader& file, int i) {
 				return {};
 			}
 
-			std::string key(keylength, '0');
-			// TODO: assert CP1252, encode as UTF-8
-			s.read((uint8_t*)&key[0], keylength);
+			std::string key = read_cp1252_string(s, keylength);
 			if (!is_printable(key)) {
 				return {};
 			}
@@ -73,17 +72,13 @@ optional<PrayTagBlock> get_block_as_tags(PrayFileReader& file, int i) {
 		for (unsigned int i = 0; i < nostrvalues; i++) {
 			unsigned int keylength = read32le(s);
 
-			std::string key(keylength, '0');
-			// TODO: assert CP1252, encode as UTF-8
-			s.read((uint8_t*)&key[0], keylength);
+			std::string key = read_cp1252_string(s, keylength);
 			if (!is_printable(key)) {
 				return {};
 			}
 
 			unsigned int valuelength = read32le(s);
-			std::string value(valuelength, '0');
-			// TODO: assert CP1252, encode as UTF-8
-			s.read((uint8_t*)&value[0], valuelength);
+			std::string value = read_cp1252_string(s, valuelength);
 			if (!is_printable(value)) {
 				return {};
 			}

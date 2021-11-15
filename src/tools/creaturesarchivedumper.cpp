@@ -9,7 +9,7 @@
 
 namespace fs = ghc::filesystem;
 
-static const std::string CREATURES_ARCHIVE_MAGIC = "Creatures Evolution Engine - Archived information file. zLib 1.13 compressed.";
+static const char CREATURES_ARCHIVE_MAGIC[] = "Creatures Evolution Engine - Archived information file. zLib 1.13 compressed.";
 
 int main(int argc, char** argv) {
 	if (argc != 2) {
@@ -28,18 +28,16 @@ int main(int argc, char** argv) {
 	fmt::print("data size = {}\n", data.size());
 
 	spanreader s(data);
-	std::string magic;
-	magic.resize(CREATURES_ARCHIVE_MAGIC.size());
-	s.read(reinterpret_cast<uint8_t*>(&magic[0]), magic.size());
+	uint8_t magic[sizeof(CREATURES_ARCHIVE_MAGIC)];
+	s.read(magic, sizeof(magic));
 
-
-	if (magic != CREATURES_ARCHIVE_MAGIC) {
+	if (memcmp(magic, CREATURES_ARCHIVE_MAGIC, sizeof(magic)) != 0) {
 		fmt::print(stderr, "Invalid magic - got \"{}\"\n", magic);
 		exit(1);
 	}
 
 	fmt::print("magic = \"{}\"\n", magic);
-	fmt::print("magic size = {}\n", magic.size());
+	fmt::print("magic size = {}\n", sizeof(magic));
 
 	uint8_t sub = read8(s);
 	uint8_t eot = read8(s);
