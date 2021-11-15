@@ -22,6 +22,7 @@
 #include "common/Exception.h"
 #include "common/encoding.h"
 #include "common/endianlove.h"
+#include "common/io/text.h"
 
 #include <algorithm>
 #include <assert.h>
@@ -59,14 +60,8 @@ c2cobfile::~c2cobfile() {
 cobBlock::cobBlock(c2cobfile* p) {
 	seekablereader& file = p->getStream();
 
-	uint8_t cobtype[4];
-	file.read(cobtype, 4);
-	if (!is_valid_ascii(cobtype, 4)) {
-		// TODO: is CP1252 allowed?
-		// TODO: debug representation, instead of lossy UTF-8?
-		throw Exception("bad type of C2 COB block \"" + to_utf8_lossy(cobtype, 4) + "\"");
-	}
-	type = ascii_to_utf8(cobtype, 4);
+	// TODO: is CP1252 allowed?
+	type = read_ascii_string(file, 4);
 
 	size = read32le(file);
 
@@ -113,9 +108,10 @@ void cobBlock::free() {
 	buffer = 0;
 }
 
-// TODO: argh, isn't there a better way to do this?
-std::string readstring(reader& file) {
-	return file.read_cp1252_until('\0');
+static std::string readstring(reader& file) {
+	std::vector<uint8_t> buf = read_until(file, '\0');
+	buf.resize(buf.size() - 1);
+	return cp1252_to_utf8(buf);
 }
 
 cobAgentBlock::cobAgentBlock(cobBlock* p) {

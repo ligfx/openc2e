@@ -30,9 +30,7 @@ bufferedreader& operator>>(bufferedreader& i, attFile& f) {
 
 	std::string s;
 	while (i.has_more_data()) {
-		std::vector<uint8_t> buf = read_text_line(i);
-		// TODO: enforce encoding? this should actually just be parsed, so meh
-		s = std::string((char*)buf.data(), buf.size());
+		s = read_ascii_line(i);
 		if (s.size() == 0)
 			return i;
 		if (f.nolines >= 16)

@@ -23,7 +23,9 @@
 #include "common/Exception.h"
 #include "common/encoding.h"
 #include "common/endianlove.h"
+#include "common/index_of.h"
 #include "common/io/spanreader.h"
+#include "common/io/text.h"
 
 /*
  * This isn't a full PE parser, but it manages to extract resources from the
@@ -72,9 +74,11 @@ peFile::peFile(fs::path filepath) {
 
 	std::map<std::string, peSection> sections;
 	for (unsigned int i = 0; i < nosections; i++) {
-		uint8_t section_name[8];
 		// what encoding is this? ascii? raw bytes?
-		file.read(section_name, 8);
+		std::string section_name = read_ascii_string(file, 8);
+		if (index_of(section_name, '\0') != (size_t)-1) {
+			section_name.resize(index_of(section_name, '\0'));
+		}
 
 		file.ignore(4);
 
@@ -82,7 +86,7 @@ peFile::peFile(fs::path filepath) {
 		section.vaddr = read32le(file);
 		section.size = read32le(file);
 		section.offset = read32le(file);
-		sections[ascii_to_utf8(section_name, 8)] = section;
+		sections[section_name] = section;
 
 		file.ignore(16);
 	}

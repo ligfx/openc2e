@@ -23,6 +23,7 @@
 #include "common/encoding.h"
 #include "common/endianlove.h"
 #include "common/io/spanreader.h"
+#include "common/io/text.h"
 
 #include <cstring>
 #include <zlib.h>
@@ -61,7 +62,11 @@ std::string PrayFileReader::getBlockType(size_t i) {
 
 std::string PrayFileReader::getBlockName(size_t i) {
 	stream.seek(block_offsets[i] + 4);
-	return read_cp1252_string(stream, 128);
+	std::string name = read_cp1252_string(stream, 128);
+	if (name.find('\0') != std::string::npos) {
+		name.resize(name.find('\0'));
+	}
+	return name;
 }
 
 bool PrayFileReader::getBlockIsCompressed(size_t i) {

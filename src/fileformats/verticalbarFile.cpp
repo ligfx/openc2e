@@ -16,7 +16,7 @@ std::vector<std::vector<std::string>> ReadVerticalBarSeparatedValuesFile(const s
 
 	std::vector<std::vector<std::string>> lines;
 	while (in.has_more_data()) {
-		std::string line = cp1252_to_utf8(read_text_line(in));
+		std::string line = read_cp1252_line(in);
 		if (line.empty() || line[0] == '#') {
 			continue;
 		}
