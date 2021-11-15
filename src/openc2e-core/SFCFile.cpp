@@ -38,6 +38,7 @@
 #include "common/Exception.h"
 #include "common/encoding.h"
 #include "common/endianlove.h"
+#include "common/index_of.h"
 #include "common/io/io.h"
 #include "common/macro_stringify.h"
 #include "fileformats/sprImage.h"
@@ -280,6 +281,10 @@ std::vector<uint8_t> SFCFile::readBytes(unsigned int n) {
 	return ourStream->read_vector(n);
 }
 
+void SFCFile::ignore(size_t n) {
+	return ourStream->ignore(n);
+}
+
 void SFCFile::setVersion(unsigned int v) {
 	if (v == 0) {
 		sfccheck(engine.gametype == "c1");
@@ -487,14 +492,18 @@ void SFCEntity::read() {
 		animframe = read8();
 
 		// read the animation string
-		std::string tempstring;
-		if (parent->version() == 0)
-			tempstring = ascii_to_utf8(readBytes(32));
-		else
-			tempstring = ascii_to_utf8(readBytes(99));
+		std::vector<uint8_t> tempstring;
+		if (parent->version() == 0) {
+			tempstring = readBytes(32);
+		} else {
+			tempstring = readBytes(99);
+		}
 
 		// chop off non-null-terminated bits
-		animstring = std::string(tempstring.c_str());
+		if (index_of(tempstring, '\0') != (size_t)-1) {
+			tempstring.resize(index_of(tempstring, '\0'));
+		}
+		animstring = ascii_to_utf8(tempstring);
 	} else {
 		haveanim = false;
 	}

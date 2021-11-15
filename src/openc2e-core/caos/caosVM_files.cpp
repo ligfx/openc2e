@@ -248,9 +248,16 @@ void v_INNL(caosVM* vm) {
 		throw caosException("no input stream in INNL!");
 
 	try {
-		std::vector<uint8_t> line = read_text_line(*vm->inputstream);
-		// TODO: assert line is CP1252? the vm result is a caosvalue which should
-		// be in CP1252
+		// TODO: what is the encoding of the inputstream? CP1252? the vm result
+		// is a caosvalue which should be in CP1252
+		std::vector<uint8_t> line = read_until(*vm->inputstream, '\n');
+		// trim newline
+		if (line.back() == '\n') {
+			line.resize(line.size() - 1);
+			if (line.back() == '\r') {
+				line.resize(line.size() - 1);
+			}
+		}
 		vm->result.setString(std::string((char*)line.data(), line.size()));
 	} catch (io_error&) {
 		vm->result.setString("");
