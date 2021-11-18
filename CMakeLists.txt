@@ -36,14 +36,6 @@ if (OPENC2E_PROFILE_ALLOCATION)
 endif()
 
 # Find / include dependencies
-find_package(Python REQUIRED)
-
-find_program(RE2C_EXECUTABLE re2c)
-if(NOT RE2C_EXECUTABLE)
-	add_subdirectory(externals/re2c EXCLUDE_FROM_ALL)
-	set(RE2C_EXECUTABLE re2c)
-endif()
-
 if(WIN32)
 	add_subdirectory(externals/zlib EXCLUDE_FROM_ALL)
 else()
@@ -80,6 +72,28 @@ add_subdirectory(externals/googletest EXCLUDE_FROM_ALL)
 add_subdirectory(externals/imgui EXCLUDE_FROM_ALL)
 add_subdirectory(externals/mpark-variant EXCLUDE_FROM_ALL)
 
+# Find / include build tools
+find_package(Python REQUIRED)
+
+find_program(RE2C_EXECUTABLE re2c)
+if(NOT RE2C_EXECUTABLE)
+	add_subdirectory(externals/re2c EXCLUDE_FROM_ALL)
+	set(RE2C_EXECUTABLE re2c)
+endif()
+function(target_re2c_sources target_name scope)
+	foreach(filename IN LISTS ARGN)
+		string(REGEX REPLACE "[.]re2c[.]cpp$" ".cpp" output_filename "${GEN}/${filename}")
+		get_filename_component(output_directory "${output_filename}" DIRECTORY)
+		add_custom_command(
+			OUTPUT "${output_filename}"
+			COMMAND ${CMAKE_COMMAND} -E make_directory "${output_directory}"
+			COMMAND ${RE2C_EXECUTABLE} -o "${output_filename}" "${filename}"
+			DEPENDS "${filename}"
+			WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
+		)
+		target_sources(${target_name} ${scope} "${output_filename}")
+	endforeach()
+endfunction()
 
 # Pass flags to the compiler
 add_compile_definitions("_REENTRANT" "YYERROR_VERBOSE")
@@ -124,11 +138,7 @@ add_library(openc2e-fileformats STATIC
 	src/fileformats/attFile.cpp
 	src/fileformats/blkImage.cpp
 	src/fileformats/bmpImage.cpp
-	${GEN}/fileformats/Caos2PrayParser.cpp
-	${GEN}/fileformats/caoslexer.cpp
 	src/fileformats/caostoken.cpp
-	${GEN}/fileformats/catalogueFile.cpp
-	${GEN}/fileformats/cfgFile.cpp
 	src/fileformats/charsetdta.cpp
 	src/fileformats/c1cobfile.cpp
 	src/fileformats/c1defaultpalette.cpp
@@ -137,18 +147,24 @@ add_library(openc2e-fileformats STATIC
 	src/fileformats/genomeFile.cpp
 	src/fileformats/hedfile.cpp
 	src/fileformats/mngfile.cpp
-	${GEN}/fileformats/mngparser.cpp
 	src/fileformats/paletteFile.cpp
 	src/fileformats/peFile.cpp
 	src/fileformats/pngImage.cpp
 	src/fileformats/PrayFileReader.cpp
 	src/fileformats/PrayFileWriter.cpp
-	${GEN}/fileformats/PraySourceParser.cpp
 	src/fileformats/s16Image.cpp
 	src/fileformats/sprImage.cpp
 	src/fileformats/strFile.cpp
 	src/fileformats/verticalbarFile.cpp
 	src/fileformats/ImageUtils.cpp
+)
+target_re2c_sources(openc2e-fileformats PRIVATE
+	src/fileformats/caoslexer.re2c.cpp
+	src/fileformats/catalogueFile.re2c.cpp
+	src/fileformats/cfgFile.re2c.cpp
+	src/fileformats/mngparser.re2c.cpp
+	src/fileformats/Caos2PrayParser.re2c.cpp
+	src/fileformats/PraySourceParser.re2c.cpp
 )
 target_include_directories(openc2e-fileformats PRIVATE src/fileformats)
 target_link_libraries(openc2e-fileformats
@@ -388,63 +404,7 @@ add_custom_command(
 	DEPENDS scripts/writecmds.py ${GEN}/commandinfo.json
 	WORKING_DIRECTORY ${SRC})
 
-# it seems these add_custom_command for re2c could be made
-# into a macro... e.g. RE2C(file1) RE2C(file2) etc...
-add_custom_command(
-	OUTPUT ${GEN}/cataloglexer.cpp
-	COMMAND ${CMAKE_COMMAND} -E make_directory "${GEN}"
-	COMMAND ${RE2C_EXECUTABLE} -o ${GEN}/cataloglexer.cpp ${SRC}/src/cataloglexer.re2c.cpp
-	DEPENDS ${SRC}/src/cataloglexer.re2c.cpp
-	WORKING_DIRECTORY ${SRC})
-
-add_custom_command(
-	OUTPUT ${GEN}/fileformats/caoslexer.cpp
-	COMMAND ${CMAKE_COMMAND} -E make_directory "${GEN}/fileformats"
-	COMMAND ${RE2C_EXECUTABLE} -o ${GEN}/fileformats/caoslexer.cpp ${SRC}/src/fileformats/caoslexer.re2c.cpp
-	DEPENDS ${SRC}/src/fileformats/caoslexer.re2c.cpp
-	WORKING_DIRECTORY ${SRC})
-
-add_custom_command(
-	OUTPUT ${GEN}/fileformats/catalogueFile.cpp
-	COMMAND ${CMAKE_COMMAND} -E make_directory "${GEN}/fileformats"
-	COMMAND ${RE2C_EXECUTABLE} -o ${GEN}/fileformats/catalogueFile.cpp ${SRC}/src/fileformats/catalogueFile.re2c.cpp
-	DEPENDS ${SRC}/src/fileformats/catalogueFile.re2c.cpp
-	WORKING_DIRECTORY ${SRC})
-
-add_custom_command(
-	OUTPUT ${GEN}/fileformats/cfgFile.cpp
-	COMMAND ${CMAKE_COMMAND} -E make_directory "${GEN}/fileformats"
-	COMMAND ${RE2C_EXECUTABLE} -o ${GEN}/fileformats/cfgFile.cpp ${SRC}/src/fileformats/cfgFile.re2c.cpp
-	DEPENDS ${SRC}/src/fileformats/cfgFile.re2c.cpp
-	WORKING_DIRECTORY ${SRC})
-
-add_custom_command(
-	OUTPUT ${GEN}/fileformats/mngparser.cpp
-	COMMAND ${CMAKE_COMMAND} -E make_directory "${GEN}/fileformats"
-	COMMAND ${RE2C_EXECUTABLE} -o ${GEN}/fileformats/mngparser.cpp ${SRC}/src/fileformats/mngparser.re2c.cpp
-	DEPENDS ${SRC}/src/fileformats/mngparser.re2c.cpp
-	WORKING_DIRECTORY ${SRC})
-
-add_custom_command(
-	OUTPUT ${GEN}/fileformats/Caos2PrayParser.cpp
-	COMMAND ${CMAKE_COMMAND} -E make_directory "${GEN}/fileformats"
-	COMMAND ${RE2C_EXECUTABLE} -o ${GEN}/fileformats/Caos2PrayParser.cpp ${SRC}/src/fileformats/Caos2PrayParser.re2c.cpp
-	DEPENDS ${SRC}/src/fileformats/Caos2PrayParser.re2c.cpp
-	WORKING_DIRECTORY ${SRC})
-
-add_custom_command(
-	OUTPUT ${GEN}/fileformats/PraySourceParser.cpp
-	COMMAND ${CMAKE_COMMAND} -E make_directory "${GEN}/fileformats"
-	COMMAND ${RE2C_EXECUTABLE} -o ${GEN}/fileformats/PraySourceParser.cpp ${SRC}/src/fileformats/PraySourceParser.re2c.cpp
-	DEPENDS ${SRC}/src/fileformats/PraySourceParser.re2c.cpp
-	WORKING_DIRECTORY ${SRC})
-
 add_custom_target(docs ALL DEPENDS ${BIN}/caosdocs.html)
-add_custom_target(generated DEPENDS
-	${GEN}/caoslexer.cpp
-	${GEN}/mngparser.cpp
-	${GEN}/cmddata.cpp
-)
 
 install(FILES
 	AUTHORS
