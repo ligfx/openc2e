@@ -2,9 +2,7 @@
 
 #include "io.h"
 
-#include <string.h>
-
-class spanreader final : public seekablereader {
+class spanreader : public bufferedseekablereader {
   public:
 	spanreader()
 		: spanreader(nullptr, 0) {}
@@ -17,8 +15,11 @@ class spanreader final : public seekablereader {
 		: spanreader(t.data(), t.size()) {}
 
 	size_t read_some(uint8_t* buf, size_t n) override;
-	void seek(int64_t offset, seek_type whence) override;
+	void seek(int64_t offset, seek_type whence = seek_type::seek_set) override;
 	size_t tell() override;
+
+	uint8_t peek() override;
+	bool has_more_data() override;
 
   private:
 	const uint8_t* m_buffer = nullptr;

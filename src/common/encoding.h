@@ -12,6 +12,9 @@ std::string ensure_utf8(const std::string& str);
 std::string ensure_cp1252(const std::string& str);
 
 // translate strings, throwing if it's not possible
+std::string ascii_to_utf8(const uint8_t*, size_t);
+std::string ascii_to_utf8(const std::vector<uint8_t>&);
+std::string cp1252_to_utf8(const std::vector<uint8_t>&);
 std::string cp1252_to_utf8(const std::string& cp1252_str);
 std::string utf8_to_cp1252(const std::string& utf8_str);
 
@@ -36,6 +39,13 @@ std::string wstring_to_string(const std::wstring&);
 std::wstring string_to_wstring(const std::string&);
 
 // helper functions
+std::string to_utf8_lossy(const uint8_t*, size_t);
+std::string to_utf8_lossy(const std::vector<uint8_t>& s);
 std::string to_utf8_lossy(const std::basic_string<uint8_t>& s);
+bool is_valid_ascii(const uint8_t*, size_t);
+bool is_valid_ascii(const std::string& str);
+bool is_valid_ascii(const std::vector<uint8_t>&);
+bool is_valid_utf8(const uint8_t* s, size_t n);
 bool is_valid_utf8(const std::string& str);
+bool is_valid_utf8(const std::vector<uint8_t>&);
 bool cp1252_isprint(unsigned char cp1252_char);

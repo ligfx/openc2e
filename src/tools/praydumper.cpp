@@ -158,7 +158,7 @@ int main(int argc, char** argv) {
 					name = file.getBlockName(i) + " - " + name + ".cos";
 					std::cout << "Writing " << (output_directory / name) << std::endl;
 					filewriter output(output_directory / name);
-					output.write(y.second.c_str(), y.second.size());
+					output.write_str(y.second);
 					pray_source << "\"" << y.first << "\" @ \"" << name << "\"" << std::endl;
 				} else {
 					pray_source << "\"" << y.first << "\" \"" << y.second << "\"" << std::endl;

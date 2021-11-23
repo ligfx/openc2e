@@ -66,14 +66,14 @@ int main(int argc, char** argv) {
 
 	fmt::print("Writing script...\n");
 	decryptbuf((char*)script.data(), script.size());
-	out.write(script.data(), script_size);
+	out.write_str(script.data(), script_size);
 
 	fmt::print("Writing samples...\n");
 	for (auto s : sample_names) {
 		fmt::print("{}\n", s);
 		auto sample = readfilebinary(s);
 		// TODO: check size matches what we wrote earlier
-		out.write((char*)sample.data() + 16, sample.size() - 16);
+		out.write(sample.data() + 16, sample.size() - 16);
 	}
 
 	fmt::print("Done!\n");

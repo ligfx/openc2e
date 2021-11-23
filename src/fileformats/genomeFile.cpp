@@ -202,7 +202,7 @@ seekablereader& operator>>(seekablereader& s, genomeFile& f) {
 }
 
 writer& operator<<(writer& s, const genomeFile& f) {
-	char majic[4] = {'d', 'n', 'a', static_cast<char>(f.cversion + 48)}; // 48 = ASCII '0';
+	uint8_t majic[4] = {'d', 'n', 'a', static_cast<uint8_t>(f.cversion + 48)}; // 48 = ASCII '0';
 	s.write(majic, 4);
 
 	// iterate through genes
@@ -210,7 +210,7 @@ writer& operator<<(writer& s, const genomeFile& f) {
 		s << *gene;
 	}
 
-	s.write("gend", 4);
+	s.write_str("gend");
 
 	return s;
 }
@@ -246,7 +246,7 @@ void geneFlags::operator()(uint8_t f) {
 }
 
 writer& operator<<(writer& s, const gene& g) {
-	s.write("gene", 4);
+	s.write_str("gene");
 	write8(s, g.type());
 	write8(s, g.subtype());
 
@@ -550,8 +550,8 @@ void creatureGenusGene::write(writer& s) const {
 	write8(s, genus);
 
 	// TODO: we read past the end of the returned buffer here!
-	s.write(mum.c_str(), (cversion == 3) ? 32 : 4);
-	s.write(dad.c_str(), (cversion == 3) ? 32 : 4);
+	s.write_str(mum.c_str(), (cversion == 3) ? 32 : 4);
+	s.write_str(dad.c_str(), (cversion == 3) ? 32 : 4);
 }
 
 void creatureGenusGene::read(reader& s) {
@@ -680,7 +680,7 @@ void oldBrainLobeGene::write(writer& s) const {
 	write8(s, leakagerate);
 	write8(s, reststate);
 	write8(s, inputgain);
-	s.write((char*)staterule, (cversion == 1) ? 8 : 12);
+	s.write(staterule, (cversion == 1) ? 8 : 12);
 	write8(s, flags);
 
 	s << dendrite1;
@@ -736,15 +736,15 @@ writer& operator<<(writer& s, const oldDendriteInfo& i) {
 	write8(s, i.LTWgainrate);
 
 	write8(s, i.strgain);
-	s.write((char*)i.strgainrule, (i.cversion == 1) ? 8 : 12);
+	s.write(i.strgainrule, (i.cversion == 1) ? 8 : 12);
 	write8(s, i.strloss);
-	s.write((char*)i.strlossrule, (i.cversion == 1) ? 8 : 12);
-	s.write((char*)i.susceptrule, (i.cversion == 1) ? 8 : 12);
-	s.write((char*)i.relaxrule, (i.cversion == 1) ? 8 : 12);
+	s.write(i.strlossrule, (i.cversion == 1) ? 8 : 12);
+	s.write(i.susceptrule, (i.cversion == 1) ? 8 : 12);
+	s.write(i.relaxrule, (i.cversion == 1) ? 8 : 12);
 
 	if (i.cversion == 2) {
-		s.write((char*)i.backproprule, 12);
-		s.write((char*)i.forproprule, 12);
+		s.write(i.backproprule, 12);
+		s.write(i.forproprule, 12);
 	}
 
 	return s;

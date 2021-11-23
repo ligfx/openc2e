@@ -123,11 +123,12 @@ add_library(openc2e-common STATIC
 	src/common/filesystem.cpp
 	src/common/io/file.cpp
 	src/common/io/io.cpp
+	src/common/io/spanreader.cpp
+	src/common/io/text.cpp
 	src/common/mappedfile.cpp
 	src/common/osstring.cpp
 	src/common/path.cpp
 	src/common/readfile.cpp
-	src/common/io/spanreader.cpp
 	src/common/string_in.cpp
 	src/common/userlocale.cpp
 	src/common/case_insensitive_filesystem.cpp

@@ -78,7 +78,7 @@ void check_roundtrip(const std::vector<uint8_t>& data) {
 	vectorwriter out;
 	out << genome;
 	while (out.vector().size() < data.size()) {
-		out.write("", 1);
+		out.write_str("\0", 1);
 	}
 
 	for (size_t i = 0; i < out.vector().size(); ++i) {
@@ -132,7 +132,7 @@ std::vector<uint8_t> change_genome(const std::vector<uint8_t>& data, int new_spe
 	out << genome;
 
 	while (out.vector().size() < data.size()) {
-		out.write("", 1);
+		out.write_str("\0", 1);
 	}
 	return out.vector();
 }
@@ -238,8 +238,8 @@ int main(int argc, char** argv) {
 		auto newdata = change_genome(data, new_species_number, new_slot_number);
 
 		fmt::print("writing to {}\n", filename);
-		std::ofstream out(filename, std::ios_base::binary);
-		out.write((char*)newdata.data(), newdata.size());
+		filewriter out(filename);
+		out.write(newdata.data(), newdata.size());
 
 	} else if (extension == ".c16" || extension == ".s16" || extension == ".att") {
 		std::string newname = get_new_filename(filename, new_species_number, new_slot_number);
@@ -257,8 +257,8 @@ int main(int argc, char** argv) {
 		auto newdata = change_prayfile(data, new_species_number, new_slot_number);
 
 		fmt::print("writing to {}\n", filename);
-		std::ofstream out(filename, std::ios_base::binary);
-		out.write((char*)newdata.data(), newdata.size());
+		filewriter out(filename);
+		out.write(newdata.data(), newdata.size());
 
 	} else {
 		fmt::print(stderr, "error: unknown file type\n");

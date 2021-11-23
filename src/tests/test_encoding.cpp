@@ -17,6 +17,7 @@ TEST(encoding, ensure_utf8) {
 }
 
 TEST(encoding, cp1252_to_utf8) {
+	// TODO: don't allow control/nonprintable characters, as they're likely not CP1252?
 	EXPECT_EQ(cp1252_to_utf8("tr\xe8s cool"), "tr\xc3\xa8s cool");
 	EXPECT_EQ(cp1252_to_utf8("\x80"), "\xe2\x82\xac");
 }

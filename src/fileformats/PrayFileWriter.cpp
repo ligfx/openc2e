@@ -10,7 +10,7 @@
 
 PrayFileWriter::PrayFileWriter(writer& stream_)
 	: stream(stream_) {
-	stream.write("PRAY", 4);
+	stream.write_str("PRAY", 4);
 }
 
 void PrayFileWriter::writeBlockRawData(const std::string& type,
@@ -18,18 +18,18 @@ void PrayFileWriter::writeBlockRawData(const std::string& type,
 	const unsigned char* data, size_t data_size,
 	PrayFileWriter::Compression compression) {
 	assert(type.size() == 4);
-	stream.write(type.c_str(), 4);
+	stream.write_str(type);
 
 	std::string cp1252_name = ensure_cp1252(name);
 	assert(cp1252_name.size() < 128);
-	stream.write(cp1252_name.c_str(), cp1252_name.size());
+	stream.write_str(cp1252_name);
 	for (size_t i = 0; i < 128 - cp1252_name.size(); ++i) {
-		stream.write("\0", 1);
+		stream.write_str("\0", 1);
 	}
 
 	if (compression == PRAY_COMPRESS_ON) {
 		uLongf compressed_size = compressBound(data_size);
-		std::vector<char> compressed_data(compressed_size);
+		std::vector<uint8_t> compressed_data(compressed_size);
 		int status = compress((Bytef*)compressed_data.data(), &compressed_size,
 			(const Bytef*)data, data_size);
 		if (status != Z_OK) {
@@ -51,7 +51,7 @@ void PrayFileWriter::writeBlockRawData(const std::string& type,
 	write32le(stream, data_size);
 	write32le(stream, 0);
 
-	stream.write((char*)data, data_size);
+	stream.write(data, data_size);
 }
 
 void PrayFileWriter::writeBlockRawData(const std::string& type,
@@ -72,7 +72,7 @@ void PrayFileWriter::writeBlockTags(
 	for (auto kv : integer_tags) {
 		std::string cp1252_key = ensure_cp1252(kv.first);
 		write32le(os, cp1252_key.size());
-		os.write(cp1252_key.c_str(), cp1252_key.size());
+		os.write_str(cp1252_key);
 		write32le(os, kv.second);
 	}
 
@@ -80,10 +80,10 @@ void PrayFileWriter::writeBlockTags(
 	for (auto kv : string_tags) {
 		std::string cp1252_key = ensure_cp1252(kv.first);
 		write32le(os, cp1252_key.size());
-		os.write(cp1252_key.c_str(), cp1252_key.size());
+		os.write_str(cp1252_key);
 		std::string cp1252_value = ensure_cp1252(kv.second);
 		write32le(os, cp1252_value.size());
-		os.write(cp1252_value.c_str(), cp1252_value.size());
+		os.write_str(cp1252_value);
 	}
 
 	writeBlockRawData(type, name, os.vector(), compression);

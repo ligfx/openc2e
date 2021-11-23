@@ -34,3 +34,7 @@ TEST(common, wildcard_match) {
 	EXPECT_TRUE(wildcard_match("h*o", "hello"));
 	EXPECT_TRUE(wildcard_match("h*l*o", "hello"));
 }
+
+TEST(common, mappedfile_move) {
+	ADD_FAILURE();
+}

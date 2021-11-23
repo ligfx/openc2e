@@ -13,10 +13,28 @@ filereader::filereader(const std::string& filename) {
 	}
 }
 
+filereader::filereader(filereader&& other) {
+	m_file = other.m_file;
+	other.m_file = nullptr;
+}
+
+filereader& filereader::operator=(filereader&& other) {
+	if (m_file) {
+		close();
+	}
+	m_file = other.m_file;
+	other.m_file = nullptr;
+	return *this;
+}
+
 filereader::~filereader() {
 	if (m_file) {
 		close();
 	}
+}
+
+bool filereader::is_open() const {
+	return m_file != nullptr;
 }
 
 void filereader::close() {
@@ -101,14 +119,58 @@ size_t filereader::tell() {
 	return pos;
 }
 
+uint8_t filereader::peek() {
+	int next_char = fgetc(m_file);
+	if (next_char == EOF) {
+		throw io_unexpectedeof();
+	}
+	if (ungetc(next_char, m_file) == EOF) {
+		throw io_error(fmt::format("Error ocurred calling ungetc, errno = {}", errno));
+	}
+	// safe cast, fgetc returns the character read as an unsigned char cast to an int.
+	return static_cast<uint8_t>(next_char);
+}
+
+bool filereader::has_more_data() {
+	int next_char = fgetc(m_file);
+	if (next_char == EOF) {
+		return false;
+	}
+	if (ungetc(next_char, m_file) == EOF) {
+		throw io_error(fmt::format("Error ocurred calling ungetc, errno = {}", errno));
+	}
+	return true;
+}
+
 filewriter::filewriter() = default;
 
-filewriter::filewriter(const std::string& filename) {
+filewriter::filewriter(const std::string& filename, write_open_type open_type) {
 	// TODO: Windows filenames
-	m_file = fopen(filename.c_str(), "wb");
+	switch (open_type) {
+		case write_open_type::write_open_truncate:
+			m_file = fopen(filename.c_str(), "wb");
+			break;
+		case write_open_type::write_open_append:
+			m_file = fopen(filename.c_str(), "ab");
+			break;
+	}
 	if (m_file == nullptr) {
 		throw io_error(fmt::format("Error opening '{}', errno {}", filename, errno));
 	}
+}
+
+filewriter::filewriter(filewriter&& other) {
+	m_file = other.m_file;
+	other.m_file = nullptr;
+}
+
+filewriter& filewriter::operator=(filewriter&& other) {
+	if (m_file) {
+		close();
+	}
+	m_file = other.m_file;
+	other.m_file = nullptr;
+	return *this;
 }
 
 filewriter::~filewriter() {
@@ -163,4 +225,11 @@ size_t filewriter::write_some(const uint8_t* buf, size_t n) {
 		}
 	}
 	return bytes_written;
+}
+
+void filewriter::flush() {
+	if (m_file == nullptr) {
+		throw io_error("Attempted flushing an empty filewriter object");
+	}
+	fflush(m_file);
 }

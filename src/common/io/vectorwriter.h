@@ -7,10 +7,13 @@
 class vectorwriter final : public writer {
   public:
 	vectorwriter() = default;
-	size_t write_some(const uint8_t* buf, size_t n) {
+
+	size_t write_some(const uint8_t* buf, size_t n) override {
 		m_vector.insert(m_vector.end(), buf, buf + n);
 		return n;
 	}
+	void flush() override {}
+
 	const std::vector<uint8_t>& vector() const {
 		return m_vector;
 	}

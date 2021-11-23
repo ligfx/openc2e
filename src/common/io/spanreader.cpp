@@ -49,3 +49,15 @@ void spanreader::seek(int64_t offset, seek_type whence) {
 size_t spanreader::tell() {
 	return m_position;
 }
+
+uint8_t spanreader::peek() {
+	if (m_position < m_buffer_size) {
+		return m_buffer[m_position];
+	} else {
+		throw io_unexpectedeof();
+	}
+}
+
+bool spanreader::has_more_data() {
+	return m_position < m_buffer_size;
+}

@@ -1,3 +1,4 @@
+#include "common/io/owningstringreader.h"
 #include "common/readfile.h"
 #include "openc2e-core/PathResolver.h"
 #include "openc2e-core/World.h"
@@ -6,6 +7,7 @@
 #include "openc2e-core/creaturesImage.h"
 #include "openc2e-core/imageManager.h"
 
+#include <fmt/core.h>
 #include <gtest/gtest.h>
 
 class Openc2eTestHelper {
@@ -29,7 +31,7 @@ class Openc2eTestHelper {
 };
 
 static void run_script(const std::string& dialect, const std::string& s) {
-	std::stringstream stream(s);
+	owningstringreader stream(s);
 	caosScript script(dialect, "");
 	script.parse(stream);
 
@@ -87,8 +89,8 @@ TEST(caos, simpleagent) {
 }
 
 TEST(caos, special_lexing) {
-	run_script("c1", readfile("../src/tests/special-lexing.cos"));
-	run_script("c2", readfile("../src/tests/special-lexing.cos"));
+	run_script("c1", readfile("../src/tests/special-lexing.c1,c2.cos"));
+	run_script("c2", readfile("../src/tests/special-lexing.c1,c2.cos"));
 }
 
 TEST(caos, strings) {

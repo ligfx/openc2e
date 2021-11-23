@@ -6,6 +6,23 @@
 #include <assert.h>
 #include <stdexcept>
 
+std::string ascii_to_utf8(const uint8_t* p, size_t n) {
+	std::string s;
+	s.reserve(n);
+	for (size_t i = 0; i < n; ++i) {
+		uint8_t c = p[i];
+		if (c >= 128) {
+			throw std::domain_error("Incorrect text encoding (non-ASCII)");
+		}
+		s.push_back(c);
+	}
+	return s;
+}
+
+std::string ascii_to_utf8(const std::vector<uint8_t>& buf) {
+	return ascii_to_utf8(buf.data(), buf.size());
+}
+
 static_vector<uint8_t, 4> utf8_encode(char32_t c) {
 	static_vector<uint8_t, 4> buf;
 	if (c <= 0x7f) {
@@ -167,14 +184,37 @@ static char32_t utf8_to_codepoint(const std::string& s, size_t& pos) {
 	return c;
 }
 
-bool is_valid_utf8(const char* s) {
+bool is_valid_ascii(const uint8_t* s, size_t n) {
+	if (s == nullptr) {
+		return false;
+	}
+	size_t pos = 0;
+	while (pos < n) {
+		if (s[pos] > 127) {
+			return false;
+		}
+		pos += 1;
+	}
+	return true;
+}
+
+bool is_valid_ascii(const std::string& str) {
+	return is_valid_ascii(reinterpret_cast<const uint8_t*>(str.c_str()), str.size());
+}
+
+bool is_valid_ascii(const std::vector<uint8_t>& buf) {
+	return is_valid_ascii(buf.data(), buf.size());
+}
+
+bool is_valid_utf8(const uint8_t* s, size_t n) {
 	if (s == nullptr) {
 		return true;
 	}
 	size_t pos = 0;
-	while (s[pos] != '\0') {
+	while (pos < n) {
 		char32_t codepoint;
-		size_t bytes_read = utf8decode((unsigned char*)s + pos, &codepoint);
+		// TODO: utf8decode needs a size parameter too to be safe?
+		size_t bytes_read = utf8decode(s + pos, &codepoint);
 		if (bytes_read == 0) {
 			return false;
 		}
@@ -184,13 +224,17 @@ bool is_valid_utf8(const char* s) {
 }
 
 bool is_valid_utf8(const std::string& str) {
-	return is_valid_utf8(str.c_str());
+	return is_valid_utf8(reinterpret_cast<const uint8_t*>(str.c_str()), str.size());
 }
 
-std::string to_utf8_lossy(const std::basic_string<uint8_t>& s) {
+bool is_valid_utf8(const std::vector<uint8_t>& buf) {
+	return is_valid_utf8(buf.data(), buf.size());
+}
+
+std::string to_utf8_lossy(const uint8_t* start, size_t n) {
 	std::string result;
-	const uint8_t* p = s.data();
-	while (*p != '\0') {
+	const uint8_t* p = start;
+	while (p < start + n) {
 		char32_t codepoint;
 		size_t bytes_read = utf8decode(p, &codepoint);
 		if (bytes_read > 0) {
@@ -204,7 +248,25 @@ std::string to_utf8_lossy(const std::basic_string<uint8_t>& s) {
 	return result;
 }
 
+std::string to_utf8_lossy(const std::vector<uint8_t>& s) {
+	return to_utf8_lossy(s.data(), s.size());
+}
+
+std::string to_utf8_lossy(const std::basic_string<uint8_t>& s) {
+	return to_utf8_lossy(s.data(), s.size());
+}
+
+std::string cp1252_to_utf8(const std::vector<uint8_t>& buf) {
+	// TODO: test that it's actually CP1252 somehow?
+	std::string utf8_str;
+	for (uint8_t c : buf) {
+		utf8_str += codepoint_to_utf8(cp1252_to_codepoint(c));
+	}
+	return utf8_str;
+}
+
 std::string cp1252_to_utf8(const std::string& cp1252_str) {
+	// TODO: test that it's actually CP1252 somehow?
 	std::string utf8_str;
 	for (unsigned char c : cp1252_str) {
 		utf8_str += codepoint_to_utf8(cp1252_to_codepoint(c));
