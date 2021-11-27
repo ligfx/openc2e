@@ -92,7 +92,7 @@ MNGFile::MNGFile(std::string n) {
 		memcpy(&data[0], "RIFF", 4);
 		write32le(&data[4], sample_headers[i].size + 4);
 		memcpy(&data[8], "WAVEfmt ", 8);
-		stream.read(&data[16]), sample_headers[i].size);
+		stream.read(&data[16], sample_headers[i].size);
 		samples.push_back(data);
 	}
 }
