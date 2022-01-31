@@ -173,9 +173,8 @@ class EntityManager {
 	}
 
 	const std::vector<Entity*>& entities_zorder() {
-		if (m_entities_zorder.size() != m_entities.size()) {
+		if (m_entities_zorder.empty()) {
 			fmt::print("* [EntityManager] Resorting entities by z-order\n");
-			m_entities_zorder.clear();
 			for (auto& e : m_entities) {
 				m_entities_zorder.push_back(&e);
 			}
