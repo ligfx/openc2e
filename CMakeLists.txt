@@ -305,6 +305,7 @@ add_executable(opencreatures1
 	src/opencreatures1/SFCLoader.cpp
 	src/opencreatures1/C1Sound.cpp
 	src/opencreatures1/C1SoundManager.cpp
+	src/opencreatures1/ServiceLocator.cpp
 	src/openc2e-core/creaturesImage.cpp
 )
 target_link_libraries(opencreatures1
@@ -397,7 +398,10 @@ add_executable(test_openc2e
 	src/tests/common/EndsWithTest.cpp
 	src/tests/common/FixedPointTest.cpp
 	src/tests/common/SparseSetTest.cpp
+	src/tests/common/TypeErasedSharedPtrTest.cpp
 	src/tests/common/WildcardTest.cpp
+	src/tests/opencreatures1/ServiceLocatorTest.cpp
+	src/opencreatures1/ServiceLocator.cpp # TODO
 )
 target_link_libraries(test_openc2e openc2e-core gtest gtest_main)
 if(COMMAND gtest_discover_tests)
