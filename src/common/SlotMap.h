@@ -6,19 +6,16 @@
 #include <utility>
 #include <vector>
 
-// EntityPool
+// DenseSlotMap
 //
 // This container is meant for scenarios where you want to:
 //   (1) store all instances of a type in the same place
 //   (2) reference objects without giving out raw pointers
 //   (3) have stable integer IDs for each object
 //
-// In the future, it is also intended to support scenarios where you want to:
-//   (4) store all instances of a type _family_ in the same place, and iterate
-//       over instances of sub-types as though they were parent types
 
 template <typename T>
-class EntityPool {
+class DenseSlotMap {
   private:
 	using IndexType = uint16_t;
 	using GenerationType = uint16_t;
@@ -27,39 +24,39 @@ class EntityPool {
 
   public:
 	using ValueType = T;
-	struct Id {
+	struct Key {
 	  private:
-		friend EntityPool;
-		Id(IndexType index_, GenerationType generation_)
+		friend DenseSlotMap;
+		Key(IndexType index_, GenerationType generation_)
 			: index(index_), generation(generation_) {}
 		IndexType index;
 		GenerationType generation;
 
 	  public:
-		constexpr Id() {
+		constexpr Key() {
 			index = ~0;
 			generation = ~0;
 		}
-		bool operator==(const Id& other) const {
+		bool operator==(const Key& other) const {
 			return index == other.index && generation == other.generation;
 		}
-		bool operator!=(const Id& other) const {
+		bool operator!=(const Key& other) const {
 			return !(*this == other);
 		}
 		uint32_t to_integral() const {
 			return (generation << 16) | index;
 		}
 	};
-	static_assert(sizeof(Id) == sizeof(std::declval<Id>().to_integral()), "");
+	static_assert(sizeof(Key) == sizeof(std::declval<Key>().to_integral()), "");
 
 
-	Id add(T value) {
-		Id new_id;
+	Key add(T value) {
+		Key new_id;
 		if (m_deleted.size()) {
 			new_id = m_deleted.back();
 			m_deleted.pop_back();
 		} else {
-			new_id = Id(m_sparse.size(), 0);
+			new_id = Key(m_sparse.size(), 0);
 			if (new_id.index == NULL_INDEX) {
 				// whoops, ran out of ids
 				std::terminate();
@@ -75,7 +72,7 @@ class EntityPool {
 		return new_id;
 	}
 
-	T* try_get(Id id) {
+	T* try_get(Key id) {
 		if (!contains(id)) {
 			return nullptr;
 		}
@@ -83,7 +80,7 @@ class EntityPool {
 		return &m_values[dense_index];
 	}
 
-	void erase(Id id) {
+	void erase(Key id) {
 		if (!contains(id)) {
 			return;
 		}
@@ -103,7 +100,7 @@ class EntityPool {
 		m_deleted.push_back(id);
 	}
 
-	bool contains(Id id) const {
+	bool contains(Key id) const {
 		if (id.index == NULL_INDEX) {
 			return false;
 		}
@@ -146,22 +143,22 @@ class EntityPool {
 			}
 
 		  private:
-			friend EntityPool;
+			friend DenseSlotMap;
 			ValueWrapper(std::vector<T>* values_p_, size_t index_)
 				: values_p(values_p_), index(index_) {}
 			std::vector<T>* values_p = nullptr;
 			size_t index = ~0;
 		};
 		struct Pair {
-			Id id;
+			Key id;
 			// a wrapper that ensures that if you erase an id while enumerating
 			// and the values vector gets reallocated, the remaining enumerated
 			// values will still be accessible
 			ValueWrapper value;
 
 		  private:
-			friend EntityPool;
-			Pair(Id id_, std::vector<T>* values_p, size_t index)
+			friend DenseSlotMap;
+			Pair(Key id_, std::vector<T>* values_p, size_t index)
 				: id(id_), value(values_p, index) {}
 		};
 		std::vector<Pair> ret;
@@ -202,12 +199,12 @@ class EntityPool {
 
   private:
 	std::vector<IndexType> m_sparse;
-	std::vector<Id> m_dense;
+	std::vector<Key> m_dense;
 	std::vector<T> m_values;
 	// Store a list of deleted IDs that we can recycle. This could be more
 	// optimized, see https://skypjack.github.io/2019-05-06-ecs-baf-part-3/
-	std::vector<Id> m_deleted;
+	std::vector<Key> m_deleted;
 };
 
 template <typename T>
-constexpr typename EntityPool<T>::IndexType EntityPool<T>::NULL_INDEX;
+constexpr typename DenseSlotMap<T>::IndexType DenseSlotMap<T>::NULL_INDEX;
