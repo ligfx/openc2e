@@ -1,5 +1,7 @@
 #pragma once
 
+#include "FmtFwd.h"
+
 #include <algorithm> // stable_sort
 #include <exception>
 #include <stdint.h>
@@ -43,8 +45,14 @@ class DenseSlotMap {
 		bool operator!=(const Key& other) const {
 			return !(*this == other);
 		}
+
 		uint32_t to_integral() const {
 			return (generation << 16) | index;
+		}
+
+		template <typename FormatContext>
+		friend auto format(const Key& val, FormatContext& ctx) {
+			return format_to(ctx.out(), "{}:{}", val.index, val.generation);
 		}
 	};
 	static_assert(sizeof(Key) == sizeof(std::declval<Key>().to_integral()), "");

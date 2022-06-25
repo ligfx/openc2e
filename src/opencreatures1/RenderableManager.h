@@ -1,11 +1,10 @@
 #pragma once
 
 #include "common/FixedPoint.h"
-#include "common/Repr.h"
+#include "common/Fmt.h"
 #include "common/SlotMap.h"
 #include "openc2e-core/creaturesImage.h"
 
-#include <fmt/core.h>
 #include <string>
 #include <vector>
 
@@ -41,10 +40,16 @@ class Renderable {
 	}
 };
 
-inline std::string repr(const Renderable& r) {
-	return fmt::format("<Renderable x={} y={} z={} object_base={} part_base={} index={} sprite={} animation={}>",
-		static_cast<float>(r.x), static_cast<float>(r.y), r.z, r.object_sprite_base, r.part_sprite_base, r.sprite_index, repr(r.sprite.getName()),
-		r.has_animation ? fmt::format("{} anim_index={}", repr(r.animation_string), r.animation_frame) : "false");
+template <typename FormatContext>
+auto format(const Renderable& r, FormatContext& ctx) {
+	auto out = format_to(ctx.out(),
+		"<Renderable x={} y={} z={} object_base={} part_base={} index={} sprite={}",
+		r.x, r.y, r.z, r.object_sprite_base, r.part_sprite_base, r.sprite_index, r.sprite.getName());
+	if (r.has_animation) {
+		return format_to(out, " animation={} anim_index={}>", r.animation_string, r.animation_frame);
+	} else {
+		return format_to(out, " animation=false>");
+	}
 }
 
 class RenderableManager {

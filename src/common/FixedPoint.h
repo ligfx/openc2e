@@ -1,5 +1,7 @@
 #pragma once
 
+#include "common/FmtFwd.h"
+
 #include <stdint.h>
 #include <type_traits>
 
@@ -48,3 +50,9 @@ class fixed24_8_t {
   private:
 	int32_t m_value = 0;
 };
+
+
+template <typename FormatContext>
+auto format(const fixed24_8_t& val, FormatContext& ctx) {
+	return format_to(ctx.out(), "{}", static_cast<float>(val));
+}
