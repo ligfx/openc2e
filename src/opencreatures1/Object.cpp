@@ -1,5 +1,6 @@
 #include "Object.h"
 
+#include "Creature.h"
 #include "MacroManager.h"
 #include "MessageManager.h"
 #include "ObjectManager.h"
@@ -154,6 +155,12 @@ void Object::handle_left_click(int32_t relx, int32_t rely) {
 			}
 		}
 		// TODO: what if there are no knobs/hotspots?
+		return;
+	}
+
+	// TODO: implement this for Creatures
+	if (as_creature()) {
+		printf("WARN handle_click on Creature not implemented\n");
 		return;
 	}
 
@@ -406,6 +413,12 @@ const Renderable* Object::get_renderable_for_part(int32_t partnum) const {
 			return {};
 		}
 		return &as_compound_object()->parts[idx].renderable;
+	} else if (as_creature()) {
+		if (partnum == 0) {
+			return &as_creature()->body->renderable;
+		} else {
+			printf("WARN get_renderable_for_part(%i) on CreatureData\n", partnum);
+		}
 	}
 	return nullptr;
 }
@@ -461,7 +474,6 @@ void Object::blackboard_emit_earshot(int32_t word_index) {
 	}
 }
 
-
 void Object::vehicle_grab_passengers() {
 	if (world_has_at_least_one_creature()) {
 		printf("WARNING: vehicle_grab_passengers not implemented\n");
@@ -478,6 +490,11 @@ void Object::tick() {
 	// TODO: if this function gets too slow, break out various bits into separate Systems that only
 	// know about Objects that need to be updated (e.g. an Object would have a TimerSystemHandle into
 	// the TimerSystem, and the TimerSystem only updates timer scripts for its managed objects).
+
+	// creature data
+	if (as_creature()) {
+		as_creature()->creature_tick();
+	}
 
 	// timer updates
 	if (tick_value > 0) {

@@ -321,6 +321,7 @@ target_link_libraries(test_openc2e openc2e_core gtest_main)
 add_library(opencreatures1_core STATIC
 	src/opencreatures1/Biochemistry.cpp
 	src/opencreatures1/C1MusicManager.cpp
+	src/opencreatures1/Creature.cpp
 	src/opencreatures1/EngineContext.cpp
 	src/opencreatures1/ImageManager.cpp
 	src/opencreatures1/MacroCommands.cpp

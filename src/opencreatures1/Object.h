@@ -215,10 +215,6 @@ struct Blackboard : CompoundObject {
 	std::array<RenderItemHandle, 11> text_render_items;
 };
 
-struct Creature : Object {
-	// TODO: implement me
-};
-
 inline std::string repr(const Object& o) {
 	return fmt::format("Object {} {} {} uid {} \"{}\"", o.family, o.genus, o.species, o.uid.to_integral(), get_object_name(&o));
 }

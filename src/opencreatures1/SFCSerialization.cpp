@@ -1,6 +1,7 @@
 #include "SFCSerialization.h"
 
 #include "C1SoundManager.h"
+#include "Creature.h"
 #include "EngineContext.h"
 #include "ImageManager.h"
 #include "MacroManager.h"
@@ -151,7 +152,7 @@ static std::shared_ptr<sfc::CGalleryV1> sfc_dump_gallery(const ImageGallery& gal
 	return sfc;
 }
 
-static Renderable sfc_load_renderable(const sfc::EntityV1* part) {
+Renderable sfc_load_renderable(const sfc::EntityV1* part) {
 	if (part->x >= CREATURES1_WORLD_WIDTH) {
 		throw Exception(fmt::format("Expected x to be between [0, {}), but got {}", CREATURES1_WORLD_WIDTH, part->x));
 	}
@@ -175,7 +176,7 @@ static Renderable sfc_load_renderable(const sfc::EntityV1* part) {
 	return r;
 }
 
-static std::shared_ptr<sfc::EntityV1> sfc_dump_renderable(const Renderable& r, const std::shared_ptr<sfc::CGalleryV1>& gallery = {}) {
+std::shared_ptr<sfc::EntityV1> sfc_dump_renderable(const Renderable& r, const std::shared_ptr<sfc::CGalleryV1>& gallery) {
 	auto entity = std::make_shared<sfc::EntityV1>();
 	if (gallery) {
 		// so we can share gallery between all parts on a compound object / creature
@@ -477,8 +478,9 @@ static void serialize_object(Ctx&& ctx, sfc::BlackboardV1* bbd, Blackboard* obj)
 template <typename Ctx>
 static void serialize_object(Ctx&& ctx, sfc::CreatureV1* crea, Creature* obj) {
 	if (ctx.is_storing()) {
+		obj->sfc_serialize("to", crea);
 	} else {
-		fmt::print("WARN [SFCLoader] Object {} {} {} unsupported type Creature\n", obj->family, obj->genus, obj->species);
+		obj->sfc_serialize("from", crea);
 	}
 	serialize_object(ctx, static_cast<sfc::ObjectV1*>(crea), static_cast<Object*>(obj));
 }
@@ -664,10 +666,12 @@ std::shared_ptr<sfc::ObjectV1> SFCSerializer::dump_object(Object* p) {
 	} else if (dump_engine_object<sfc::VehicleV1, Vehicle>(this, p)) {
 	} else if (dump_engine_object<sfc::LiftV1, Lift>(this, p)) {
 	} else if (dump_engine_object<sfc::BlackboardV1, Blackboard>(this, p)) {
-	} else if (typeid(*p) == typeid(Creature)) {
-		fmt::print("WARN [SFCWriter] Unsupported type: Creature\n");
-		return nullptr;
+	} else if (dump_engine_object<sfc::CreatureV1, Creature>(this, p)) {
 	}
+	// } else if (typeid(*p) == typeid(Creature)) {
+	// 	fmt::print("WARN [SFCWriter] Unsupported type: Creature\n");
+	// 	return nullptr;
+	// }
 
 	return sfc_object_mapping.find(p)->second;
 };
@@ -679,6 +683,7 @@ static void sfc_dump_objects_and_sceneries(SFCSerializer& ctx) {
 	// seen so far, and convert ObjectHandles / copy them to the SFCFile on the fly.
 	for (auto* p : *g_engine_context.objects) {
 		ctx.dump_object(p);
+		fmt::print("dumped object uid {}\n", p->uid);
 	}
 }
 
@@ -690,6 +695,7 @@ sfc::SFCFile sfc_dump_everything() {
 
 	fmt::print("INFO [SFCWriter] Writing objects and sceneries...\n");
 	sfc_dump_objects_and_sceneries(ctx);
+	fmt::print("sfc file has {} objects and {} sceneries\n", ctx.sfc.objects.size(), ctx.sfc.sceneries.size());
 
 	fmt::print("INFO [SFCWriter] Writing macros...\n");
 	serialize_macros(ctx);
