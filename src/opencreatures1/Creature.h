@@ -1,9 +1,9 @@
 #pragma once
 
-#include "Object.h"
 #include "Renderable.h"
 #include "SFCSerialization.h"
 #include "fileformats/NewSFCFile.h"
+#include "objects/Object.h"
 
 #include <assert.h>
 
