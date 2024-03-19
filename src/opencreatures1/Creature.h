@@ -143,6 +143,7 @@ struct Creature : Object {
 	std::string history_owner_address;
 	std::string history_owner_email;
 
-	void sfc_serialize(std::string serialize_direction, sfc::CreatureV1* crea);
+	void load(SFCLoader&, const sfc::CreatureV1*);
+	void save(SFCSaver&, sfc::CreatureV1*) const;
 	void creature_tick();
 };

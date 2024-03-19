@@ -323,190 +323,180 @@ static std::unique_ptr<Limb> sfc_build_limb(const std::shared_ptr<sfc::LimbV1>& 
 	return limb;
 }
 
-void Creature::sfc_serialize(std::string serialize_direction, sfc::CreatureV1* crea) {
+void Creature::load(SFCLoader&, const sfc::CreatureV1* crea) {
 	// not implemented
-	if (serialize_direction == "from") {
-		moniker = crea->moniker;
-		mother = crea->mother;
-		father = crea->father;
-	} else {
-		crea->moniker = moniker;
-		crea->mother = mother;
-		crea->father = father;
-	}
+	moniker = crea->moniker;
+	mother = crea->mother;
+	father = crea->father;
 
 	// sorta implemented
-	if (serialize_direction == "from") {
-		body = std::make_unique<Body>();
-		body->renderable = sfc_load_renderable(crea->body.get());
-		body->body_data.sfc_serialize(serialize_direction, crea->body->body_data);
-		body->angle = crea->body->angle;
-		body->view = crea->body->view;
+	body = std::make_unique<Body>();
+	body->renderable = sfc_load_renderable(crea->body.get());
+	body->body_data.sfc_serialize("from", crea->body->body_data);
+	body->angle = crea->body->angle;
+	body->view = crea->body->view;
 
-		head = sfc_build_limb(crea->head);
-		left_thigh = sfc_build_limb(crea->left_thigh);
-		right_thigh = sfc_build_limb(crea->right_thigh);
-		left_arm = sfc_build_limb(crea->left_arm);
-		right_arm = sfc_build_limb(crea->right_arm);
-		tail = sfc_build_limb(crea->tail);
+	head = sfc_build_limb(crea->head);
+	left_thigh = sfc_build_limb(crea->left_thigh);
+	right_thigh = sfc_build_limb(crea->right_thigh);
+	left_arm = sfc_build_limb(crea->left_arm);
+	right_arm = sfc_build_limb(crea->right_arm);
+	tail = sfc_build_limb(crea->tail);
 
-	} else {
+	// sorta implemented
+	direction = crea->direction;
+	downfoot_left = crea->downfoot_left;
+	footx = crea->footx;
+	footy = crea->footy;
+
+	// not implemented
+	z_order = crea->z_order;
+	current_pose = crea->current_pose;
+	expression = crea->expression;
+	eyes_open = crea->eyes_open;
+	asleep = crea->asleep;
+
+	// sorta implemented
+	poses = crea->poses;
+	gait_animations = crea->gait_animations;
+	for (auto x : crea->gait_animations) {
+		printf("%s\n", x.c_str());
+	}
+	for (size_t i = 0; i < crea->poses.size(); ++i) {
+		printf("%i: %s\n", (int)i, crea->poses[i].c_str());
+	}
+
+	// not implemented
+	vocabulary = crea->vocabulary;
+	object_positions = crea->object_positions;
+	stimuli = crea->stimuli;
+	brain = crea->brain;
+	biochemistry = crea->biochemistry;
+	sex = crea->sex;
+	age = crea->age;
+
+	// sorta implemented
+	biotick = crea->biotick;
+
+	// not implemented
+	gamete = crea->gamete;
+	zygote = crea->zygote;
+	dead = crea->dead;
+
+	// sorta implemented
+	age_ticks = crea->age_ticks;
+
+	// not implemented
+	dreaming = crea->dreaming;
+	instincts = crea->instincts;
+	goals = crea->goals;
+	zzzz = crea->zzzz;
+	voices_lookup = crea->voices_lookup;
+	voices = crea->voices;
+	history_moniker = crea->history_moniker;
+	history_name = crea->history_name;
+	history_moms_moniker = crea->history_moms_moniker;
+	history_dads_moniker = crea->history_dads_moniker;
+	history_birthday = crea->history_birthday;
+	history_birthplace = crea->history_birthplace;
+	history_owner_name = crea->history_owner_name;
+	history_owner_phone = crea->history_owner_phone;
+	history_owner_address = crea->history_owner_address;
+	history_owner_email = crea->history_owner_email;
+}
+
+void Creature::save(SFCSaver&, sfc::CreatureV1* crea) const {
+	// not implemented
+	crea->moniker = moniker;
+	crea->mother = mother;
+	crea->father = father;
+
+	// sorta implemented
+	crea->body = std::make_shared<sfc::BodyV1>();
+	*static_cast<sfc::EntityV1*>(crea->body.get()) = *sfc_dump_renderable(body->renderable);
+	auto gallery = static_cast<sfc::ObjectV1*>(crea)->gallery = crea->body->gallery;
+	body->body_data.sfc_serialize("to", crea->body->body_data);
+
+	// not implemented
+	crea->body->angle = body->angle;
+	crea->body->view = body->view;
+
+	auto sfc_dump_limb = [&](const std::unique_ptr<Limb>& limb, auto&& recurse) -> std::shared_ptr<sfc::LimbV1> {
+		if (!limb) {
+			return nullptr;
+		}
 		// sorta implemented
-		crea->body = std::make_shared<sfc::BodyV1>();
-		*static_cast<sfc::EntityV1*>(crea->body.get()) = *sfc_dump_renderable(body->renderable);
-		auto gallery = static_cast<sfc::ObjectV1*>(crea)->gallery = crea->body->gallery;
-		body->body_data.sfc_serialize(serialize_direction, crea->body->body_data);
+		auto p = std::make_shared<sfc::LimbV1>();
+		*static_cast<sfc::EntityV1*>(p.get()) = *sfc_dump_renderable(limb->renderable, gallery);
+		p->limb_data = limb->limb_data;
+		p->next = recurse(limb->next_limb, recurse);
 
 		// not implemented
-		crea->body->angle = body->angle;
-		crea->body->view = body->view;
+		p->angle = limb->angle;
+		p->view = limb->view;
 
-		auto sfc_dump_limb = [&](std::unique_ptr<Limb>& limb, auto&& recurse) -> std::shared_ptr<sfc::LimbV1> {
-			if (!limb) {
-				return nullptr;
-			}
-			// sorta implemented
-			auto p = std::make_shared<sfc::LimbV1>();
-			*static_cast<sfc::EntityV1*>(p.get()) = *sfc_dump_renderable(limb->renderable, gallery);
-			p->limb_data = limb->limb_data;
-			p->next = recurse(limb->next_limb, recurse);
-
-			// not implemented
-			p->angle = limb->angle;
-			p->view = limb->view;
-
-			return p;
-		};
-		crea->head = sfc_dump_limb(head, sfc_dump_limb);
-		crea->left_thigh = sfc_dump_limb(left_thigh, sfc_dump_limb);
-		crea->right_thigh = sfc_dump_limb(right_thigh, sfc_dump_limb);
-		crea->left_arm = sfc_dump_limb(left_arm, sfc_dump_limb);
-		crea->right_arm = sfc_dump_limb(right_arm, sfc_dump_limb);
-		crea->tail = sfc_dump_limb(tail, sfc_dump_limb);
-	}
+		return p;
+	};
+	crea->head = sfc_dump_limb(head, sfc_dump_limb);
+	crea->left_thigh = sfc_dump_limb(left_thigh, sfc_dump_limb);
+	crea->right_thigh = sfc_dump_limb(right_thigh, sfc_dump_limb);
+	crea->left_arm = sfc_dump_limb(left_arm, sfc_dump_limb);
+	crea->right_arm = sfc_dump_limb(right_arm, sfc_dump_limb);
+	crea->tail = sfc_dump_limb(tail, sfc_dump_limb);
 
 	// sorta implemented
-	if (serialize_direction == "from") {
-		direction = crea->direction;
-		downfoot_left = crea->downfoot_left;
-		footx = crea->footx;
-		footy = crea->footy;
-	} else {
-		crea->direction = direction;
-		crea->downfoot_left = downfoot_left;
-		crea->footx = footx;
-		crea->footy = footy;
-	}
+	crea->direction = direction;
+	crea->downfoot_left = downfoot_left;
+	crea->footx = footx;
+	crea->footy = footy;
 
 	// not implemented
-	if (serialize_direction == "from") {
-		z_order = crea->z_order;
-		current_pose = crea->current_pose;
-		expression = crea->expression;
-		eyes_open = crea->eyes_open;
-		asleep = crea->asleep;
-	} else {
-		crea->z_order = z_order;
-		crea->current_pose = current_pose;
-		crea->expression = expression;
-		crea->eyes_open = eyes_open;
-		crea->asleep = asleep;
-	}
+	crea->z_order = z_order;
+	crea->current_pose = current_pose;
+	crea->expression = expression;
+	crea->eyes_open = eyes_open;
+	crea->asleep = asleep;
 
 	// sorta implemented
-	if (serialize_direction == "from") {
-		poses = crea->poses;
-		gait_animations = crea->gait_animations;
-		for (auto x : crea->gait_animations) {
-			printf("%s\n", x.c_str());
-		}
-		for (size_t i = 0; i < crea->poses.size(); ++i) {
-			printf("%i: %s\n", (int)i, crea->poses[i].c_str());
-		}
-	} else {
-		crea->poses = poses;
-		crea->gait_animations = gait_animations;
-	}
+	crea->poses = poses;
+	crea->gait_animations = gait_animations;
 
 	// not implemented
-	if (serialize_direction == "from") {
-		vocabulary = crea->vocabulary;
-		object_positions = crea->object_positions;
-		stimuli = crea->stimuli;
-		brain = crea->brain;
-		biochemistry = crea->biochemistry;
-		sex = crea->sex;
-		age = crea->age;
-	} else {
-		crea->vocabulary = vocabulary;
-		crea->object_positions = object_positions;
-		crea->stimuli = stimuli;
-		crea->brain = brain;
-		crea->biochemistry = biochemistry;
-		crea->biochemistry->owner = crea; // danger!!!
-		crea->sex = sex;
-		crea->age = age;
-	}
+	crea->vocabulary = vocabulary;
+	crea->object_positions = object_positions;
+	crea->stimuli = stimuli;
+	crea->brain = brain;
+	crea->biochemistry = biochemistry;
+	crea->biochemistry->owner = crea; // danger!!!
+	crea->sex = sex;
+	crea->age = age;
 
 	// sorta implemented
-	if (serialize_direction == "from") {
-		biotick = crea->biotick;
-	} else {
-		crea->biotick = biotick;
-	}
+	crea->biotick = biotick;
 
 	// not implemented
-	if (serialize_direction == "from") {
-		gamete = crea->gamete;
-		zygote = crea->zygote;
-		dead = crea->dead;
-	} else {
-		crea->gamete = gamete;
-		crea->zygote = zygote;
-		crea->dead = dead;
-	}
+	crea->gamete = gamete;
+	crea->zygote = zygote;
+	crea->dead = dead;
 
 	// sorta implemented
-	if (serialize_direction == "from") {
-		age_ticks = crea->age_ticks;
-	} else {
-		crea->age_ticks = age_ticks;
-	}
+	crea->age_ticks = age_ticks;
 
 	// not implemented
-	if (serialize_direction == "from") {
-		dreaming = crea->dreaming;
-		instincts = crea->instincts;
-		goals = crea->goals;
-		zzzz = crea->zzzz;
-		voices_lookup = crea->voices_lookup;
-		voices = crea->voices;
-		history_moniker = crea->history_moniker;
-		history_name = crea->history_name;
-		history_moms_moniker = crea->history_moms_moniker;
-		history_dads_moniker = crea->history_dads_moniker;
-		history_birthday = crea->history_birthday;
-		history_birthplace = crea->history_birthplace;
-		history_owner_name = crea->history_owner_name;
-		history_owner_phone = crea->history_owner_phone;
-		history_owner_address = crea->history_owner_address;
-		history_owner_email = crea->history_owner_email;
-	} else {
-		crea->dreaming = dreaming;
-		crea->instincts = instincts;
-		crea->goals = goals;
-		crea->zzzz = zzzz;
-		crea->voices_lookup = voices_lookup;
-		crea->voices = voices;
-		crea->history_moniker = history_moniker;
-		crea->history_name = history_name;
-		crea->history_moms_moniker = history_moms_moniker;
-		crea->history_dads_moniker = history_dads_moniker;
-		crea->history_birthday = history_birthday;
-		crea->history_birthplace = history_birthplace;
-		crea->history_owner_name = history_owner_name;
-		crea->history_owner_phone = history_owner_phone;
-		crea->history_owner_address = history_owner_address;
-		crea->history_owner_email = history_owner_email;
-	}
+	crea->dreaming = dreaming;
+	crea->instincts = instincts;
+	crea->goals = goals;
+	crea->zzzz = zzzz;
+	crea->voices_lookup = voices_lookup;
+	crea->voices = voices;
+	crea->history_moniker = history_moniker;
+	crea->history_name = history_name;
+	crea->history_moms_moniker = history_moms_moniker;
+	crea->history_dads_moniker = history_dads_moniker;
+	crea->history_birthday = history_birthday;
+	crea->history_birthplace = history_birthplace;
+	crea->history_owner_name = history_owner_name;
+	crea->history_owner_phone = history_owner_phone;
+	crea->history_owner_address = history_owner_address;
+	crea->history_owner_email = history_owner_email;
 }

@@ -45,6 +45,10 @@ enum TouchBehaviourFlags : uint8_t {
 	TOUCH_DEACTIVATE = 4
 };
 
+namespace sfc {
+struct ObjectV1;
+};
+
 struct Scenery;
 struct SimpleObject;
 struct Bubble;
@@ -55,6 +59,8 @@ struct Vehicle;
 struct Lift;
 struct Blackboard;
 struct Creature;
+struct SFCLoader;
+struct SFCSaver;
 
 class Object {
   public:
@@ -128,6 +134,9 @@ class Object {
 	void vehicle_drop_passengers();
 
 	void tick();
+
+	void load(SFCLoader&, const sfc::ObjectV1*);
+	void save(SFCSaver&, sfc::ObjectV1*) const;
 };
 
 inline std::string repr(const Object& o) {

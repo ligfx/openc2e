@@ -21,7 +21,7 @@ struct Rect {
 	Rect() {}
 	Rect(Rect2i other)
 		: left(other.x), top(other.y), right(other.x + other.width), bottom(other.y + other.height) {}
-	operator Rect2i() {
+	operator Rect2i() const {
 		return Rect2i{left, top, right - left, bottom - top};
 	}
 };
