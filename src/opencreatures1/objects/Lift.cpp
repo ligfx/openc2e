@@ -3,7 +3,8 @@
 #include "CallButton.h"
 #include "ObjectManager.h"
 #include "SFCSerialization.h"
-#include "fileformats/NewSFCFile.h"
+#include "fileformats/sfc/Callbutton.h"
+#include "fileformats/sfc/Lift.h"
 
 void Lift::load(SFCLoader& ctx, const sfc::LiftV1* lift) {
 	next_or_current_floor = lift->next_or_current_floor;
@@ -46,7 +47,7 @@ void Lift::save(SFCSaver& ctx, sfc::LiftV1* lift) const {
 	}
 	for (auto it : enumerate(activated_call_buttons)) {
 		lift->activated_call_buttons[it.first] = dynamic_cast<sfc::CallButtonV1*>(
-			ctx.dump_object(g_engine_context.objects->try_get(it.second)).get());
+			ctx.dump_object(it.second).get());
 	}
 	static_cast<const Vehicle*>(this)->save(ctx, static_cast<sfc::VehicleV1*>(lift));
 }

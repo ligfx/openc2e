@@ -1,7 +1,7 @@
 #include "Scenery.h"
 
 #include "SFCSerialization.h"
-#include "fileformats/NewSFCFile.h"
+#include "fileformats/sfc/Scenery.h"
 
 void Scenery::load(SFCLoader& ctx, const sfc::SceneryV1* scen) {
 	part = sfc_load_renderable(scen->part.get());

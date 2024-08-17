@@ -332,7 +332,7 @@ void Creature::load(SFCLoader&, const sfc::CreatureV1* crea) {
 	// sorta implemented
 	body = std::make_unique<Body>();
 	body->renderable = sfc_load_renderable(crea->body.get());
-	body->body_data.sfc_serialize("from", crea->body->body_data);
+	body->body_data.load(crea->body->body_data);
 	body->angle = crea->body->angle;
 	body->view = crea->body->view;
 
@@ -415,7 +415,7 @@ void Creature::save(SFCSaver&, sfc::CreatureV1* crea) const {
 	crea->body = std::make_shared<sfc::BodyV1>();
 	*static_cast<sfc::EntityV1*>(crea->body.get()) = *sfc_dump_renderable(body->renderable);
 	auto gallery = static_cast<sfc::ObjectV1*>(crea)->gallery = crea->body->gallery;
-	body->body_data.sfc_serialize("to", crea->body->body_data);
+	body->body_data.save(crea->body->body_data);
 
 	// not implemented
 	crea->body->angle = body->angle;

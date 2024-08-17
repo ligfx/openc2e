@@ -1,7 +1,7 @@
 #include "Bubble.h"
 
 #include "SFCSerialization.h"
-#include "fileformats/NewSFCFile.h"
+#include "fileformats/sfc/Bubble.h"
 
 void Bubble::load(SFCLoader& ctx, const sfc::BubbleV1* bub) {
 	// TODO: implement

@@ -1,7 +1,8 @@
 #include "CompoundObject.h"
 
 #include "SFCSerialization.h"
-#include "fileformats/NewSFCFile.h"
+#include "fileformats/sfc/CompoundObject.h"
+#include "fileformats/sfc/Entity.h"
 
 void CompoundObject::load(SFCLoader& ctx, const sfc::CompoundObjectV1* comp) {
 	for (auto& cp : comp->parts) {

@@ -1,10 +1,9 @@
 #include "Blackboard.h"
 
-#include "ImageManager.h"
 #include "ObjectManager.h"
 #include "SFCSerialization.h"
 #include "common/Ascii.h"
-#include "fileformats/NewSFCFile.h"
+#include "fileformats/sfc/Blackboard.h"
 
 static bool world_has_at_least_one_creature() {
 	for (auto* obj : *g_engine_context.objects) {
@@ -77,7 +76,7 @@ void Blackboard::load(SFCLoader& loader, const sfc::BlackboardV1* bbd) {
 		words[i].value = word.value;
 		words[i].text = word.text;
 	}
-	charset_sprite = g_engine_context.images->get_charset_dta(bbd->background_color, bbd->chalk_color, bbd->alias_color);
+	charset_sprite = loader.load_charset_sprite_with_colors(bbd->background_color, bbd->chalk_color, bbd->alias_color);
 
 	static_cast<CompoundObject*>(this)->load(loader, static_cast<const sfc::CompoundObjectV1*>(bbd));
 }

@@ -1,7 +1,7 @@
 #include "SimpleObject.h"
 
 #include "SFCSerialization.h"
-#include "fileformats/NewSFCFile.h"
+#include "fileformats/sfc/SimpleObject.h"
 
 void SimpleObject::load(SFCLoader& ctx, const sfc::SimpleObjectV1* simp) {
 	part = sfc_load_renderable(simp->part.get());

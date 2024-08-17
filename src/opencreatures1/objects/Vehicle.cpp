@@ -1,7 +1,7 @@
 #include "Vehicle.h"
 
 #include "SFCSerialization.h"
-#include "fileformats/NewSFCFile.h"
+#include "fileformats/sfc/Vehicle.h"
 
 void Vehicle::load(SFCLoader& ctx, const sfc::VehicleV1* veh) {
 	// recurse before the Vehicle logic (unlike the other serialization functions) because

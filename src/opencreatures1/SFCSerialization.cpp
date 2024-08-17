@@ -11,6 +11,26 @@
 #include "Scriptorium.h"
 #include "ViewportManager.h"
 #include "common/Ranges.h"
+#include "fileformats/sfc/Blackboard.h"
+#include "fileformats/sfc/Body.h"
+#include "fileformats/sfc/CBiochemistry.h"
+#include "fileformats/sfc/CBrain.h"
+#include "fileformats/sfc/CGallery.h"
+#include "fileformats/sfc/CGenome.h"
+#include "fileformats/sfc/CInstinct.h"
+#include "fileformats/sfc/CallButton.h"
+#include "fileformats/sfc/CompoundObject.h"
+#include "fileformats/sfc/Creature.h"
+#include "fileformats/sfc/Entity.h"
+#include "fileformats/sfc/Lift.h"
+#include "fileformats/sfc/Limb.h"
+#include "fileformats/sfc/Macro.h"
+#include "fileformats/sfc/MapData.h"
+#include "fileformats/sfc/PointerTool.h"
+#include "fileformats/sfc/SFCFile.h"
+#include "fileformats/sfc/Scenery.h"
+#include "fileformats/sfc/SimpleObject.h"
+#include "fileformats/sfc/Vehicle.h"
 #include "objects/Blackboard.h"
 #include "objects/Bubble.h"
 #include "objects/CallButton.h"
@@ -23,6 +43,14 @@
 #include "objects/Vehicle.h"
 
 #include <fmt/ranges.h>
+
+ImageGallery SFCLoader::load_charset_sprite_with_colors(uint32_t bgcolor, uint32_t textcolor, uint32_t aliascolor) {
+	return g_engine_context.images->get_charset_dta(bgcolor, textcolor, aliascolor);
+}
+
+C1ControlledSound SFCLoader::load_sound(const std::string& name, Rect2f bbox) {
+	return g_engine_context.sounds->play_controlled_sound(name, bbox, true);
+}
 
 template <typename Ctx>
 void serialize_viewport(Ctx&& ctx) {
@@ -267,11 +295,11 @@ void serialize_macros(Ctx&& ctx) {
 			}
 			mac->sp = numeric_cast<uint32_t>(m.stack.size());
 			mac->vars = m.vars;
-			mac->ownr = ctx.dump_object(g_engine_context.objects->try_get(m.ownr)).get();
-			mac->from = ctx.dump_object(g_engine_context.objects->try_get(m.from)).get();
-			mac->exec = ctx.dump_object(g_engine_context.objects->try_get(m.exec)).get();
-			mac->targ = ctx.dump_object(g_engine_context.objects->try_get(m.targ)).get();
-			mac->_it_ = ctx.dump_object(g_engine_context.objects->try_get(m._it_)).get();
+			mac->ownr = ctx.dump_object(m.ownr).get();
+			mac->from = ctx.dump_object(m.from).get();
+			mac->exec = ctx.dump_object(m.exec).get();
+			mac->targ = ctx.dump_object(m.targ).get();
+			mac->_it_ = ctx.dump_object(m._it_).get();
 			mac->part = m.part;
 			mac->subroutine_label = m.subroutine_label;
 			mac->subroutine_address = m.subroutine_address;
@@ -332,6 +360,10 @@ bool dump_engine_object(SFCSaver* ctx, Object* p) {
 		ctx->sfc->objects.push_back(obj);
 	}
 	return true;
+}
+
+std::shared_ptr<sfc::ObjectV1> SFCSaver::dump_object(ObjectHandle handle) {
+	return dump_object(g_engine_context.objects->try_get(handle));
 }
 
 std::shared_ptr<sfc::ObjectV1> SFCSaver::dump_object(Object* p) {

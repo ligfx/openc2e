@@ -2,7 +2,6 @@
 
 #include "Blackboard.h"
 #include "Bubble.h"
-#include "C1SoundManager.h"
 #include "CallButton.h"
 #include "CompoundObject.h"
 #include "Creature.h"
@@ -18,7 +17,7 @@
 #include "common/Ascii.h"
 #include "common/NumericCast.h"
 #include "common/Ranges.h"
-#include "fileformats/NewSFCFile.h"
+#include "fileformats/sfc/Object.h"
 
 static bool world_has_at_least_one_creature() {
 	for (auto* obj : *g_engine_context.objects) {
@@ -603,7 +602,7 @@ void Object::load(SFCLoader& ctx, const sfc::ObjectV1* p) {
 		// these won't be audible immediately, since the SoundManager thinks
 		// they're out of hearing range. once the game starts and the
 		// listener viewport gets set these will start being audible.
-		current_sound = g_engine_context.sounds->play_controlled_sound(p->current_sound, get_bbox(), true);
+		current_sound = ctx.load_sound(p->current_sound, get_bbox());
 	}
 }
 

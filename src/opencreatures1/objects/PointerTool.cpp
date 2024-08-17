@@ -1,9 +1,8 @@
 #include "PointerTool.h"
 
 #include "EngineContext.h"
-#include "ObjectManager.h"
 #include "SFCSerialization.h"
-#include "fileformats/NewSFCFile.h"
+#include "fileformats/sfc/PointerTool.h"
 
 void PointerTool::load(SFCLoader& ctx, const sfc::PointerToolV1* pntr) {
 	relx = pntr->relx;
@@ -17,8 +16,7 @@ void PointerTool::load(SFCLoader& ctx, const sfc::PointerToolV1* pntr) {
 void PointerTool::save(SFCSaver& ctx, sfc::PointerToolV1* pntr) const {
 	pntr->relx = relx;
 	pntr->rely = rely;
-	pntr->bubble = dynamic_cast<sfc::BubbleV1*>(
-		ctx.dump_object(g_engine_context.objects->try_get(bubble)).get());
+	pntr->bubble = dynamic_cast<sfc::BubbleV1*>(ctx.dump_object(bubble).get());
 	pntr->text = text;
 
 	static_cast<const SimpleObject*>(this)->save(ctx, static_cast<sfc::SimpleObjectV1*>(pntr));

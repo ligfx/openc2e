@@ -2,7 +2,12 @@
 
 #include "Renderable.h"
 #include "SFCSerialization.h"
-#include "fileformats/NewSFCFile.h"
+#include "fileformats/sfc/Body.h"
+#include "fileformats/sfc/CBiochemistry.h"
+#include "fileformats/sfc/CBrain.h"
+#include "fileformats/sfc/CInstinct.h"
+#include "fileformats/sfc/Creature.h"
+#include "fileformats/sfc/Limb.h"
 #include "objects/Object.h"
 
 #include <assert.h>
@@ -25,14 +30,15 @@ struct BodyData {
 		return data[numeric_cast<size_t>(part)][numeric_cast<size_t>(pose)];
 	}
 
-	void sfc_serialize(std::string direction, std::array<std::array<sfc::Vector2i8, 10>, 6>& body_data) {
+	void load(const std::array<std::array<sfc::Vector2i8, 10>, 6>& body_data) {
 		// SFC files store body data in column-major order, unlike ATT
 		// files which are in row-major order
-		if (direction == "from") {
-			data = body_data;
-		} else {
-			body_data = data;
-		}
+		data = body_data;
+	}
+	void save(std::array<std::array<sfc::Vector2i8, 10>, 6>& body_data) const {
+		// SFC files store body data in column-major order, unlike ATT
+		// files which are in row-major order
+		body_data = data;
 	}
 
   private:
