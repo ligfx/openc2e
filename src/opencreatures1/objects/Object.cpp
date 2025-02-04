@@ -455,6 +455,11 @@ void Object::tick() {
 			}
 		}
 	}
+
+	// creatures
+	if (as_creature()) {
+		as_creature()->creature_tick();
+	}
 }
 
 void Object::stim_shou() {

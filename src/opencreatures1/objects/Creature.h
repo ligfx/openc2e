@@ -34,6 +34,11 @@ struct Body : BodyPart {
 struct Limb : BodyPart {
 	std::array<sfc::LimbData, 10> limb_data;
 	std::unique_ptr<Limb> next_limb;
+
+	auto startx() const { return limb_data[(size_t)pose()].startx; }
+	auto starty() const { return limb_data[(size_t)pose()].starty; }
+	auto endx() const { return limb_data[(size_t)pose()].endx; }
+	auto endy() const { return limb_data[(size_t)pose()].endy; }
 };
 
 struct Creature : Object {
@@ -55,6 +60,14 @@ struct Creature : Object {
 
 	void handle_left_click(float, float) override;
 	const DullPart* get_part(int32_t) const override;
+
+
+	Limb* left_shin() { return left_thigh ? left_thigh->next_limb.get() : nullptr; }
+	Limb* left_foot() { return left_shin() ? left_shin()->next_limb.get() : nullptr; }
+	Limb* right_shin() { return right_thigh ? right_thigh->next_limb.get() : nullptr; }
+	Limb* right_foot() { return right_shin() ? right_shin()->next_limb.get() : nullptr; }
+	Limb* left_hand() { return left_arm ? left_arm->next_limb.get() : nullptr; }
+	Limb* right_hand() { return right_arm ? right_arm->next_limb.get() : nullptr; }
 
 	uint8_t direction;
 	bool downfoot_left;
