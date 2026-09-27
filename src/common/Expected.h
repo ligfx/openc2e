@@ -1,7 +1,5 @@
 #pragma once
 
-#include "ConstructAt.h"
-
 #include <type_traits>
 #include <utility>
 
@@ -72,17 +70,17 @@ class Expected {
 	Expected(const Expected& other) {
 		has_value_ = other.has_value_;
 		if (has_value_) {
-			construct_at(&value_, other.value_);
+			std::construct_at(&value_, other.value_);
 		} else {
-			construct_at(&error_, other.error_);
+			std::construct_at(&error_, other.error_);
 		}
 	}
 	Expected(Expected&& other) {
 		has_value_ = other.has_value_;
 		if (has_value_) {
-			construct_at(&value_, std::move(other.value_));
+			std::construct_at(&value_, std::move(other.value_));
 		} else {
-			construct_at(&error_, std::move(other.error_));
+			std::construct_at(&error_, std::move(other.error_));
 		}
 		other.reset();
 	}
@@ -98,9 +96,9 @@ class Expected {
 			destroy();
 			has_value_ = other.has_value_;
 			if (has_value_) {
-				construct_at(&value_, other.value_);
+				std::construct_at(&value_, other.value_);
 			} else {
-				construct_at(&error_, other.error_);
+				std::construct_at(&error_, other.error_);
 			}
 		}
 		return *this;
@@ -116,9 +114,9 @@ class Expected {
 			destroy();
 			has_value_ = other.has_value_;
 			if (has_value_) {
-				construct_at(&value_, std::move(other.value_));
+				std::construct_at(&value_, std::move(other.value_));
 			} else {
-				construct_at(&error_, std::move(other.error_));
+				std::construct_at(&error_, std::move(other.error_));
 			}
 		}
 		other.reset();
@@ -161,7 +159,7 @@ class Expected {
 	void reset() {
 		destroy();
 		has_value_ = true;
-		construct_at(&value_);
+		std::construct_at(&value_);
 	}
 
 	bool has_value_;
