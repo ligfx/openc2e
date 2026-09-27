@@ -215,7 +215,7 @@ TEST_F(FileTest, file_seek_and_has_data_left_false) {
 }
 
 TEST_F(FileTest, file_with_unicode_name) {
-	auto fname = fs::u8path("\xf0\x9f\x99\x82");
+	auto fname = fs::path(u8"\xf0\x9f\x99\x82");
 	FileWriter(fname).write("hello");
 	auto contents = FileReader(fname).read_to_end();
 	EXPECT_EQ(contents, vec("hello"));
