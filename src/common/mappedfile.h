@@ -44,6 +44,9 @@ class mappedfile final {
 	const uint8_t* data() const;
 	size_t size() const;
 
+	const uint8_t* begin() const;
+	const uint8_t* end() const;
+
   private:
 #ifdef _WIN32
 	void* m_file = (void*)-1; // INVALID_HANDLE_VALUE

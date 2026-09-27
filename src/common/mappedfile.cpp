@@ -140,3 +140,11 @@ const uint8_t* mappedfile::data() const {
 size_t mappedfile::size() const {
 	return m_size;
 }
+
+const uint8_t* mappedfile::begin() const {
+	return data();
+}
+
+const uint8_t* mappedfile::end() const {
+	return data() + size();
+}
