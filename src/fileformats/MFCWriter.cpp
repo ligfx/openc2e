@@ -110,7 +110,7 @@ void MFCWriter::operator()(int32_t val) {
 	::writesigned32le(m_out, val);
 }
 
-void MFCWriter::operator()(span<const uint8_t> buf) {
+void MFCWriter::operator()(std::span<const uint8_t> buf) {
 	m_out.write(reinterpret_cast<const char*>(buf.data()), buf.size());
 }
 

@@ -1,8 +1,8 @@
 #pragma once
 
 #include "common/StringView.h"
-#include "common/span.h"
 
+#include <span>
 #include <stddef.h>
 #include <stdint.h>
 
@@ -13,7 +13,7 @@ class Writer {
 
 	inline void write(const uint8_t*, size_t);
 	inline void write(const char*, size_t);
-	inline void write(span<const uint8_t>);
+	inline void write(std::span<const uint8_t>);
 	inline void write(StringView);
 	virtual void flush() = 0;
 
@@ -29,7 +29,7 @@ inline void Writer::write(const char* buf, size_t n) {
 	return write(reinterpret_cast<const uint8_t*>(buf), n);
 }
 
-inline void Writer::write(span<const uint8_t> buf) {
+inline void Writer::write(std::span<const uint8_t> buf) {
 	return write(buf.data(), buf.size());
 }
 
