@@ -88,10 +88,6 @@ bool PrayToken::is_atsign() const {
 	return type == PRAY_ATSIGN;
 }
 
-std::string format_as(const PrayToken& t) {
-	return fmt::format("{} {:?}", t.type, t.raw_value);
-}
-
 auto format_as(PrayTokenType type) {
 	switch (type) {
 		case PRAY_BAREWORD: return "string";
@@ -104,6 +100,10 @@ auto format_as(PrayTokenType type) {
 		case PRAY_ERROR: return "lexer error";
 		case PRAY_EOI: return "<eoi>";
 	}
+}
+
+std::string format_as(const PrayToken& t) {
+	return fmt::format("{} {:?}", t.type, t.raw_value);
 }
 
 std::vector<PrayToken> praylex(const char* p) {

@@ -112,7 +112,7 @@ void c_OUTV(caosVM* vm) {
 		fmt::print(*vm->outputstream, "{}", val.getInt());
 	} else if (val.hasVector()) {
 		const Vector<float>& v = val.getVector();
-		fmt::print(*vm->outputstream, "({:0.6f}, {:%0.6f})", v.x, v.y);
+		fmt::print(*vm->outputstream, "({:0.6f}, {:0.6f})", v.x, v.y);
 	} else
 		throw badParamException();
 }
