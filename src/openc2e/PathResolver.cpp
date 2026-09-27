@@ -41,6 +41,7 @@
 #else
 #include <pwd.h> // getpwuid
 #include <sys/types.h> // passwd*
+#include <unistd.h> // getuid
 #endif
 
 namespace fs = ghc::filesystem;

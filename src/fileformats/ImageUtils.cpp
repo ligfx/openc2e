@@ -22,7 +22,7 @@ MultiImage ReadImage(std::string path) {
 		throw Exception("File '" + path + "' doesn't exist");
 	}
 
-	std::string ext = fs::path(path).extension();
+	auto ext = fs::path(path).extension();
 	ext = to_ascii_lowercase(ext);
 
 	mappedfile m(path);
@@ -43,7 +43,7 @@ MultiImage ReadImage(std::string path) {
 		return {ReadBmpFile(in)};
 	}
 
-	std::string filename = fs::path(path).filename();
+	auto filename = fs::path(path).filename();
 	filename = to_ascii_lowercase(filename);
 
 	if (filename == "charset.dta" || filename == "eurocharset.dta") {
