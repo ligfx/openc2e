@@ -24,11 +24,11 @@
 #include "Keycodes.h"
 #include "common/Image.h"
 #include "common/math/Rect.h"
-#include "common/span.h"
 
 #include <functional>
-#include <stdint.h>
 #include <memory>
+#include <span>
+#include <stdint.h>
 #include <string>
 
 // reasonable defaults

@@ -4,13 +4,13 @@
 #include "common/io/IOException.h"
 #include "common/io/SpanReader.h"
 #include "common/io/WriterFmt.h"
-#include "common/span.h"
 #include "fileformats/PrayFileReader.h"
 
 #include <array>
 #include <filesystem>
 #include <fmt/core.h>
 #include <optional>
+#include <span>
 
 namespace fs = std::filesystem;
 

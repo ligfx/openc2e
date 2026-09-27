@@ -110,7 +110,7 @@ void MFCReader::operator()(int32_t& out) {
 	out = ::readsigned32le(m_in);
 }
 
-void MFCReader::operator()(span<uint8_t> out) {
+void MFCReader::operator()(std::span<uint8_t> out) {
 	m_in.read(reinterpret_cast<char*>(out.data()), out.size());
 }
 

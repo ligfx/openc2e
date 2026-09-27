@@ -2,15 +2,15 @@
 
 #include "common/StringView.h"
 #include "common/io/Reader.h"
-#include "common/span.h"
 
+#include <span>
 #include <stddef.h>
 #include <stdint.h>
 #include <vector>
 
 /*
 
-A Reader implementation over a span<const uint8_t>. Useful
+A Reader implementation over a std::span<const uint8_t>. Useful
 for passing in-memory regions of bytes to functions that
 typically operate on files or other I/O.
 
@@ -19,7 +19,7 @@ typically operate on files or other I/O.
 class SpanReader : public Reader {
   public:
 	SpanReader();
-	SpanReader(span<const uint8_t>);
+	SpanReader(std::span<const uint8_t>);
 	SpanReader(StringView);
 
 	void seek_absolute(size_t n) override;
@@ -33,5 +33,5 @@ class SpanReader : public Reader {
 	void do_read(uint8_t* out, size_t n) override;
 
 	size_t pos = 0;
-	span<const uint8_t> buf;
+	std::span<const uint8_t> buf;
 };

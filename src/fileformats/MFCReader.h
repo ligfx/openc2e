@@ -3,10 +3,10 @@
 #include "MFCObject.h"
 #include "common/Exception.h"
 #include "common/ResizableContainerView.h"
-#include "common/span.h"
 
 #include <map>
 #include <memory>
+#include <span>
 #include <stdint.h>
 #include <string>
 #include <utility>
@@ -36,7 +36,7 @@ class MFCReader {
 	void operator()(int16_t&);
 	void operator()(uint32_t&);
 	void operator()(int32_t&);
-	void operator()(span<uint8_t>);
+	void operator()(std::span<uint8_t>);
 
 	template <typename T>
 	void operator()(T*& out) {

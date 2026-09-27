@@ -1,7 +1,6 @@
 #pragma once
 
-#include "common/span.h"
-
+#include <span>
 #include <stddef.h>
 #include <stdint.h>
 #include <vector>
@@ -14,7 +13,7 @@ class Reader {
 	virtual bool has_data_left() = 0;
 	void read(uint8_t*, size_t);
 	void read(char*, size_t);
-	void read(span<uint8_t>);
+	void read(std::span<uint8_t>);
 	virtual std::vector<uint8_t> read_to_end() = 0;
 	virtual void seek_absolute(size_t) = 0;
 	virtual void seek_relative(int64_t) = 0;
@@ -42,6 +41,6 @@ inline void Reader::read(char* out, size_t n) {
 	return read(reinterpret_cast<uint8_t*>(out), n);
 }
 
-inline void Reader::read(span<uint8_t> out) {
+inline void Reader::read(std::span<uint8_t> out) {
 	return read(out.data(), out.size());
 }

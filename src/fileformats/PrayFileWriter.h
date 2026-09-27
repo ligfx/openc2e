@@ -1,9 +1,9 @@
 #pragma once
 
 #include "common/io/Writer.h"
-#include "common/span.h"
 
 #include <map>
+#include <span>
 #include <string>
 
 class PrayFileWriter {
@@ -19,7 +19,7 @@ class PrayFileWriter {
 		const unsigned char* data, size_t data_size,
 		Compression compress = PRAY_COMPRESS_ON);
 	void writeBlockRawData(const std::string& type, const std::string& name,
-		span<const unsigned char> data, Compression compress = PRAY_COMPRESS_ON);
+		std::span<const unsigned char> data, Compression compress = PRAY_COMPRESS_ON);
 
 	void writeBlockTags(const std::string& type, const std::string& name,
 		const std::map<std::string, unsigned int>& integer_tags,

@@ -1,8 +1,8 @@
 #include "SpanReader.h"
 
 #include "common/io/IOException.h"
-#include "common/span.h"
 
+#include <span>
 #include <stddef.h>
 #include <stdexcept>
 #include <stdint.h>
@@ -12,7 +12,7 @@
 SpanReader::SpanReader() {
 }
 
-SpanReader::SpanReader(span<const uint8_t> buf_)
+SpanReader::SpanReader(std::span<const uint8_t> buf_)
 	: buf(buf_) {
 }
 

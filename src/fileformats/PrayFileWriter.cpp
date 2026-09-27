@@ -56,7 +56,7 @@ void PrayFileWriter::writeBlockRawData(const std::string& type,
 
 void PrayFileWriter::writeBlockRawData(const std::string& type,
 	const std::string& name,
-	span<const unsigned char> data,
+	std::span<const unsigned char> data,
 	PrayFileWriter::Compression compress) {
 	writeBlockRawData(type, name, data.data(), data.size(), compress);
 }
