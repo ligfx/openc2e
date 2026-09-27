@@ -57,7 +57,7 @@ bool SpanReader::has_data_left() {
 }
 
 std::vector<uint8_t> SpanReader::read_to_end() {
-	auto result = std::vector<uint8_t>(buf.data() + pos, buf.end());
+	auto result = std::vector<uint8_t>(buf.data() + pos, buf.data() + buf.size());
 	pos = buf.size();
 	return result;
 }
