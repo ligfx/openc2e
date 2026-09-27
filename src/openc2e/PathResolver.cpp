@@ -26,6 +26,7 @@
 #include "common/io/FileWriter.h"
 #include "common/wildcard_match.h"
 
+#include <algorithm>
 #include <assert.h>
 #include <fmt/core.h>
 #include <ghc/filesystem.hpp>

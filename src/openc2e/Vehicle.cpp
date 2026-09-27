@@ -21,6 +21,7 @@
 
 #include "Engine.h"
 
+#include <algorithm>
 #include <cassert>
 
 Vehicle::Vehicle(unsigned int family, unsigned int genus, unsigned int species, unsigned int plane,

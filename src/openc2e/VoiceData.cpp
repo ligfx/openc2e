@@ -24,6 +24,7 @@
 #include "common/NumericCast.h"
 #include "common/endianlove.h"
 
+#include <algorithm>
 #include <cassert>
 #include <fmt/core.h>
 
