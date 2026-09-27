@@ -189,10 +189,10 @@ int main(int argc, char** argv) {
 			// TODO: make sure it ends with endm
 		}
 		try {
-			fmt::print(caos1_format(script));
+			fmt::print("{}\n", caos1_format(script));
 		} catch (const Exception& e) {
 			fmt::print("* exception formatting CAOS: {}\n", e.what());
-			fmt::print(script);
+			fmt::print("{}\n", script);
 		}
 
 		if (cob.picture) {

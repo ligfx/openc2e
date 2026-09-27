@@ -8,6 +8,42 @@
 #include <ctype.h>
 #include <fmt/format.h>
 
+auto format_as(const ci_type& ci) {
+	switch (ci) {
+		case CI_OTHER: return "CI_OTHER";
+		case CI_COMMAND: return "CI_COMMAND";
+		case CI_NUMERIC: return "CI_NUMERIC";
+		case CI_STRING: return "CI_STRING";
+		case CI_AGENT: return "CI_AGENT";
+		case CI_VARIABLE: return "CI_VARIABLE";
+		case CI_BYTESTR: return "CI_BYTESTR";
+		case CI_FACEVALUE: return "CI_FACEVALUE";
+		case CI_VECTOR: return "CI_VECTOR";
+		case CI_BAREWORD: return "CI_BAREWORD";
+		case CI_SUBCOMMAND: return "CI_SUBCOMMAND";
+		case CI_ANYVALUE: return "CI_ANYVALUE";
+		case CI_CONDITION: return "CI_CONDITION";
+	}
+}
+
+auto format_as(const caostoken::toktype& t) {
+	switch (t) {
+		case caostoken::TOK_WORD: return "TOK_WORD";
+		case caostoken::TOK_BYTESTR: return "TOK_BYTESTR";
+		case caostoken::TOK_STRING: return "TOK_STRING";
+		case caostoken::TOK_CHAR: return "TOK_CHAR";
+		case caostoken::TOK_BINARY: return "TOK_BINARY";
+		case caostoken::TOK_INT: return "TOK_INT";
+		case caostoken::TOK_FLOAT: return "TOK_FLOAT";
+		case caostoken::TOK_COMMENT: return "TOK_COMMENT";
+		case caostoken::TOK_WHITESPACE: return "TOK_WHITESPACE";
+		case caostoken::TOK_NEWLINE: return "TOK_NEWLINE";
+		case caostoken::TOK_COMMA: return "TOK_COMMA";
+		case caostoken::TOK_EOI: return "TOK_EOI";
+		case caostoken::TOK_ERROR: return "TOK_ERROR";
+	}
+}
+
 struct CAOSParserState {
 	CAOSParserState(const std::vector<caostoken>& tokens_, Dialect* dialect_)
 		: tokens(tokens_), dialect(dialect_) {}
@@ -248,40 +284,4 @@ std::vector<CAOSNodePtr> parse(const std::vector<caostoken>& tokens, Dialect* di
 		toplevel.push_back(parse_command(state, true));
 	}
 	return toplevel;
-}
-
-auto format_as(const ci_type& ci) {
-	switch (ci) {
-		case CI_OTHER: return "CI_OTHER";
-		case CI_COMMAND: return "CI_COMMAND";
-		case CI_NUMERIC: return "CI_NUMERIC";
-		case CI_STRING: return "CI_STRING";
-		case CI_AGENT: return "CI_AGENT";
-		case CI_VARIABLE: return "CI_VARIABLE";
-		case CI_BYTESTR: return "CI_BYTESTR";
-		case CI_FACEVALUE: return "CI_FACEVALUE";
-		case CI_VECTOR: return "CI_VECTOR";
-		case CI_BAREWORD: return "CI_BAREWORD";
-		case CI_SUBCOMMAND: return "CI_SUBCOMMAND";
-		case CI_ANYVALUE: return "CI_ANYVALUE";
-		case CI_CONDITION: return "CI_CONDITION";
-	}
-}
-
-auto format_as(const caostoken::toktype& t) {
-	switch (t) {
-		case caostoken::TOK_WORD: return "TOK_WORD";
-		case caostoken::TOK_BYTESTR: return "TOK_BYTESTR";
-		case caostoken::TOK_STRING: return "TOK_STRING";
-		case caostoken::TOK_CHAR: return "TOK_CHAR";
-		case caostoken::TOK_BINARY: return "TOK_BINARY";
-		case caostoken::TOK_INT: return "TOK_INT";
-		case caostoken::TOK_FLOAT: return "TOK_FLOAT";
-		case caostoken::TOK_COMMENT: return "TOK_COMMENT";
-		case caostoken::TOK_WHITESPACE: return "TOK_WHITESPACE";
-		case caostoken::TOK_NEWLINE: return "TOK_NEWLINE";
-		case caostoken::TOK_COMMA: return "TOK_COMMA";
-		case caostoken::TOK_EOI: return "TOK_EOI";
-		case caostoken::TOK_ERROR: return "TOK_ERROR";
-	}
 }

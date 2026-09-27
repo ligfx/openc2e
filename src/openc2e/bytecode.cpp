@@ -78,6 +78,6 @@ std::string dumpOp(const Dialect* d, caosOp op) {
 		case CAOS_ENUMPOP:
 			return fmt::format("ENUMPOP {:08d}", arg);
 		default:
-			return fmt::format("UNKNOWN {:02x} {:06x}", arg);
+			return fmt::format("UNKNOWN {:02x} {:06x}", fmt::underlying(op.opcode), arg);
 	}
 }

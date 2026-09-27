@@ -82,7 +82,7 @@ bool prayInstall(std::string name, unsigned int type, bool actually_install) {
 
 	std::map<std::string, PrayBlock>::iterator i = world.praymanager->blocks.find(name);
 	if (i == world.praymanager->blocks.end()) {
-		fmt::print("PRAY FILE: couldn't find block {}\n");
+		fmt::print("PRAY FILE: couldn't find block {}\n", name);
 		return false;
 	}
 

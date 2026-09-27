@@ -332,7 +332,7 @@ int main(int argc, char** argv) {
 
 	fmt::print("  goals = [ ... ]\n");
 	if (exp.creature->zzzz) {
-		fmt::print("  zzzz = SimpleObject { ... }\n");
+		fmt::print("  zzzz = SimpleObject {{ ... }}\n");
 	} else {
 		fmt::print("  zzzz = null\n");
 	}
