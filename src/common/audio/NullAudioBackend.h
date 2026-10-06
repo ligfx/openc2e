@@ -37,7 +37,7 @@ class NullAudioBackend : public AudioBackend {
 	void init() {}
 	void shutdown() {}
 
-	AudioChannel play_clip(const ghc::filesystem::path& filename, bool) {
+	AudioChannel play_clip(const std::filesystem::path& filename, bool) {
 		if (filename.empty())
 			return {};
 		return {1};
@@ -57,7 +57,7 @@ class NullAudioBackend : public AudioBackend {
 
 	void audio_channel_stop(AudioChannel) {}
 
-	void play_midi_file(const ghc::filesystem::path&) {}
+	void play_midi_file(const std::filesystem::path&) {}
 	void midi_set_volume(float) {}
 	void midi_stop() {}
 };

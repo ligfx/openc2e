@@ -13,7 +13,7 @@
 static_assert(sizeof(off_t) == sizeof(int64_t), "off_t == int64_t");
 #endif
 
-namespace fs = ghc::filesystem;
+namespace fs = std::filesystem;
 
 static inline std::string errno_message() {
 	return std::error_code(errno, std::generic_category()).message();
@@ -21,7 +21,7 @@ static inline std::string errno_message() {
 
 FileReader::FileReader(const fs::path& name) {
 #ifdef _WIN32
-	ptr_ = _wfopen(name.wstring().c_str(), L"rb");
+	ptr_ = _wfopen(name.c_str(), L"rb");
 #else
 	ptr_ = fopen(name.c_str(), "rb");
 #endif

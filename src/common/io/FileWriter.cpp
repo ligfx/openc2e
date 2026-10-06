@@ -11,7 +11,7 @@
 #include <unistd.h>
 #endif
 
-namespace fs = ghc::filesystem;
+namespace fs = std::filesystem;
 
 static inline std::string errno_message() {
 	return std::error_code(errno, std::generic_category()).message();
@@ -19,7 +19,7 @@ static inline std::string errno_message() {
 
 FileWriter::FileWriter(const fs::path& name) {
 #ifdef _WIN32
-	ptr_ = _wfopen(name.wstring().c_str(), L"wb");
+	ptr_ = _wfopen(name.c_str(), L"wb");
 #else
 	ptr_ = fopen(name.c_str(), "wb");
 #endif
@@ -34,7 +34,7 @@ FileWriter::FileWriter(const fs::path& name) {
 
 FileWriter::FileWriter(const fs::path& name, FileWriter::option_append_t) {
 #ifdef _WIN32
-	ptr_ = _wfopen(name.wstring().c_str(), L"ab");
+	ptr_ = _wfopen(name.c_str(), L"ab");
 #else
 	ptr_ = fopen(name.c_str(), "ab");
 #endif

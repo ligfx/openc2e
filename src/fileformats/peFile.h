@@ -22,7 +22,7 @@
 #include "common/Image.h"
 #include "common/io/FileReader.h"
 
-#include <ghc/filesystem.hpp>
+#include <filesystem>
 #include <optional>
 #include <stdint.h>
 #include <string>
@@ -82,7 +82,7 @@ class peFile {
 	FileReader file;
 
   public:
-	peFile(ghc::filesystem::path);
+	peFile(std::filesystem::path);
 	~peFile();
 
 	std::optional<resourceInfo> findResource(PeResourceType type, PeLanguage lang, uint32_t name);

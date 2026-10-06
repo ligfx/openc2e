@@ -39,7 +39,7 @@ class SDLMixerBackend : public AudioBackend {
 	void init();
 	void shutdown();
 
-	AudioChannel play_clip(const ghc::filesystem::path& filename, bool looping = false);
+	AudioChannel play_clip(const std::filesystem::path& filename, bool looping = false);
 	AudioChannel play_wav_data(const std::string& name, const uint8_t* data, size_t size, bool looping = false);
 
 	void audio_channel_set_volume(AudioChannel, float);
@@ -48,7 +48,7 @@ class SDLMixerBackend : public AudioBackend {
 	AudioState audio_channel_get_state(AudioChannel);
 	void audio_channel_stop(AudioChannel);
 
-	void play_midi_file(const ghc::filesystem::path& filename);
+	void play_midi_file(const std::filesystem::path& filename);
 	void midi_set_volume(float);
 	void midi_stop();
 };

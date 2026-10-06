@@ -10,13 +10,13 @@
 
 #include <algorithm>
 #include <ctype.h>
+#include <filesystem>
 #include <fmt/core.h>
-#include <ghc/filesystem.hpp>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 
-namespace fs = ghc::filesystem;
+namespace fs = std::filesystem;
 
 std::string part_number_to_name(int part_number) {
 	switch (part_number) {

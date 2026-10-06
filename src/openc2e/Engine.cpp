@@ -56,7 +56,7 @@
 #endif
 
 #include <cassert>
-#include <ghc/filesystem.hpp>
+#include <filesystem>
 #define CXXOPTS_VECTOR_DELIMITER '\0'
 #include <cxxopts.hpp>
 #include <fmt/core.h>
@@ -71,7 +71,7 @@
 #include <sys/types.h> // passwd*
 #endif
 
-namespace fs = ghc::filesystem;
+namespace fs = std::filesystem;
 
 Engine engine;
 
@@ -889,15 +889,6 @@ static fs::path showDirectoryPicker() {
 	return fs::path(pszFilePath.get());
 }
 #endif
-
-// remove when migrating from ghc::filesystem to std::filesystem
-namespace ghc {
-namespace filesystem {
-void parse_value(const std::string& text, fs::path& value) {
-	value = text;
-}
-} // namespace filesystem
-} // namespace ghc
 
 bool Engine::parseCommandLine(int argc, char* argv[]) {
 	// variables for command-line flags

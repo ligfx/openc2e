@@ -29,8 +29,8 @@
 #include "serfwd.h"
 
 #include <cassert>
+#include <filesystem>
 #include <fmt/core.h>
-#include <ghc/filesystem.hpp>
 #include <map>
 #include <memory>
 #include <string>
@@ -89,7 +89,7 @@ class script {
 	const class Dialect* dialect;
 	const Dialect* getDialect() const { return dialect; };
 
-	ghc::filesystem::path filename;
+	std::filesystem::path filename;
 
 	caosOp getOp(int idx) const {
 		assert(idx >= 0);
@@ -111,9 +111,9 @@ class script {
 	std::map<std::string, int> gsub;
 	int getNextIndex() { return (int)ops.size(); }
 	// add op as the next opcode
-	script(const Dialect* v, const ghc::filesystem::path& fn,
+	script(const Dialect* v, const std::filesystem::path& fn,
 		int fmly_, int gnus_, int spcs_, int scrp_);
-	script(const Dialect* v, const ghc::filesystem::path& fn);
+	script(const Dialect* v, const std::filesystem::path& fn);
 	script(const script&) = delete;
 	script& operator=(const script&) = delete;
 	~script();
@@ -208,12 +208,12 @@ struct CAOSExpression {
 class caosScript { //: Collectable {
   public:
 	const Dialect* d;
-	ghc::filesystem::path filename;
+	std::filesystem::path filename;
 	std::shared_ptr<script> installer, removal;
 	std::vector<std::shared_ptr<script> > scripts;
 	std::shared_ptr<script> current;
 
-	caosScript(const std::string& dialect, const ghc::filesystem::path& filename);
+	caosScript(const std::string& dialect, const std::filesystem::path& filename);
 	caosScript() { d = NULL; }
 	void parse(const std::string& caostext);
 	void parse(Reader& in);

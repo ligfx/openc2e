@@ -6,7 +6,7 @@
 #include <array>
 #include <stdint.h>
 
-shared_array<Color> ReadPaletteFile(const ghc::filesystem::path& path) {
+shared_array<Color> ReadPaletteFile(const std::filesystem::path& path) {
 	FileReader in(path);
 	return ReadPaletteFile(in);
 }

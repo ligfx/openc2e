@@ -28,8 +28,8 @@
 
 #include <algorithm>
 #include <assert.h>
+#include <filesystem>
 #include <fmt/core.h>
-#include <ghc/filesystem.hpp>
 #include <string>
 #include <system_error>
 #include <unordered_map>
@@ -44,7 +44,7 @@
 #include <unistd.h> // getuid
 #endif
 
-namespace fs = ghc::filesystem;
+namespace fs = std::filesystem;
 
 DataDirectory::DataDirectory(fs::path main_)
 	: main(main_) {

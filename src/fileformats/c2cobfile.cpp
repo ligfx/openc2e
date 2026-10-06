@@ -28,7 +28,7 @@
 #include <ctype.h>
 #include <string.h>
 
-c2cobfile::c2cobfile(ghc::filesystem::path _path)
+c2cobfile::c2cobfile(std::filesystem::path _path)
 	: path(_path), file(_path) {
 	// TODO: c1 cob support
 	char majic[4];

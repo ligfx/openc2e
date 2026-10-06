@@ -3,9 +3,9 @@
 #include "common/io/FileWriter.h"
 #include "common/io/IOException.h"
 
+#include <filesystem>
 #include <fmt/format.h>
 #include <fmt/xchar.h>
-#include <ghc/filesystem.hpp>
 #include <gtest/gtest.h>
 #include <stdint.h>
 #include <string.h>
@@ -18,7 +18,7 @@
 #define _T(x) x
 #endif
 
-namespace fs = ghc::filesystem;
+namespace fs = std::filesystem;
 
 
 static auto vec(const char* s) {

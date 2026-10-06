@@ -5,7 +5,7 @@
 #include "common/io/Reader.h"
 #include "common/throw_ifnot.h"
 
-hedfile read_hedfile(const ghc::filesystem::path& path) {
+hedfile read_hedfile(const std::filesystem::path& path) {
 	FileReader in(path);
 	return read_hedfile(in);
 }

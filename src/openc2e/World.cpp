@@ -45,12 +45,12 @@
 #include "prayManager.h"
 
 #include <cassert>
+#include <filesystem>
 #include <fmt/core.h>
-#include <ghc/filesystem.hpp>
 #include <limits.h> // for MAXINT
 #include <memory>
 #include <stdint.h>
-namespace fs = ghc::filesystem;
+namespace fs = std::filesystem;
 
 struct scriptevent {
 	unsigned short scriptno;

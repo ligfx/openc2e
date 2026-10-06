@@ -1,7 +1,7 @@
 #pragma once
 
-#include <ghc/filesystem.hpp>
+#include <filesystem>
 #include <string>
 #include <vector>
 
-std::vector<std::vector<std::string>> ReadVerticalBarSeparatedValuesFile(const ghc::filesystem::path& path);
+std::vector<std::vector<std::string>> ReadVerticalBarSeparatedValuesFile(const std::filesystem::path& path);

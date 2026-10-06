@@ -11,7 +11,7 @@
 #include <fmt/core.h>
 #include <math.h>
 
-namespace fs = ghc::filesystem;
+namespace fs = std::filesystem;
 
 constexpr bool SOUND_MANAGER_DEBUG = false;
 

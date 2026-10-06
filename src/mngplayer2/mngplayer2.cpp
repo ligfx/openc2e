@@ -18,8 +18,8 @@
 #include <SDL3/SDL_main.h>
 #include <chrono>
 #include <cstring>
+#include <filesystem>
 #include <fmt/core.h>
-#include <ghc/filesystem.hpp>
 #include <imgui.h>
 #include <imgui_internal.h>
 #include <nfd.h>
@@ -32,7 +32,7 @@
 #undef main
 #endif
 
-namespace fs = ghc::filesystem;
+namespace fs = std::filesystem;
 
 static SDLBackend* backend;
 static bool should_quit = false;

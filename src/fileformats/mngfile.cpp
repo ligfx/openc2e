@@ -51,7 +51,7 @@ std::vector<uint8_t> mngencrypt(const std::string& s) {
 
 MNGFile::MNGFile() = default;
 
-MNGFile::MNGFile(const ghc::filesystem::path& n) {
+MNGFile::MNGFile(const std::filesystem::path& n) {
 	name = n;
 
 	mappedfile m(n);

@@ -1,6 +1,6 @@
 #pragma once
 
-#include <ghc/filesystem.hpp>
+#include <filesystem>
 #include <string>
 
 inline bool is_ascii_digit(char c) {
@@ -53,6 +53,6 @@ inline std::wstring to_ascii_lowercase(std::wstring s) {
 	return s;
 }
 
-inline ghc::filesystem::path to_ascii_lowercase(const ghc::filesystem::path& p) {
+inline std::filesystem::path to_ascii_lowercase(const std::filesystem::path& p) {
 	return to_ascii_lowercase(p.native());
 }

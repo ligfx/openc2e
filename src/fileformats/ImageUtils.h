@@ -2,12 +2,12 @@
 
 #include "common/Image.h"
 
-#include <ghc/filesystem.hpp>
+#include <filesystem>
 #include <stdint.h>
 
 namespace ImageUtils {
 
-MultiImage ReadImage(const ghc::filesystem::path& path);
+MultiImage ReadImage(const std::filesystem::path& path);
 
 bool IsBackground(const MultiImage& images);
 Image StitchBackground(const MultiImage& images);

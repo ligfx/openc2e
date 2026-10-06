@@ -2,7 +2,7 @@
 
 #include "common/Exception.h"
 
-#include <ghc/filesystem.hpp>
+#include <filesystem>
 #include <memory>
 #include <string>
 #include <vector>
@@ -16,7 +16,7 @@ class parseException : public Exception {
 
 	std::shared_ptr<std::vector<struct caostoken> > context;
 	int ctxoffset;
-	ghc::filesystem::path filename;
+	std::filesystem::path filename;
 	int lineno = -1;
 
 	std::string prettyPrint() const;

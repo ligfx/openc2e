@@ -18,7 +18,7 @@ static std::string read_string(Reader& in) {
 	return {(char*)script.data()};
 }
 
-c1cobfile read_c1cobfile(const ghc::filesystem::path& path) {
+c1cobfile read_c1cobfile(const std::filesystem::path& path) {
 	FileReader in(path);
 	return read_c1cobfile(in);
 }

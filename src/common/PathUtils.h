@@ -2,9 +2,9 @@
 
 #include "common/Ascii.h"
 
-#include <ghc/filesystem.hpp>
+#include <filesystem>
 
-inline ghc::filesystem::path with_extension(ghc::filesystem::path p, const ghc::filesystem::path& ext) {
+inline std::filesystem::path with_extension(std::filesystem::path p, const std::filesystem::path& ext) {
 	p.replace_extension(ext);
 	return p;
 }

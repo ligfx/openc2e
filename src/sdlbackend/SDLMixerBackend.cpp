@@ -9,10 +9,10 @@
 #include <SDL3/SDL.h>
 #include <SDL3_mixer/SDL_mixer.h>
 #include <SDL3_native_midi/SDL_native_midi.h>
-#include <ghc/filesystem.hpp>
+#include <filesystem>
 #include <mutex>
 
-namespace fs = ghc::filesystem;
+namespace fs = std::filesystem;
 
 template <typename T, void (*F)(T*)>
 struct deleter {
@@ -75,7 +75,7 @@ AudioBackend* SDLMixerBackend::get_instance() {
 	return &s_sdl_mixer_backend;
 }
 
-void SDLMixerBackend::play_midi_file(const ghc::filesystem::path& filename) {
+void SDLMixerBackend::play_midi_file(const std::filesystem::path& filename) {
 	// TODO: also support SDL_mixer's Timidity/FluidSynth support
 	// SDL takes UTF-8 paths so use u8string
 	s_midi.reset(NativeMidi_LoadSong(reinterpret_cast<const char*>(filename.u8string().c_str())));

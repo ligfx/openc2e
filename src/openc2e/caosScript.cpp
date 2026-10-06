@@ -68,7 +68,7 @@ void script::link() {
 	relocations.clear();
 }
 
-script::script(const Dialect* v, const ghc::filesystem::path& fn)
+script::script(const Dialect* v, const std::filesystem::path& fn)
 	: fmly(-1), gnus(-1), spcs(-1), scrp(-1),
 	  dialect(v), filename(fn) {
 	// advance past reserved index 0
@@ -79,7 +79,7 @@ script::script(const Dialect* v, const ghc::filesystem::path& fn)
 	linked = false;
 }
 
-script::script(const Dialect* v, const ghc::filesystem::path& fn,
+script::script(const Dialect* v, const std::filesystem::path& fn,
 	int fmly_, int gnus_, int spcs_, int scrp_)
 	: fmly(fmly_), gnus(gnus_), spcs(spcs_), scrp(scrp_),
 	  dialect(v), filename(fn) {
@@ -102,7 +102,7 @@ std::string script::dump() {
 	return buf;
 }
 
-caosScript::caosScript(const std::string& dialect, const ghc::filesystem::path& _filename) {
+caosScript::caosScript(const std::string& dialect, const std::filesystem::path& _filename) {
 	enumdepth = 0;
 	d = getDialectByName(dialect);
 	if (!d)

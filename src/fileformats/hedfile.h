@@ -1,7 +1,7 @@
 #pragma once
 
 #include <cstdint>
-#include <ghc/filesystem.hpp>
+#include <filesystem>
 
 class Reader;
 
@@ -11,5 +11,5 @@ struct hedfile {
 	uint32_t numframes;
 };
 
-hedfile read_hedfile(const ghc::filesystem::path& path);
+hedfile read_hedfile(const std::filesystem::path& path);
 hedfile read_hedfile(Reader& in);
