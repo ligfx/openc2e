@@ -20,6 +20,7 @@
 #pragma once
 
 #include "common/audio/AudioBackend.h"
+
 #include <stdint.h>
 
 class NullAudioBackend : public AudioBackend {
@@ -36,8 +37,8 @@ class NullAudioBackend : public AudioBackend {
 	void init() {}
 	void shutdown() {}
 
-	AudioChannel play_clip(const std::string& filename, bool) {
-		if (filename.size() == 0)
+	AudioChannel play_clip(const ghc::filesystem::path& filename, bool) {
+		if (filename.empty())
 			return {};
 		return {1};
 	}
@@ -56,7 +57,7 @@ class NullAudioBackend : public AudioBackend {
 
 	void audio_channel_stop(AudioChannel) {}
 
-	void play_midi_file(const std::string&) {}
+	void play_midi_file(const ghc::filesystem::path&) {}
 	void midi_set_volume(float) {}
 	void midi_stop() {}
 };

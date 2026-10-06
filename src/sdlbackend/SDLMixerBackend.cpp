@@ -75,11 +75,12 @@ AudioBackend* SDLMixerBackend::get_instance() {
 	return &s_sdl_mixer_backend;
 }
 
-void SDLMixerBackend::play_midi_file(const std::string& filename) {
+void SDLMixerBackend::play_midi_file(const ghc::filesystem::path& filename) {
 	// TODO: also support SDL_mixer's Timidity/FluidSynth support
-	s_midi.reset(NativeMidi_LoadSong(filename.c_str()));
+	// SDL takes UTF-8 paths so use u8string
+	s_midi.reset(NativeMidi_LoadSong(reinterpret_cast<const char*>(filename.u8string().c_str())));
 	if (!s_midi) {
-		fmt::print("* SDLMixer: Couldn't load {}: {}\n", filename, SDL_GetError());
+		fmt::print("* SDLMixer: Couldn't load {}: {}\n", filename.string(), SDL_GetError());
 		return;
 	}
 	NativeMidi_Start(s_midi.get(), -1); // TODO: is looping forever correct?
@@ -250,8 +251,9 @@ static AudioChannel play_sdl_io(const std::string& name, SDL_IOStream* io, bool 
 	return channel;
 }
 
-AudioChannel SDLMixerBackend::play_clip(const std::string& filename, bool looping) {
-	return play_sdl_io(filename, SDL_IOFromFile(filename.c_str(), "rb"), looping);
+AudioChannel SDLMixerBackend::play_clip(const fs::path& filename, bool looping) {
+	// SDL takes UTF-8 paths so use u8string
+	return play_sdl_io(filename.string(), SDL_IOFromFile(reinterpret_cast<const char*>(filename.u8string().c_str()), "rb"), looping);
 }
 
 AudioChannel SDLMixerBackend::play_wav_data(const std::string& name, const uint8_t* buf, size_t size, bool looping) {
