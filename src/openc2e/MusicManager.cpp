@@ -117,8 +117,8 @@ void MusicManager::playTrackForAtLeastThisManyMilliseconds(std::string track, un
 			return;
 		}
 
-		std::string filename = findSoundFile(track + ".mid");
-		if (!filename.size()) {
+		auto filename = findSoundFile(track + ".mid");
+		if (filename.empty()) {
 			fmt::print("Couldn't find MIDI file '{}'!\n", track);
 			return;
 		}
@@ -144,8 +144,8 @@ void MusicManager::playTrackForAtLeastThisManyMilliseconds(std::string track, un
 		MNGFile* file;
 		std::transform(filename.begin(), filename.end(), filename.begin(), (int (*)(int))tolower);
 		if (files.find(filename) == files.end()) {
-			std::string realfilename = findSoundFile(filename);
-			if (!realfilename.size()) {
+			auto realfilename = findSoundFile(filename);
+			if (realfilename.empty()) {
 				fmt::print("Couldn't find MNG file '{}'!\n", filename);
 				return; // TODO: exception?
 			}

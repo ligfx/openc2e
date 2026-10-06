@@ -5,6 +5,7 @@
 #include "World.h"
 #include "common/Ascii.h"
 #include "common/Exception.h"
+#include "common/PathUtils.h"
 #include "common/Ranges.h"
 #include "common/case_insensitive_filesystem.h"
 #include "common/io/FileWriter.h"
@@ -144,7 +145,7 @@ void CobManager::inject(const CobFileInfo& info) {
 void CobManager::remove(const CobFileInfo& info) {
 	std::string rdata;
 	if (engine.version == 1) {
-		std::string rcbpath = findCobFile(fs::path(info.filename).stem().string() + ".rcb");
+		auto rcbpath = findCobFile(with_extension(info.filename.filename(), "rcb"));
 		c1cobfile cobfile = read_c1cobfile(rcbpath);
 		for (auto s : cobfile.install_scripts) {
 			rdata += s + "\n";

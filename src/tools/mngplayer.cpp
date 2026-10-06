@@ -49,7 +49,7 @@ int main(int argc, char** argv) {
 	set_audio_backend(SDLMixerBackend::get_instance());
 	get_audio_backend()->init();
 
-	std::string ext = to_ascii_lowercase(fs::path(filename).extension());
+	std::string ext = to_ascii_lowercase(fs::path(filename).extension().string());
 	if (ext == ".mng") {
 		MNGFile file(filename);
 

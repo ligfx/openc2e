@@ -5,8 +5,8 @@
 #include "fileformats/pngImage.h"
 
 #include <fmt/format.h>
-#include <stdint.h>
 #include <ghc/filesystem.hpp>
+#include <stdint.h>
 
 namespace fs = ghc::filesystem;
 
@@ -102,7 +102,7 @@ int main(int argc, char** argv) {
 
 	for (int i = 1; i < argc; ++i) {
 		fs::path input_path(argv[i]);
-		std::string stem = input_path.stem();
+		std::string stem = input_path.stem().string();
 
 		MultiImage image = [&] {
 			try {

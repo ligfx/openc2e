@@ -22,6 +22,7 @@
 #include "common/Exception.h"
 #include "common/shared_array.h"
 
+#include <ghc/filesystem.hpp>
 #include <map>
 #include <stdint.h>
 #include <string>
@@ -46,11 +47,11 @@ class MNGFileException : public Exception {
 class MNGFile {
   public:
 	MNGFile();
-	MNGFile(std::string);
+	MNGFile(const ghc::filesystem::path&);
 	~MNGFile();
 	std::vector<std::string> getSampleNames() const;
 	unsigned int getSampleForName(std::string name);
-	std::string name;
+	ghc::filesystem::path name;
 	std::string script;
 	std::map<std::string, unsigned int> samplemappings;
 	std::vector<shared_array<uint8_t>> samples;

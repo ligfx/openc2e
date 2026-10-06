@@ -3,7 +3,7 @@
 #include "common/io/FileReader.h"
 #include "common/ioutil/Getline.h"
 
-std::vector<std::vector<std::string>> ReadVerticalBarSeparatedValuesFile(const std::string& path) {
+std::vector<std::vector<std::string>> ReadVerticalBarSeparatedValuesFile(const ghc::filesystem::path& path) {
 	FileReader in(path);
 
 	std::vector<std::vector<std::string>> lines;

@@ -28,13 +28,13 @@
 #include <ctype.h>
 #include <string.h>
 
-c2cobfile::c2cobfile(std::string _path)
+c2cobfile::c2cobfile(ghc::filesystem::path _path)
 	: path(_path), file(_path) {
 	// TODO: c1 cob support
 	char majic[4];
 	file.read(majic, 4);
 	if (strncmp(majic, "cob2", 4) != 0)
-		throw Exception(std::string("bad magic of C2 COB file \"") + path + "\"");
+		throw_exception("bad magic of C2 COB file {:?}", path.string());
 
 	while (file.has_data_left()) {
 		// TODO: catch exceptions, and free all blocks before passing it up the stack

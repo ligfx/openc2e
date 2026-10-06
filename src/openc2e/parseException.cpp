@@ -5,14 +5,14 @@
 #include <fmt/core.h>
 
 std::string parseException::prettyPrint() const {
-	std::string filename = this->filename;
-	if (filename == "")
-		filename = std::string("(UNKNOWN)");
+	auto filename = this->filename;
+	if (filename.empty())
+		filename = "(UNKNOWN)";
 
 	std::string buf = fmt::format(
-		"Parse error at line {} in file {}: {}",
+		"Parse error at line {} in file {:?}: {}",
 		lineno == -1 ? "(UNKNOWN)" : std::to_string(lineno),
-		filename,
+		filename.string(),
 		what());
 	if (!context)
 		buf += "\n";

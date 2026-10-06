@@ -890,9 +890,18 @@ static fs::path showDirectoryPicker() {
 }
 #endif
 
+// remove when migrating from ghc::filesystem to std::filesystem
+namespace ghc {
+namespace filesystem {
+void parse_value(const std::string& text, fs::path& value) {
+	value = text;
+}
+} // namespace filesystem
+} // namespace ghc
+
 bool Engine::parseCommandLine(int argc, char* argv[]) {
 	// variables for command-line flags
-	std::vector<std::string> data_vec;
+	std::vector<fs::path> data_vec;
 
 	// generate help for backend options
 	std::string available_backends;
@@ -921,7 +930,7 @@ bool Engine::parseCommandLine(int argc, char* argv[]) {
 	desc.add_options()("l,language", "Select the language; default is '" + language + "'", cxxopts::value<std::string>(language));
 	desc.add_options()("k,backend", available_backends, cxxopts::value<std::string>(preferred_backend));
 	desc.add_options()("o,audiobackend", available_audiobackends, cxxopts::value<std::string>(preferred_audiobackend));
-	desc.add_options()("d,data-path", "Sets or adds a path to a data directory", cxxopts::value<std::vector<std::string>>(data_vec));
+	desc.add_options()("d,data-path", "Sets or adds a path to a data directory", cxxopts::value<std::vector<fs::path>>(data_vec));
 	desc.add_options()("b,bootstrap", "Sets or adds a path or COS file to bootstrap from", cxxopts::value<std::vector<std::string>>(cmdline_bootstrap));
 	desc.add_options()("m,gamename", "Set the game name", cxxopts::value<std::string>(gamename));
 	desc.add_options()("n,norun", "Don't run the game, just execute scripts");
@@ -1002,7 +1011,7 @@ bool Engine::parseCommandLine(int argc, char* argv[]) {
 
 	// try to read machine.cfg
 	if (!fs::exists(data_vec[0])) {
-		throw Exception("data path '" + data_vec[0] + "' doesn't exist");
+		throw_exception("data path {:?} doesn't exist", data_vec[0].string());
 	}
 	if (engine.version == 3) {
 		data_directories = data_directories_from_machine_cfg(fs::path(data_vec[0]) / "machine.cfg");
@@ -1013,10 +1022,10 @@ bool Engine::parseCommandLine(int argc, char* argv[]) {
 	// add remaining data directories
 	for (auto it = data_vec.begin() + 1; it != data_vec.end(); ++it) {
 		if (!fs::exists(*it)) {
-			throw Exception("data path '" + *it + "' doesn't exist");
+			throw_exception("data path {:?} doesn't exist", it->string());
 		}
 		if (find_if(data_directories, [&](auto d) { return fs::absolute(d.main) == fs::absolute(*it); })) {
-			fmt::print("* Warning: ignoring duplicate data directory {}\n", *it);
+			fmt::print("* Warning: ignoring duplicate data directory {}", it->string());
 			continue;
 		}
 		data_directories.push_back(fs::path(*it));

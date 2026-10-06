@@ -15,7 +15,6 @@
 #include "sdlbackend/SDLMixerBackend.h"
 
 #include <SDL3/SDL.h>
-#include <stdint.h>
 #include <SDL3/SDL_main.h>
 #include <chrono>
 #include <cstring>
@@ -24,6 +23,7 @@
 #include <imgui.h>
 #include <imgui_internal.h>
 #include <nfd.h>
+#include <stdint.h>
 #include <stdlib.h>
 #include <string>
 
@@ -133,7 +133,7 @@ static bool ShowConfirmBox(const std::string& title, const std::string& message)
 }
 
 static struct AppState {
-	std::string fullpath;
+	fs::path fullpath;
 	std::string filename;
 	std::string trackname;
 	MNGFile mngfile;
@@ -249,8 +249,8 @@ static struct AppState {
 
 		stopMusic();
 
-		fullpath = outPath;
-		filename = fs::path(outPath).filename();
+		fullpath = fs::path(outPath);
+		filename = fullpath.filename().string();
 		mngfile = newfile;
 		parsed_script = newscript;
 		random_allowed_track_indices = BoolVector(parsed_script.tracks.size(), true);
@@ -274,7 +274,7 @@ static struct AppState {
 
 		MNGFile newfile;
 		try {
-			newfile.name = fs::path(outPath).stem();
+			newfile.name = fs::path(outPath).stem().string();
 			newfile.script = readfile(outPath);
 
 			auto sample_names = mngparse(newfile.script).getWaveNames();
@@ -301,8 +301,8 @@ static struct AppState {
 
 		stopMusic();
 
-		fullpath = outPath;
-		filename = fs::path(outPath).filename();
+		fullpath = fs::path(outPath);
+		filename = fullpath.filename().string();
 		mngfile = newfile;
 		parsed_script = mngparse(newfile.script);
 		random_allowed_track_indices = BoolVector(parsed_script.tracks.size(), true);
@@ -314,7 +314,7 @@ static struct AppState {
 	}
 
 	void compile() {
-		std::string output_path = replace_extension(fullpath, "mng");
+		std::string output_path = replace_extension(fullpath, "mng").string();
 		if (ends_with_ignore_case(output_path, ".mng")) {
 			output_path.resize(output_path.size() - 4);
 		}

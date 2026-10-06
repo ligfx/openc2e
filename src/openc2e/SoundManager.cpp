@@ -172,8 +172,8 @@ Sound SoundManager::playSound(std::string name, bool loop) {
 	if (name.size() == 0)
 		return {};
 
-	std::string filename = findSoundFile(name + ".wav");
-	if (filename.size() == 0) {
+	auto filename = findSoundFile(name + ".wav");
+	if (filename.empty()) {
 		if (engine.version < 3)
 			return {}; // creatures 1 and 2 ignore non-existent audio clips
 		throw Exception(fmt::format("No such clip '{}.wav'", name));
@@ -182,7 +182,7 @@ Sound SoundManager::playSound(std::string name, bool loop) {
 	auto handle = get_audio_backend()->play_clip(filename, loop);
 	if (!handle) {
 		// note that more specific error messages can be thrown by implementations of play_clip
-		throw Exception("failed to load audio clip " + filename);
+		throw_exception("failed to load audio clip {:?}", filename.string());
 	}
 
 	return getNewSound(handle);
@@ -192,8 +192,8 @@ Sound SoundManager::playVoice(std::string name) {
 	if (name.size() == 0)
 		return {};
 
-	std::string filename = findSoundFile(name + ".wav");
-	if (filename.size() == 0) {
+	auto filename = findSoundFile(name + ".wav");
+	if (filename.empty()) {
 		if (engine.version < 3)
 			return {}; // creatures 1 and 2 ignore non-existent audio clips
 		throw Exception(fmt::format("No such clip '{}.wav'", name));
@@ -202,7 +202,7 @@ Sound SoundManager::playVoice(std::string name) {
 	auto handle = get_audio_backend()->play_clip(filename);
 	if (!handle) {
 		// note that more specific error messages can be thrown by implementations of play_clip
-		throw Exception("failed to load audio clip " + filename);
+		throw_exception("failed to load audio clip {:?}", filename.string());
 	}
 
 	return getNewSound(handle, true);

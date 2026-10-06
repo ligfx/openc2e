@@ -127,17 +127,17 @@ static fs::path findFile(FileDirectory type, fs::path name) {
 	return {};
 }
 
-static std::vector<fs::path> findByWildcard(FileDirectory type, std::string wild) {
+static std::vector<fs::path> findByWildcard(FileDirectory type, fs::path wild) {
 	std::vector<fs::path> results;
 	// TODO: check user directory before or after data directories?
 	for (auto d : data_directories) {
 		auto dirname = getDirectory(d, type);
-		if (!fs::path(wild).parent_path().empty()) {
-			dirname /= fs::path(wild).parent_path();
-			wild = fs::path(wild).filename().string();
+		if (!wild.parent_path().empty()) {
+			dirname /= wild.parent_path();
+			wild = wild.filename().string();
 		}
 		for (const auto& entry : case_insensitive_filesystem::directory_iterator(dirname)) {
-			if (wildcard_match_ignore_case(wild, entry.lexically_relative(dirname).native())) {
+			if (wildcard_match_ignore_case(wild.string(), entry.lexically_relative(dirname).string())) {
 				results.push_back(entry);
 			}
 		}
@@ -250,11 +250,11 @@ FileWriter createUserSoundFile(fs::path name) {
 	return case_insensitive_filesystem::create_file(dir / name);
 }
 
-std::vector<fs::path> findAgentFiles(std::string wild) {
+std::vector<fs::path> findAgentFiles(fs::path wild) {
 	return findByWildcard(DIRECTORY_AGENTS, wild);
 }
 
-std::vector<fs::path> findCobFiles(std::string wild) {
+std::vector<fs::path> findCobFiles(fs::path wild) {
 	if (engine.version == 2) {
 		return findByWildcard(DIRECTORY_MAIN, fs::path("Objects") / wild);
 	} else {
@@ -262,15 +262,15 @@ std::vector<fs::path> findCobFiles(std::string wild) {
 	}
 }
 
-std::vector<fs::path> findGeneticsFiles(std::string wild) {
+std::vector<fs::path> findGeneticsFiles(fs::path wild) {
 	return findByWildcard(DIRECTORY_GENETICS, wild);
 }
 
-std::vector<fs::path> findJournalFiles(std::string wild) {
+std::vector<fs::path> findJournalFiles(fs::path wild) {
 	return findByWildcard(DIRECTORY_JOURNAL, wild);
 }
 
-std::vector<fs::path> findSoundFiles(std::string wild) {
+std::vector<fs::path> findSoundFiles(fs::path wild) {
 	return findByWildcard(DIRECTORY_SOUNDS, wild);
 }
 

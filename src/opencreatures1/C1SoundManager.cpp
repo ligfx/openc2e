@@ -11,6 +11,8 @@
 #include <fmt/core.h>
 #include <math.h>
 
+namespace fs = ghc::filesystem;
+
 constexpr bool SOUND_MANAGER_DEBUG = false;
 
 C1SoundManager::C1SoundManager() {
@@ -159,7 +161,7 @@ AudioChannel C1SoundManager::play_sound_helper(std::string name, Rect2f initial_
 		}
 	}
 
-	std::string filename = g_engine_context.paths->find_path(PATH_TYPE_SOUND, name + ".wav");
+	fs::path filename = g_engine_context.paths->find_path(PATH_TYPE_SOUND, name + ".wav");
 	if (filename.empty()) {
 		// creatures 1 ignores non-existent audio clips
 		fmt::print("WARNING: couldn't find audio clip {:?}\n", name);
@@ -169,7 +171,7 @@ AudioChannel C1SoundManager::play_sound_helper(std::string name, Rect2f initial_
 	auto channel = get_audio_backend()->play_clip(filename, loop);
 	if (!channel) {
 		// note that more specific error messages can be thrown by implementations of play_clip
-		throw_exception("failed to play audio clip {}{}", filename, loop ? " (loop)" : "");
+		throw_exception("failed to play audio clip {}{}", filename.string(), loop ? " (loop)" : "");
 	}
 
 	uint16_t index = channel.handle & 0xffff;

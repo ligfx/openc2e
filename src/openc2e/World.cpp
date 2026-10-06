@@ -45,11 +45,11 @@
 #include "prayManager.h"
 
 #include <cassert>
-#include <stdint.h>
 #include <fmt/core.h>
 #include <ghc/filesystem.hpp>
 #include <limits.h> // for MAXINT
 #include <memory>
+#include <stdint.h>
 namespace fs = ghc::filesystem;
 
 struct scriptevent {
@@ -499,7 +499,7 @@ void World::drawWorld(Camera* cam, RenderTarget* surface) {
 	}
 }
 
-void World::executeInitScript(std::string x) {
+void World::executeInitScript(fs::path x) {
 	assert(fs::exists(x));
 	assert(!fs::is_directory(x));
 
@@ -519,7 +519,7 @@ void World::executeInitScript(std::string x) {
 	fflush(stderr);
 }
 
-void World::executeBootstrap(std::string p) {
+void World::executeBootstrap(fs::path p) {
 	if (!fs::is_directory(p)) {
 		executeInitScript(p);
 		return;
@@ -546,7 +546,7 @@ void World::executeBootstrap(bool switcher) {
 		if (data_directories.size() == 0)
 			throw Exception("C1/2 can't run without data directories!");
 
-		std::string edenpath = findMainDirectoryFile("Eden.sfc");
+		auto edenpath = findMainDirectoryFile("Eden.sfc");
 		if (fs::exists(edenpath) && !fs::is_directory(edenpath)) {
 			SFCFile sfc;
 			FileReader f(edenpath);
@@ -602,8 +602,8 @@ void World::selectCreature(std::shared_ptr<Agent> a) {
 	}
 }
 
-std::shared_ptr<genomeFile> World::loadGenome(std::string& genefile) {
-	std::vector<fs::path> possibles = findGeneticsFiles(genefile + ".gen");
+std::shared_ptr<genomeFile> World::loadGenome(const std::string& moniker) {
+	std::vector<fs::path> possibles = findGeneticsFiles(moniker + ".gen");
 	if (possibles.empty())
 		return std::shared_ptr<genomeFile>();
 	auto filename = rand_choice(possibles);

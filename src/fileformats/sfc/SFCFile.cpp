@@ -26,7 +26,7 @@
 
 namespace sfc {
 
-SFCFile read_sfc_v1_file(const std::string& path) {
+SFCFile read_sfc_v1_file(const ghc::filesystem::path& path) {
 	FileReader in(path);
 	return read_sfc_v1_file(in);
 }
@@ -61,7 +61,7 @@ SFCFile read_sfc_v1_file(Reader& in) {
 	return sfc;
 }
 
-void write_sfc_v1_file(const std::string& path, SFCFile& sfc) {
+void write_sfc_v1_file(const ghc::filesystem::path& path, SFCFile& sfc) {
 	FileWriter out(path);
 	return write_sfc_v1_file(out, sfc);
 }

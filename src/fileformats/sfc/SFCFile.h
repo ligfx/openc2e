@@ -4,8 +4,9 @@
 #include "fileformats/sfc/Script.h"
 
 #include <array>
-#include <stdint.h>
+#include <ghc/filesystem.hpp>
 #include <memory>
+#include <stdint.h>
 #include <string>
 #include <vector>
 
@@ -109,8 +110,8 @@ struct SFCFile {
 };
 
 SFCFile read_sfc_v1_file(Reader& in);
-SFCFile read_sfc_v1_file(const std::string& path);
+SFCFile read_sfc_v1_file(const ghc::filesystem::path& path);
 void write_sfc_v1_file(Writer& out, SFCFile&);
-void write_sfc_v1_file(const std::string& path, SFCFile&);
+void write_sfc_v1_file(const ghc::filesystem::path& path, SFCFile&);
 
 } // namespace sfc

@@ -73,11 +73,11 @@ ghc::filesystem::path getCurrentWorldJournalPath(ghc::filesystem::path name);
 ghc::filesystem::path getMainJournalPath(ghc::filesystem::path name);
 ghc::filesystem::path getOtherWorldJournalPath(ghc::filesystem::path name);
 
-std::vector<ghc::filesystem::path> findAgentFiles(std::string wild);
-std::vector<ghc::filesystem::path> findCobFiles(std::string wild);
-std::vector<ghc::filesystem::path> findGeneticsFiles(std::string wild);
-std::vector<ghc::filesystem::path> findJournalFiles(std::string wild);
-std::vector<ghc::filesystem::path> findSoundFiles(std::string wild);
+std::vector<ghc::filesystem::path> findAgentFiles(ghc::filesystem::path wild);
+std::vector<ghc::filesystem::path> findCobFiles(ghc::filesystem::path wild);
+std::vector<ghc::filesystem::path> findGeneticsFiles(ghc::filesystem::path wild);
+std::vector<ghc::filesystem::path> findJournalFiles(ghc::filesystem::path wild);
+std::vector<ghc::filesystem::path> findSoundFiles(ghc::filesystem::path wild);
 
 ghc::filesystem::path getUserDataDir();
 

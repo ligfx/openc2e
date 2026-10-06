@@ -14,7 +14,7 @@ std::string caosException::prettyPrint() const {
 	if (!script)
 		return buf + "Source information unavailable.\n";
 	buf += "in file ";
-	buf += script->filename;
+	buf += script->filename.string();
 	if (traceindex < 0 || (size_t)traceindex >= script->tokinfo->size()) {
 		buf += "\n";
 		return buf;

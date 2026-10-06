@@ -3,6 +3,7 @@
 #include "common/Image.h"
 
 #include <cstdint>
+#include <ghc/filesystem.hpp>
 #include <string>
 #include <vector>
 
@@ -24,5 +25,5 @@ struct c1cobfile {
 	Image picture;
 };
 
-c1cobfile read_c1cobfile(const std::string& path);
+c1cobfile read_c1cobfile(const ghc::filesystem::path& path);
 c1cobfile read_c1cobfile(Reader& in);

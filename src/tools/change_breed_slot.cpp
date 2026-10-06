@@ -1,3 +1,4 @@
+#include "common/Ascii.h"
 #include "common/io/FileWriter.h"
 #include "common/io/SpanReader.h"
 #include "common/io/VectorWriter.h"
@@ -8,10 +9,10 @@
 #include "openc2e/creatures/lifestage.h"
 
 #include <algorithm>
-#include <stdint.h>
 #include <ctype.h>
 #include <fmt/core.h>
 #include <ghc/filesystem.hpp>
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -138,13 +139,9 @@ std::vector<uint8_t> change_genome(const std::vector<uint8_t>& data, int new_spe
 	return out.vector();
 }
 
-std::string get_new_filename(std::string filename, int new_species_number, int new_slot_number) {
-	std::string directory = fs::path(filename).parent_path();
-	std::string stem = fs::path(filename).stem();
-	std::transform(stem.begin(), stem.end(), stem.begin(), &tolower);
-
-	std::string extension = fs::path(filename).extension();
-	std::transform(extension.begin(), extension.end(), extension.begin(), &tolower);
+fs::path get_new_filename(fs::path filename, int new_species_number, int new_slot_number) {
+	auto stem = to_ascii_lowercase(filename.stem().string());
+	auto extension = to_ascii_lowercase(filename.extension().string());
 
 	if (stem.size() != 4) {
 		fmt::print(stderr, "error: doesn't look like an appearance file\n");
@@ -153,7 +150,7 @@ std::string get_new_filename(std::string filename, int new_species_number, int n
 
 	fmt::print(
 		"file {}: species={} slot={} part={} gender={} lifestage={}\n",
-		fs::path(filename).filename().string(),
+		filename.filename().string(),
 		species_number_to_name((stem[1] - '0') % 4),
 		(char)toupper(stem[3]),
 		(char)toupper(stem[0]),
@@ -168,8 +165,7 @@ std::string get_new_filename(std::string filename, int new_species_number, int n
 		(char)tolower(breed_slot_to_name(new_slot_number)[0]),
 		extension);
 
-	newname = fs::path(filename).parent_path() / newname;
-	return newname;
+	return filename.parent_path() / newname;
 }
 
 std::vector<uint8_t> change_prayfile(const std::vector<uint8_t>& data, int new_species_number, int new_slot_number) {
@@ -184,12 +180,11 @@ std::vector<uint8_t> change_prayfile(const std::vector<uint8_t>& data, int new_s
 			fmt::print("group EGGS \"{}\"\n", reader.getBlockName(i));
 			auto tags = reader.getBlockTags(i);
 			for (auto& kv : tags.second) {
-				std::string value_extension = fs::path(kv.second).extension();
-				std::transform(value_extension.begin(), value_extension.end(), value_extension.begin(), &tolower);
+				std::string value_extension = to_ascii_lowercase(fs::path(kv.second).extension().string());
 				if (kv.second.size() == 8 && (value_extension == ".c16" || value_extension == ".s16" || value_extension == ".att")) {
-					kv.second = get_new_filename(kv.second, new_species_number, new_slot_number);
+					kv.second = get_new_filename(kv.second, new_species_number, new_slot_number).string();
 				} else if (kv.first == "Egg Gallery female" || kv.first == "Egg Gallery male") {
-					kv.second = get_new_filename(kv.second, new_species_number, new_slot_number);
+					kv.second = get_new_filename(kv.second, new_species_number, new_slot_number).string();
 				}
 			}
 			writer.writeBlockTags(reader.getBlockType(i), reader.getBlockName(i), tags.first, tags.second);
@@ -198,14 +193,13 @@ std::vector<uint8_t> change_prayfile(const std::vector<uint8_t>& data, int new_s
 			auto blockname = reader.getBlockName(i);
 			auto data = reader.getBlockRawData(i);
 
-			std::string block_extension = fs::path(blockname).extension();
-			std::transform(block_extension.begin(), block_extension.end(), block_extension.begin(), &tolower);
+			std::string block_extension = to_ascii_lowercase(fs::path(blockname).extension().string());
 			if (block_extension == ".gen") {
 				fmt::print("inline FILE \"{}\"\n", blockname);
 				data = change_genome(data, new_species_number, new_slot_number);
 			} else if (blockname.size() == 8 && (block_extension == ".c16" || block_extension == ".s16" || block_extension == ".att")) {
 				fmt::print("inline FILE \"{}\"\n", blockname);
-				blockname = get_new_filename(blockname, new_species_number, new_slot_number);
+				blockname = get_new_filename(blockname, new_species_number, new_slot_number).string();
 			}
 			writer.writeBlockRawData(reader.getBlockType(i), blockname, data);
 
@@ -232,8 +226,7 @@ int main(int argc, char** argv) {
 	int new_species_number = species_name_to_number(argv[2]);
 	int new_slot_number = breed_slot_name_to_number(argv[3]);
 
-	std::string extension = fs::path(filename).extension();
-	std::transform(extension.begin(), extension.end(), extension.begin(), &tolower);
+	std::string extension = to_ascii_lowercase(fs::path(filename).extension().string());
 	if (extension == ".gen") {
 		auto data = readfilebinary(filename);
 		auto newdata = change_genome(data, new_species_number, new_slot_number);
@@ -243,7 +236,7 @@ int main(int argc, char** argv) {
 		out.write((char*)newdata.data(), newdata.size());
 
 	} else if (extension == ".c16" || extension == ".s16" || extension == ".att") {
-		std::string newname = get_new_filename(filename, new_species_number, new_slot_number);
+		std::string newname = get_new_filename(filename, new_species_number, new_slot_number).string();
 		if (newname != filename) {
 			fmt::print("renaming to {}\n", newname);
 			int ret = rename(filename.c_str(), newname.c_str());

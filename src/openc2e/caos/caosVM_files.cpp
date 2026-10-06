@@ -130,7 +130,7 @@ void c_FILE_IOPE(caosVM* vm) {
 
 	c_FILE_ICLO(vm);
 
-	std::string fullfilename = calculateJournalFilename(directory, filename);
+	auto fullfilename = calculateJournalFilename(directory, filename);
 	try {
 		vm->inputstream = new FileReader(fullfilename);
 	} catch (const IOException&) {
@@ -149,7 +149,7 @@ void c_FILE_JDEL(caosVM* vm) {
 	VM_PARAM_STRING(filename)
 	VM_PARAM_INTEGER(directory)
 
-	std::string fullfilename = calculateJournalFilename(directory, filename);
+	auto fullfilename = calculateJournalFilename(directory, filename);
 
 	// TODO
 }
@@ -193,7 +193,7 @@ void c_FILE_OOPE(caosVM* vm) {
 
 	c_FILE_OCLO(vm);
 
-	std::string fullfilename = calculateJournalFilename(directory, filename);
+	auto fullfilename = calculateJournalFilename(directory, filename);
 
 	try {
 		if (append)
@@ -201,7 +201,7 @@ void c_FILE_OOPE(caosVM* vm) {
 		else
 			vm->outputstream = new FileWriter(fullfilename);
 	} catch (const IOException&) {
-		throw caosException(fmt::format("FILE OOPE failed to open {}", fullfilename));
+		throw caosException(fmt::format("FILE OOPE failed to open {}", fullfilename.string()));
 	}
 }
 

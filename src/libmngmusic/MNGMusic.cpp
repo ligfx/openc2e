@@ -56,7 +56,7 @@ void MNGMusic::playTrack(MNGFile* file, std::string trackname) {
 	auto parsed_script = mngparse(file->script);
 	auto track = find_if(parsed_script.tracks, [&](const auto& t) { return to_ascii_lowercase(t.name) == trackname; });
 	if (!track) {
-		fmt::print("Couldn't find MNG track '{}' ('{}')!\n", trackname, file->name);
+		fmt::print("Couldn't find MNG track '{}' ('{}')!\n", trackname, file->name.string());
 		return; // TODO: exception?
 	}
 
@@ -157,7 +157,7 @@ static float evaluateExpression(const MNGExpression& e, MusicLayer* layer = null
 
 static AudioChannel playSample(const std::string& name, MNGFile* file, bool looping = false) {
 	const auto& sample = file->samples[file->getSampleForName(name)];
-	return get_audio_backend()->play_wav_data(file->name + "\\\\" + name, sample.data(), sample.size(), looping);
+	return get_audio_backend()->play_wav_data(file->name.string() + "\\\\" + name, sample.data(), sample.size(), looping);
 }
 
 MusicStage::MusicStage(MNGStage node) {

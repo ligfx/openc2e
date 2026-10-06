@@ -2,16 +2,17 @@
 
 #include "common/Image.h"
 
+#include <ghc/filesystem.hpp>
 #include <string>
 #include <vector>
 
 class CobManager {
   public:
 	struct CobFileInfo {
-		CobFileInfo(std::string name_, std::string filename_)
+		CobFileInfo(std::string name_, ghc::filesystem::path filename_)
 			: name(name_), filename(filename_) {}
 		std::string name;
-		std::string filename;
+		ghc::filesystem::path filename;
 		bool is_removable = false;
 	};
 

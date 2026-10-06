@@ -4,7 +4,7 @@
 #include "common/endianlove.h"
 #include "common/io/FileReader.h"
 
-std::vector<std::string> ReadStrFile(const std::string& path) {
+std::vector<std::string> ReadStrFile(const ghc::filesystem::path& path) {
 	FileReader in(path);
 
 	int num_strings = read16le(in);

@@ -24,6 +24,7 @@
 #include "partzorder.h"
 #include "renderablezorder.h"
 
+#include <ghc/filesystem.hpp>
 #include <list>
 #include <map>
 #include <memory>
@@ -108,12 +109,12 @@ class World {
 	void initCatalogue();
 	void shutdown();
 
-	void executeInitScript(std::string p);
-	void executeBootstrap(std::string p);
+	void executeInitScript(ghc::filesystem::path p);
+	void executeBootstrap(ghc::filesystem::path p);
 	void executeBootstrap(bool switcher);
 
 	void newMoniker(std::shared_ptr<genomeFile> g, std::string genefile, AgentRef agent);
-	std::shared_ptr<genomeFile> loadGenome(std::string& filename);
+	std::shared_ptr<genomeFile> loadGenome(const std::string& moniker);
 	std::string generateMoniker(std::string basename);
 
 	int findCategory(unsigned char family, unsigned char genus, unsigned short species);

@@ -23,6 +23,7 @@
 #include "common/io/FileReader.h"
 
 #include <cassert>
+#include <ghc/filesystem.hpp>
 #include <stdint.h>
 #include <string>
 #include <vector>
@@ -31,15 +32,15 @@ class cobBlock;
 
 class c2cobfile {
   protected:
-	std::string path;
+	ghc::filesystem::path path;
 	FileReader file;
 
   public:
 	std::vector<cobBlock*> blocks;
 
-	c2cobfile(std::string filepath);
+	c2cobfile(ghc::filesystem::path filepath);
 	~c2cobfile();
-	std::string getPath() { return path; }
+	ghc::filesystem::path getPath() { return path; }
 	FileReader& getStream() { return file; }
 };
 

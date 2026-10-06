@@ -32,7 +32,7 @@ Texture GetTextureFromExeFileWithTransparentTopLeft(uint32_t resource) {
 }
 
 std::vector<Texture> LoadImageWithTransparentTopLeft(const std::string& name) {
-	std::string path = findMainDirectoryFile(name);
+	auto path = findMainDirectoryFile(name);
 	if (path.empty()) {
 		return {};
 	}

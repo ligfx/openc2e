@@ -35,9 +35,9 @@
 
 using namespace ghc::filesystem;
 
-std::shared_ptr<creaturesImage> tryOpenImage(std::string fname) {
+static std::shared_ptr<creaturesImage> tryOpenImage(std::string fname) {
 	path realfile(findImageFile(fname));
-	std::string basename = realfile.filename().stem();
+	std::string basename = realfile.filename().stem().string();
 
 	if (exists(realfile)) {
 		auto img = std::make_shared<creaturesImage>(basename);
@@ -49,7 +49,7 @@ std::shared_ptr<creaturesImage> tryOpenImage(std::string fname) {
 
 std::shared_ptr<creaturesImage> tryOpenBackground(std::string fname) {
 	path realfile(findBackgroundFile(fname));
-	std::string basename = realfile.filename().stem();
+	std::string basename = realfile.filename().stem().string();
 
 	if (exists(realfile)) {
 		auto img = std::make_shared<creaturesImage>(basename);
@@ -218,7 +218,7 @@ std::shared_ptr<creaturesImage> imageManager::getCharsetDta(imageformat format,
 	uint32_t aliascolor) {
 	// TODO: cache this?
 
-	std::string filename = findImageFile("EuroCharset.dta");
+	auto filename = findImageFile("EuroCharset.dta");
 	if (filename.empty()) {
 		filename = findImageFile("CHARSET.DTA");
 	}
@@ -271,7 +271,7 @@ std::shared_ptr<creaturesImage> imageManager::getCharsetDta(imageformat format,
 			throw Exception("Unimplemented image format when loading charset.dta");
 	}
 
-	auto img = std::make_shared<creaturesImage>(path(filename).stem());
+	auto img = std::make_shared<creaturesImage>(filename.stem().string());
 	img->images = images;
 	return img;
 }

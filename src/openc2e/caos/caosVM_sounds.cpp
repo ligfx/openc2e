@@ -273,7 +273,7 @@ void c_VOLM(caosVM* vm) {
 		// TODO: do a full stacktrace like CaosException?
 		fmt::print(
 			"exec of \"{}\" raised warning: VOLM: Can't set volume of audio type {}\n",
-			vm->currentscript->filename.size() ? vm->currentscript->filename : "(null)",
+			vm->currentscript->filename.empty() ? "(null)" : vm->currentscript->filename.string(),
 			type);
 	}
 }

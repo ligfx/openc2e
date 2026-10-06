@@ -17,13 +17,12 @@ namespace fs = ghc::filesystem;
 
 namespace ImageUtils {
 
-MultiImage ReadImage(std::string path) {
+MultiImage ReadImage(const fs::path& path) {
 	if (!fs::exists(path)) {
-		throw Exception("File '" + path + "' doesn't exist");
+		throw_exception("File {:?} doesn't exist", path.string());
 	}
 
-	auto ext = fs::path(path).extension();
-	ext = to_ascii_lowercase(ext);
+	auto ext = to_ascii_lowercase(path.extension());
 
 	mappedfile m(path);
 	SpanReader in(m);
@@ -43,14 +42,14 @@ MultiImage ReadImage(std::string path) {
 		return {ReadBmpFile(in)};
 	}
 
-	auto filename = fs::path(path).filename();
+	auto filename = path.filename();
 	filename = to_ascii_lowercase(filename);
 
 	if (filename == "charset.dta" || filename == "eurocharset.dta") {
 		return ReadCharsetDtaFile(in);
 	}
 
-	throw Exception("Don't know how to read image '" + path + "'");
+	throw_exception("Don't know how to read image {:?}", path.string());
 }
 
 bool IsBackground(const MultiImage& images) {

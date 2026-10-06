@@ -33,16 +33,16 @@ int main(int argc, char** argv) {
 
 	MNGFile file(argv[1]);
 
-	fs::path script_filename((output_directory / stem).native() + ".txt");
+	fs::path script_filename((output_directory / stem).string() + ".txt");
 	fmt::print("{}\n", script_filename.string());
 	FileWriter script(script_filename);
 	script.write(file.script.c_str(), file.script.size());
 
 	for (auto kv : zip(file.getSampleNames(), file.samples)) {
-		fs::path sample_filename((output_directory / kv.first).native() + ".wav");
+		fs::path sample_filename((output_directory / kv.first).string() + ".wav");
 		fmt::print("{}\n", sample_filename.string());
 
-		FileWriter out((output_directory / kv.first).native() + ".wav");
+		FileWriter out((output_directory / kv.first).string() + ".wav");
 		out.write((const char*)kv.second.data(), kv.second.size());
 	}
 }
