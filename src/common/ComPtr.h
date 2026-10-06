@@ -14,7 +14,7 @@ class ComPtr {
 	}
 	ComPtr& operator=(ComPtr&& other) {
 		if (data != other.data) {
-			release();
+			reset();
 			data = other.data;
 			other.data = nullptr;
 		}
