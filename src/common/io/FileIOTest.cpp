@@ -4,13 +4,22 @@
 #include "common/io/IOException.h"
 
 #include <fmt/format.h>
+#include <fmt/xchar.h>
 #include <ghc/filesystem.hpp>
 #include <gtest/gtest.h>
 #include <stdint.h>
 #include <string.h>
 #include <vector>
 
+#ifdef _WIN32
+#define __T(x) L##x
+#define _T(x) __T(x)
+#else
+#define _T(x) x
+#endif
+
 namespace fs = ghc::filesystem;
+
 
 static auto vec(const char* s) {
 	// note this removes the trailing NUL, which is usually what we want
@@ -32,7 +41,7 @@ class FileTest : public testing::Test {
 	void SetUp() {
 		original_path_ = fs::current_path();
 		auto dirname = fs::temp_directory_path() / fmt::format("openc2e-test-{:08x}", rand_uint32());
-		create_directory(dirname);
+		fs::create_directory(dirname);
 		fs::current_path(dirname);
 	}
 
@@ -214,10 +223,47 @@ TEST_F(FileTest, file_seek_and_has_data_left_false) {
 	EXPECT_FALSE(f.has_data_left());
 }
 
+template <typename T>
+struct debug_wrapper {
+	debug_wrapper(T t)
+		: t_(t) {}
+	T t_;
+};
+
+template <typename T>
+auto format_as(debug_wrapper<T> d) {
+	T out;
+	out += _T("\"");
+	for (auto c : d.t_) {
+		if (c >= 0x20 && c <= 0x7e) {
+			if (c == 0x22 || c == 0x5c) {
+				out += _T("\\");
+			}
+			out += c;
+		} else {
+			out += fmt::format(_T("\\x{:02x}"), c);
+		}
+	}
+	out += _T("\"");
+	return out;
+}
+
 TEST_F(FileTest, file_with_unicode_name) {
-	auto fname = fs::path(u8"\xf0\x9f\x99\x82");
+	// std::filesystem will still mangle unicode paths if passed in as a std::string... ugh.
+	// but assert that, at least if the path object contains unicode, FileWriter and FileReader
+	// will do the right thing.
+
+	std::u8string fname = u8"\xf0\x9f\x99\x82";
 	FileWriter(fname).write("hello");
 	auto contents = FileReader(fname).read_to_end();
 	EXPECT_EQ(contents, vec("hello"));
-	EXPECT_TRUE(fs::exists("\U0001F642"));
+
+	bool seen_fname = false;
+	for (auto& de : fs::directory_iterator(".")) {
+		fmt::print(_T("{:?} -> {}\n"), de.path().native(), debug_wrapper(de.path().native()));
+		if (de.path().filename().u8string() == fname) {
+			seen_fname = true;
+		}
+	}
+	EXPECT_TRUE(seen_fname);
 }
