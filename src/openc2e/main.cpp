@@ -20,6 +20,7 @@
 
 #include "Engine.h"
 #include "common/backtrace.h"
+#include "common/Exception.h"
 #include "sdlbackend/SDLBackend.h"
 #include "sdlbackend/SDLMixerBackend.h"
 #include "version.h"
@@ -49,8 +50,13 @@ int main(int argc, char* argv[]) {
 	engine.addPossibleAudioBackend("sdlmixer", SDLMixerBackend::get_instance());
 
 	// pass command-line flags to the engine, but do no other setup
-	if (!engine.parseCommandLine(argc, argv))
+	try {
+		if (!engine.parseCommandLine(argc, argv))
+			return 1;
+	} catch (const Exception& e) {
+		fmt::print(stderr, "error: {}\n", e.what());
 		return 1;
+	}
 
 	// get the engine to do all the startup (read catalogue, loading world, etc)
 	if (!engine.initialSetup())

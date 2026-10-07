@@ -781,7 +781,7 @@ static std::string detectGameType(fs::path directory) {
 	if (case_insensitive_filesystem::exists(catalogue_directory / "Sea Monkeys.catalogue")) {
 		return "sm";
 	}
-	throw Exception("Couldn't auto-detect game type");
+	throw_exception("Couldn't auto-detect game type from data path {:?}", directory.string());
 }
 
 static std::vector<DataDirectory> data_directories_from_machine_cfg(fs::path machine_cfg_filename) {
@@ -958,17 +958,22 @@ bool Engine::parseCommandLine(int argc, char* argv[]) {
 		world.autostop = true;
 	}
 
-	if (vm.count("data-path") == 0) {
 #ifdef _WIN32
+	if (data_vec.empty()) {
 		fs::path picked_path = showDirectoryPicker();
 		if (!picked_path.empty()) {
 			data_vec.push_back(picked_path);
 		}
+	}
 #endif
-		if (data_vec.empty()) {
-			fmt::print("Warning: No data path specified, trying default of '{}', see --help if you need to specify one.\n", data_default);
-			data_vec.push_back(data_default);
-		}
+	if (data_vec.empty()) {
+		fmt::print("Warning: No data path specified, trying default of {:?}, see --help if you need to specify one.\n", data_default);
+		data_vec.push_back(data_default);
+	}
+
+	// check first data directory exists
+	if (!fs::exists(data_vec[0])) {
+		throw_exception("data path {:?} not found", data_vec[0].string());
 	}
 
 	// detect game type from first data directory
