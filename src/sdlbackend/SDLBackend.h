@@ -66,6 +66,7 @@ class SDLBackend : public Backend {
 	std::shared_ptr<SDLRenderTarget> mainrendertarget;
 	SDL_Event peeked_event;
 	bool have_peeked_event = false;
+	std::function<bool()> render_callback;
 
 	SDLBackend();
 	SDLBackend(const SDLBackend&) = delete;
@@ -74,13 +75,15 @@ class SDLBackend : public Backend {
 	SDLBackend& operator=(SDLBackend&&) = delete;
 
 	int translateScancode(int key);
+	bool render();
+	static bool event_watcher(void* userdata, SDL_Event* event);
 
   public:
 	SDL_Window* window = nullptr;
 
 	static Backend* get_instance();
 	void init(const std::string& name, int32_t width, int32_t height) override;
-	void run(std::function<bool()> render_callback) override;
+	void run(std::function<bool()> update_callback) override;
 	void shutdown() override;
 
 	bool pollEvent(BackendEvent& e) override;

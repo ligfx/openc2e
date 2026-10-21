@@ -612,27 +612,48 @@ static constexpr int OPENC2E_MIN_FPS = 20;
 
 static bool should_quit = false;
 
-bool sdl_event_watcher(void* userdata, SDL_Event* event) {
-	(void)userdata;
+bool SDLBackend::render() {
+	// TODO: we have to calculate renderer sizes when the backend is initialized,
+	// otherwise side panels get in weird locations. related to issue with panels
+	// when resizing in general?
+
+	// TODO: does this work on Windows?
+	SDL_SetRenderScale(renderer, SDL_GetWindowDisplayScale(window), SDL_GetWindowDisplayScale(window));
+
+	ImGui_ImplSDLRenderer3_NewFrame();
+	ImGui_ImplSDL3_NewFrame();
+	ImGui::NewFrame();
+
+	bool result = render_callback();
+	if (should_quit || !result) {
+		return false;
+	}
+
+	ImGui::Render();
+	ImGui_ImplSDLRenderer3_RenderDrawData(ImGui::GetDrawData(), renderer);
+
+	SDL_RenderPresent(renderer);
+	return true;
+}
+
+bool SDLBackend::event_watcher(void* userdata, SDL_Event* event) {
+	auto backend = reinterpret_cast<SDLBackend*>(userdata);
 	if (event->type == SDL_EVENT_QUIT) {
 		should_quit = true;
+	}
+	if (event->type == SDL_EVENT_WINDOW_EXPOSED && event->window.data1 == 1) {
+		// live-resize event
+		backend->render();
 	}
 	return true;
 }
 
-void SDLBackend::run(std::function<bool()> update_callback) {
-	SDL_AddEventWatch(sdl_event_watcher, nullptr);
+void SDLBackend::run(std::function<bool()> render_callback) {
+	this->render_callback = render_callback;
+	SDL_AddEventWatch(SDLBackend::event_watcher, this);
 
 	uint32_t last_frame_end = 0;
-
 	while (true) {
-		// TODO: we have to calculate renderer sizes when the backend is initialized,
-		// otherwise side panels get in weird locations. related to issue with panels
-		// when resizing in general?
-
-		// TODO: does this work on Windows?
-		SDL_SetRenderScale(renderer, SDL_GetWindowDisplayScale(window), SDL_GetWindowDisplayScale(window));
-
 		bool focused = SDL_GetWindowFlags(window) & (SDL_WINDOW_INPUT_FOCUS | SDL_WINDOW_MOUSE_FOCUS);
 		Uint32 desired_ticks_per_frame = 1000 / (focused ? OPENC2E_MAX_FPS : OPENC2E_MIN_FPS);
 		Uint32 frame_end = SDL_GetTicks();
@@ -641,18 +662,11 @@ void SDLBackend::run(std::function<bool()> update_callback) {
 		}
 		last_frame_end = SDL_GetTicks();
 
-		ImGui_ImplSDLRenderer3_NewFrame();
-		ImGui_ImplSDL3_NewFrame();
-		ImGui::NewFrame();
-
-		bool result = update_callback();
-		if (should_quit || !result) {
+		if (!render()) {
 			break;
-		}
-
-		ImGui::Render();
-		ImGui_ImplSDLRenderer3_RenderDrawData(ImGui::GetDrawData(), renderer);
-
-		SDL_RenderPresent(renderer);
+		};
 	}
+
+	SDL_RemoveEventWatch(SDLBackend::event_watcher, this);
+	this->render_callback = {};
 }
