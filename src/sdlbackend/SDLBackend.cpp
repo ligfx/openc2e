@@ -138,8 +138,13 @@ static bool ImGuiConsumeEvent(const SDL_Event& event) {
 bool SDLBackend::pollEvent(BackendEvent& e) {
 	SDL_Event event;
 retry:
-	if (!SDL_PollEvent(&event))
-		return false;
+	if (have_peeked_event) {
+		event = peeked_event;
+		have_peeked_event = false;
+	} else {
+		if (!SDL_PollEvent(&event))
+			return false;
+	}
 
 	if (!SDL_ConvertEventToRenderCoordinates(renderer, &event)) {
 		throw Exception(fmt::format("error converting event to render coordinates: {}", SDL_GetError()));
@@ -632,7 +637,7 @@ void SDLBackend::run(std::function<bool()> update_callback) {
 		Uint32 desired_ticks_per_frame = 1000 / (focused ? OPENC2E_MAX_FPS : OPENC2E_MIN_FPS);
 		Uint32 frame_end = SDL_GetTicks();
 		if (frame_end - last_frame_end < desired_ticks_per_frame) {
-			SDL_Delay(desired_ticks_per_frame - (frame_end - last_frame_end));
+			have_peeked_event = SDL_WaitEventTimeout(&peeked_event, desired_ticks_per_frame - (frame_end - last_frame_end));
 		}
 		last_frame_end = SDL_GetTicks();
 

@@ -22,9 +22,9 @@
 #include "common/backend/Backend.h"
 
 #include <SDL3/SDL.h>
-#include <stdint.h>
 #include <array>
 #include <memory>
+#include <stdint.h>
 #include <string>
 
 class SDLBackend;
@@ -64,6 +64,8 @@ class SDLBackend : public Backend {
   protected:
 	SDL_Renderer* renderer = nullptr;
 	std::shared_ptr<SDLRenderTarget> mainrendertarget;
+	SDL_Event peeked_event;
+	bool have_peeked_event = false;
 
 	SDLBackend();
 	SDLBackend(const SDLBackend&) = delete;
