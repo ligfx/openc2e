@@ -97,7 +97,6 @@ set(gtest_force_shared_crt ON CACHE BOOL "" FORCE) # fix 'mismatch detected for 
 set(INSTALL_GTEST OFF)
 add_subdirectory(externals/googletest EXCLUDE_FROM_ALL)
 add_subdirectory(externals/imgui EXCLUDE_FROM_ALL)
-add_subdirectory(externals/nativefiledialog EXCLUDE_FROM_ALL)
 
 # turn warnings back on
 set(CMAKE_C_FLAGS "${original_c_flags}")
@@ -465,7 +464,6 @@ add_executable(mngplayer2
     src/mngplayer2/mngplayer2.rc
 )
 target_link_libraries(mngplayer2
-	nativefiledialog
 	openc2e-mngmusic
 	openc2e_sdlbackend
 )
