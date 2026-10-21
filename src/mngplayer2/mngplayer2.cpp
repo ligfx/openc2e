@@ -22,7 +22,7 @@
 #include <fmt/core.h>
 #include <imgui.h>
 #include <imgui_internal.h>
-#include <nfd.h>
+#include <mutex>
 #include <stdint.h>
 #include <stdlib.h>
 #include <string>
@@ -133,6 +133,8 @@ static bool ShowConfirmBox(const std::string& title, const std::string& message)
 }
 
 static struct AppState {
+	std::mutex app_state_mutex;
+
 	fs::path fullpath;
 	std::string filename;
 	std::string trackname;
@@ -164,6 +166,8 @@ static struct AppState {
 	} loaded_file_type = TYPE_NO_FILE_LOADED;
 
 	void Update() {
+		std::scoped_lock lock(app_state_mutex);
+
 		mng_music->update();
 
 		if (state == STATE_PLAYING && random_play && std::chrono::duration_cast<std::chrono::seconds>(std::chrono::steady_clock::now() - random_time_of_last_switch).count() >= random_interval) {
@@ -221,92 +225,98 @@ static struct AppState {
 	}
 
 	void openFile() {
-		const nfdchar_t* filterList = "mng";
-		nfdchar_t* outPath = nullptr;
-		nfdresult_t result = NFD_OpenDialog(filterList, nullptr, &outPath);
+		static const SDL_DialogFileFilter s_filter = {"MNG file", "mng"};
 
-		if (result == NFD_CANCEL) {
-			return;
-		}
-		if (result != NFD_OKAY) {
-			SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "Error opening file", NFD_GetError(), backend->window);
-			return;
-		}
+		SDL_ShowOpenFileDialog([](void* userdata, const char* const* filelist, int) {
+			AppState* app_state = reinterpret_cast<AppState*>(userdata);
 
-		auto outpath_guard = make_scope_guard([&] { free(outPath); });
+			if (filelist == nullptr) {
+				SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "Error opening file", SDL_GetError(), backend->window);
+				return;
+			}
+			if (*filelist == nullptr) {
+				return;
+			}
 
-		MNGFile newfile;
-		MNGScript newscript;
+			std::scoped_lock<std::mutex> lock(app_state->app_state_mutex);
 
-		try {
-			newfile = MNGFile(outPath);
-			newscript = mngparse(newfile.script);
-		} catch (const std::exception& e) {
-			std::string message = std::string("Error opening file: ") + outPath + "\n\n" + e.what();
-			SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "Error opening file", message.c_str(), backend->window);
-			return;
-		}
+			MNGFile newfile;
+			MNGScript newscript;
 
-		stopMusic();
+			try {
+				newfile = MNGFile(*filelist);
+				newscript = mngparse(newfile.script);
+			} catch (const std::exception& e) {
+				std::string message = fmt::format("Error opening file: {}\n\n{}", *filelist, e.what());
+				SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "Error opening file", message.c_str(), backend->window);
+				return;
+			}
 
-		fullpath = fs::path(outPath);
-		filename = fullpath.filename().string();
-		mngfile = newfile;
-		parsed_script = newscript;
-		random_allowed_track_indices = BoolVector(parsed_script.tracks.size(), true);
-		loaded_file_type = TYPE_MNGFILE;
+			app_state->stopMusic();
+
+			app_state->fullpath = fs::path(reinterpret_cast<const char8_t*>(*filelist));
+			app_state->filename = app_state->fullpath.filename().string();
+			app_state->mngfile = newfile;
+			app_state->parsed_script = newscript;
+			app_state->random_allowed_track_indices = BoolVector(app_state->parsed_script.tracks.size(), true);
+			app_state->loaded_file_type = TYPE_MNGFILE;
+		},
+			this, backend->window, &s_filter, 1, nullptr, false);
 	}
 
 	void openScript() {
-		const nfdchar_t* filterList = "txt";
-		nfdchar_t* outPath = nullptr;
-		nfdresult_t result = NFD_OpenDialog(filterList, nullptr, &outPath);
+		static const SDL_DialogFileFilter s_filter = {"MNG Script file", "txt"};
 
-		if (result == NFD_CANCEL) {
-			return;
-		}
-		if (result != NFD_OKAY) {
-			SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "Error opening file", NFD_GetError(), backend->window);
-			return;
-		}
+		SDL_ShowOpenFileDialog([](void* userdata, const char* const* filelist, int) {
+			AppState* app_state = reinterpret_cast<AppState*>(userdata);
 
-		auto outpath_guard = make_scope_guard([&] { free(outPath); });
-
-		MNGFile newfile;
-		try {
-			newfile.name = fs::path(outPath).stem().string();
-			newfile.script = readfile(outPath);
-
-			auto sample_names = mngparse(newfile.script).getWaveNames();
-			for (size_t i = 0; i < sample_names.size(); ++i) {
-				auto sample_filename = (fs::path(outPath).parent_path() / sample_names[i]).string() + ".wav";
-
-				try {
-					FileReader in(sample_filename);
-					// in.ignore(16); // skip wav header
-					auto data = in.read_to_end();
-					newfile.samples.push_back(shared_array<uint8_t>(data.begin(), data.end()));
-					newfile.samplemappings[sample_names[i]] = i;
-				} catch (...) {
-					SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "Error reading file", sample_filename.c_str(), backend->window);
-					return;
-				}
+			if (filelist == nullptr) {
+				SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "Error opening file", SDL_GetError(), backend->window);
+				return;
+			}
+			if (*filelist == nullptr) {
+				return;
 			}
 
-		} catch (const std::exception& e) {
-			std::string message = std::string("Error opening file: ") + outPath + "\n\n" + e.what();
-			SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "Error opening file", message.c_str(), backend->window);
-			return;
-		}
+			fs::path script_filename(reinterpret_cast<const char8_t*>(*filelist));
 
-		stopMusic();
+			MNGFile newfile;
+			try {
+				newfile.name = script_filename.stem().string();
+				newfile.script = readfile(script_filename);
 
-		fullpath = fs::path(outPath);
-		filename = fullpath.filename().string();
-		mngfile = newfile;
-		parsed_script = mngparse(newfile.script);
-		random_allowed_track_indices = BoolVector(parsed_script.tracks.size(), true);
-		loaded_file_type = TYPE_MNGSCRIPT;
+				auto sample_names = mngparse(newfile.script).getWaveNames();
+				for (size_t i = 0; i < sample_names.size(); ++i) {
+					auto sample_filename = (script_filename.parent_path() / sample_names[i]).string() + ".wav";
+
+					try {
+						FileReader in(sample_filename);
+						// in.ignore(16); // skip wav header
+						auto data = in.read_to_end();
+						newfile.samples.push_back(shared_array<uint8_t>(data.begin(), data.end()));
+						newfile.samplemappings[sample_names[i]] = i;
+					} catch (...) {
+						SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "Error reading file", sample_filename.c_str(), backend->window);
+						return;
+					}
+				}
+
+			} catch (const std::exception& e) {
+				std::string message = fmt::format("Error opening file: {}\n\n{}", script_filename.string(), e.what());
+				SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "Error opening file", message.c_str(), backend->window);
+				return;
+			}
+
+			app_state->stopMusic();
+
+			app_state->fullpath = script_filename;
+			app_state->filename = app_state->fullpath.filename().string();
+			app_state->mngfile = newfile;
+			app_state->parsed_script = mngparse(newfile.script);
+			app_state->random_allowed_track_indices = BoolVector(app_state->parsed_script.tracks.size(), true);
+			app_state->loaded_file_type = TYPE_MNGSCRIPT;
+		},
+			this, backend->window, &s_filter, 1, nullptr, false);
 	}
 
 	bool canCompile() {
