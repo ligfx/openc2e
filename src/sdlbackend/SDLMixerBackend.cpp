@@ -257,5 +257,5 @@ AudioChannel SDLMixerBackend::play_clip(const fs::path& filename, bool looping) 
 }
 
 AudioChannel SDLMixerBackend::play_wav_data(const std::string& name, const uint8_t* buf, size_t size, bool looping) {
-	return play_sdl_io(name, name, SDL_IOFromMem((void*)buf, size), looping);
+	return play_sdl_io(name, name, SDL_IOFromConstMem(reinterpret_cast<const void*>(buf), size), looping);
 }
